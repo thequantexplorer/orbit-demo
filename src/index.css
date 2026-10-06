@@ -1051,6 +1051,10 @@ details[open] > .toolbar-button {
     0 3px 10px #2020320b,
     0 1px 3px #20203206;
 }
+.card--urgent,
+.card--urgent:hover {
+  border-left: 3px solid var(--danger);
+}
 .card:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: -2px;
