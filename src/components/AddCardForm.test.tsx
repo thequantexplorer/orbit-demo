@@ -151,14 +151,21 @@ describe('AddCardForm', () => {
       expect(onAdd).not.toHaveBeenCalled()
     })
 
-    it('ignores a whitespace-only submission and keeps the typed text', async () => {
-      const { user, input, onAdd } = setup()
+    it.each([
+      ['an empty string', ''],
+      ['spaces', '   '],
+      ['tabs', '\t\t'],
+      ['newlines', '\n\n'],
+      ['mixed whitespace', ' \t\n \r\n\t '],
+    ])('rejects a blank title: %s', (_label, value) => {
+      const { input, onAdd } = setup()
+      fireEvent.change(input, { target: { value } })
+      const valueBeforeSubmit = (input as HTMLInputElement).value
 
-      await user.type(input, '   ')
-      fireEvent.submit(input.closest('form')!)
+      expect(() => fireEvent.submit(input.closest('form')!)).not.toThrow()
 
       expect(onAdd).not.toHaveBeenCalled()
-      expect(input).toHaveValue('   ')
+      expect(input).toHaveValue(valueBeforeSubmit)
     })
 
     it('prevents the native form submission', async () => {
