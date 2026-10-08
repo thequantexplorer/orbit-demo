@@ -750,6 +750,10 @@ export default function App() {
                         setToast('Issue created')
                       }}
                       onOpenCard={setOpenCardId}
+                      onClearColumn={() => {
+                        dispatch({ type: 'clear-column', columnId: column.id })
+                        setToast('Done column cleared')
+                      }}
                     />
                   ))}
                 </div>

@@ -975,6 +975,25 @@ details[open] > .toolbar-button {
   width: 23px;
   height: 23px;
 }
+.column__clear {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 23px;
+  padding: 0 7px;
+  border-radius: 5px;
+  font-size: 10px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.column__clear:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+.column__clear + .column__add {
+  margin-left: 0;
+}
 .status-icon {
   width: 13px;
   height: 13px;

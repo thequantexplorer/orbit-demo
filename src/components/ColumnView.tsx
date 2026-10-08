@@ -11,6 +11,7 @@ interface ColumnViewProps {
   isDropTarget: boolean
   onAddCard: (title: string) => void
   onOpenCard: (cardId: string) => void
+  onClearColumn?: () => void
   filtered?: boolean
 }
 
@@ -20,6 +21,7 @@ export function ColumnView({
   isDropTarget,
   onAddCard,
   onOpenCard,
+  onClearColumn,
   filtered = false,
 }: ColumnViewProps) {
   const { setNodeRef } = useDroppable({
@@ -39,6 +41,17 @@ export function ColumnView({
         <span className="column__count" data-testid={`count-${column.id}`}>
           {cards.length}
         </span>
+        {column.id === 'done' && cards.length > 0 && onClearColumn && (
+          <button
+            className="column__clear"
+            aria-label="Clear done issues"
+            title="Remove all issues in Done"
+            onClick={onClearColumn}
+          >
+            <Icon name="trash" size={12} />
+            Clear done
+          </button>
+        )}
         <button
           className="icon-button column__add"
           aria-label={`New issue in ${column.title}`}
