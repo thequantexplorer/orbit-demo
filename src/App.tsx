@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import {
   DndContext,
   DragOverlay,
@@ -929,8 +930,15 @@ export default function App() {
             <button
               className="button button--danger"
               onClick={() => {
-                dispatch({ type: 'clear-column', columnId: 'done' })
-                setClearDoneOpen(false)
+                flushSync(() => {
+                  dispatch({ type: 'clear-column', columnId: 'done' })
+                  setClearDoneOpen(false)
+                })
+                document
+                  .querySelector<HTMLElement>(
+                    '[data-column-id="done"] .column__add',
+                  )
+                  ?.focus()
                 setToast('Done column cleared')
               }}
             >
