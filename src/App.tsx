@@ -240,7 +240,14 @@ export default function App() {
   const activeCard = activeCardId ? board.cards[activeCardId] : undefined
   const creating = openCardId === 'new'
   const openCard: Card | undefined = creating
-    ? { id: 'new', title: '', description: '', labels: [], assigneeId: null }
+    ? {
+        id: 'new',
+        title: '',
+        description: '',
+        labels: [],
+        assigneeId: null,
+        dueDate: null,
+      }
     : openCardId
       ? board.cards[openCardId]
       : undefined
