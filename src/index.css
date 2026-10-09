@@ -1219,6 +1219,9 @@ details[open] > .toolbar-button {
     0 16px 40px #17172e26,
     0 4px 10px #17172e12;
 }
+.card--urgent.card--overlay {
+  border-left-color: var(--danger);
+}
 .add-card {
   display: flex;
   align-items: center;
