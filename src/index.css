@@ -1029,6 +1029,15 @@ details[open] > .toolbar-button {
   overflow-y: auto;
   overflow-x: hidden;
 }
+.column__virtual {
+  position: relative;
+  flex-shrink: 0;
+}
+.column__virtual-item {
+  position: absolute;
+  left: 0;
+  right: 0;
+}
 .column__empty {
   display: flex;
   align-items: center;
@@ -1345,7 +1354,15 @@ details[open] > .toolbar-button {
   overflow: auto;
   padding: 12px 0 24px;
 }
-.list-group > header {
+.issue-list__virtual {
+  position: relative;
+}
+.issue-list__item {
+  position: absolute;
+  left: 0;
+  right: 0;
+}
+.list-group-header {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1353,12 +1370,12 @@ details[open] > .toolbar-button {
   background: var(--board);
   border-block: 1px solid var(--border);
 }
-.list-group h2 {
+.list-group-header h2 {
   font-size: 11px;
   margin: 0;
   font-weight: 500;
 }
-.list-group > header > span:last-child {
+.list-group-header > span:last-child {
   color: var(--muted);
   font-size: 10px;
 }
@@ -2230,7 +2247,7 @@ details[open] > .toolbar-button {
   .issue-row__labels {
     display: none;
   }
-  .list-group > header {
+  .list-group-header {
     padding-inline: 18px;
   }
   .list-empty {

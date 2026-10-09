@@ -18,7 +18,7 @@ hardware.
 
 | Metric | How it is measured |
 |---|---|
-| initial render | navigation start → all N cards in the DOM and the next frame produced |
+| initial render | navigation start → board ready (column count badges sum to N and at least one card is in the DOM) and the next frame produced |
 | filter latency | type `onboarding` into the board search one key at a time; keydown → DOM updated and main thread free, median per key |
 | scroll FPS / long tasks | scroll the longest column for 3 s; average frames per second and total long-task time |
 | JS heap after load | `JSHeapUsedSize` after a forced GC |

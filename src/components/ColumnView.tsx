@@ -1,6 +1,9 @@
+import { useCallback, useEffect, useRef } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { useVirtualizer, type Range } from '@tanstack/react-virtual'
 import type { Card, Column } from '../types'
+import { rangeWithPinned } from '../virtualList'
 import { AddCardForm } from './AddCardForm'
 import { SortableCard } from './SortableCard'
 import { Icon, StatusIcon } from './Icon'
@@ -9,6 +12,8 @@ interface ColumnViewProps {
   column: Column
   cards: Card[]
   isDropTarget: boolean
+  activeCardId: string | null
+  showDescriptions: boolean
   onAddCard: (title: string) => void
   onOpenCard: (cardId: string) => void
   onClearColumn: () => void
@@ -19,6 +24,8 @@ export function ColumnView({
   column,
   cards,
   isDropTarget,
+  activeCardId,
+  showDescriptions,
   onAddCard,
   onOpenCard,
   onClearColumn,
@@ -28,6 +35,37 @@ export function ColumnView({
     id: column.id,
     data: { type: 'column' },
   })
+  const scrollRef = useRef<HTMLDivElement | null>(null)
+  const setCardsRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      scrollRef.current = node
+      setNodeRef(node)
+    },
+    [setNodeRef],
+  )
+  const activeIndex = activeCardId
+    ? cards.findIndex((card) => card.id === activeCardId)
+    : -1
+  // No React Compiler here; useVirtualizer re-renders on scroll itself.
+  // oxlint-disable-next-line react/incompatible-library
+  const virtualizer = useVirtualizer({
+    count: cards.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => (showDescriptions ? 128 : 96),
+    getItemKey: (index) => cards[index].id,
+    gap: 9,
+    overscan: 6,
+    // Keep the dragged card mounted so dnd-kit keeps tracking it.
+    rangeExtractor: useCallback(
+      (range: Range) => rangeWithPinned(range, activeIndex),
+      [activeIndex],
+    ),
+  })
+
+  // Card heights change with descriptions; drop the cached measurements.
+  useEffect(() => {
+    virtualizer.measure()
+  }, [virtualizer, showDescriptions])
 
   return (
     <section
@@ -72,10 +110,25 @@ export function ColumnView({
         items={cards.map((card) => card.id)}
         strategy={verticalListSortingStrategy}
       >
-        <div ref={setNodeRef} className="column__cards">
-          {cards.map((card) => (
-            <SortableCard key={card.id} card={card} onOpen={onOpenCard} />
-          ))}
+        <div ref={setCardsRef} className="column__cards">
+          {cards.length > 0 && (
+            <div
+              className="column__virtual"
+              style={{ height: virtualizer.getTotalSize() }}
+            >
+              {virtualizer.getVirtualItems().map((item) => (
+                <div
+                  key={item.key}
+                  ref={virtualizer.measureElement}
+                  data-index={item.index}
+                  className="column__virtual-item"
+                  style={{ top: item.start }}
+                >
+                  <SortableCard card={cards[item.index]} onOpen={onOpenCard} />
+                </div>
+              ))}
+            </div>
+          )}
           {cards.length === 0 && (
             <div className="column__empty">
               <StatusIcon status={column.id} />

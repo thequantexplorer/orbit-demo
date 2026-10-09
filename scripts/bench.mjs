@@ -87,8 +87,18 @@ const median = (values) => {
   return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2
 }
 
-// Installed before any page script: marks when every card is in the DOM and
-// the following frame has been produced, and records long tasks.
+// The board is ready when the column count badges add up to N and at least one
+// card is in the DOM (a virtualized board never mounts all N cards).
+function boardReady(expected) {
+  const counted = [...document.querySelectorAll('.board [data-testid^="count-"]')].reduce(
+    (sum, badge) => sum + Number(badge.textContent),
+    0,
+  )
+  return counted >= expected && document.querySelector('.board [data-card-id]') !== null
+}
+
+// Installed before any page script: marks when the board is ready (see
+// boardReady) and the following frame has been produced, and records long tasks.
 function instrument(expected) {
   window.__bench = { longTasks: [] }
   new PerformanceObserver((list) => {
@@ -96,7 +106,7 @@ function instrument(expected) {
       window.__bench.longTasks.push({ start: entry.startTime, duration: entry.duration })
   }).observe({ type: 'longtask', buffered: true })
   const poll = () => {
-    if (document.querySelectorAll('.board [data-card-id]').length >= expected) {
+    if (window.__boardReady(expected)) {
       window.__bench.cardsInDom = performance.now()
       requestAnimationFrame(() => {
         const channel = new MessageChannel()
@@ -114,6 +124,7 @@ async function measureOnce(browser, url) {
   const context = await browser.createBrowserContext()
   const page = await context.newPage()
   await page.setViewport({ width: 1440, height: 900 })
+  await page.evaluateOnNewDocument(`window.__boardReady = ${boardReady}`)
   await page.evaluateOnNewDocument(instrument, CARDS)
   const cdp = await page.createCDPSession()
   await cdp.send('Performance.enable')
@@ -185,7 +196,7 @@ async function supportsSeed(browser, url) {
     await page.goto(`${url}/?seed=${CARDS}`, { waitUntil: 'load' })
     return await page
       .waitForFunction(
-        (expected) => document.querySelectorAll('.board [data-card-id]').length >= expected,
+        boardReady,
         { timeout: 60_000, polling: 250 },
         CARDS,
       )

@@ -34,6 +34,7 @@ import { ColumnView } from './components/ColumnView'
 import { Avatar } from './components/Avatar'
 import { CommandMenu } from './components/CommandMenu'
 import { Dialog } from './components/Dialog'
+import { IssueList } from './components/IssueList'
 import { Icon, ProgressRing, StatusIcon } from './components/Icon'
 import { LabelPill } from './components/LabelPill'
 import { Sidebar } from './components/Sidebar'
@@ -754,6 +755,8 @@ export default function App() {
                       column={column}
                       cards={column.cards}
                       filtered={hasFilters}
+                      activeCardId={activeCardId}
+                      showDescriptions={descriptions}
                       isDropTarget={
                         activeCardId !== null && overColumnId === column.id
                       }
@@ -771,38 +774,10 @@ export default function App() {
                   ))}
                 </div>
               ) : (
-                <div className="issue-list" aria-label="Issue list">
-                  {visibleColumns.map((column) => (
-                    <section className="list-group" key={column.id}>
-                      <header>
-                        <StatusIcon status={column.id} />
-                        <h2>{column.title}</h2>
-                        <span>{column.cards.length}</span>
-                      </header>
-                      {column.cards.map((card) => (
-                        <button
-                          className="issue-row"
-                          key={card.id}
-                          onClick={() => setOpenCardId(card.id)}
-                        >
-                          <span className="card__id">{card.id}</span>
-                          <StatusIcon status={column.id} />
-                          <strong>{card.title}</strong>
-                          <span className="issue-row__labels">
-                            {card.labels.map((label) => (
-                              <LabelPill key={label} labelId={label} />
-                            ))}
-                          </span>
-                          <Avatar assigneeId={card.assigneeId} />
-                          <Icon name="chevron" size={12} />
-                        </button>
-                      ))}
-                      {column.cards.length === 0 && (
-                        <p className="list-empty">No issues in this view</p>
-                      )}
-                    </section>
-                  ))}
-                </div>
+                <IssueList
+                  columns={visibleColumns}
+                  onOpenCard={setOpenCardId}
+                />
               )}
               <DragOverlay
                 dropAnimation={{
