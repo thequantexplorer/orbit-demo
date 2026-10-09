@@ -41,7 +41,7 @@ export function ColumnView({
         <span className="column__count" data-testid={`count-${column.id}`}>
           {cards.length}
         </span>
-        {column.id === 'done' && cards.length > 0 && (
+        {column.id === 'done' && column.cardIds.length > 0 && (
           <button
             className="column__clear"
             aria-label="Clear done issues"
