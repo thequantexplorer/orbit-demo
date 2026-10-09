@@ -1,24 +1,40 @@
+import { useEffect, useRef } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { defaultRangeExtractor, useVirtualizer } from '@tanstack/react-virtual'
 import type { Card, Column } from '../types'
 import { AddCardForm } from './AddCardForm'
 import { SortableCard } from './SortableCard'
 import { Icon, StatusIcon } from './Icon'
 
+const CARD_GAP = 9
+
 interface ColumnViewProps {
   column: Column
   cards: Card[]
   isDropTarget: boolean
+  activeCardId: string | null
+  showDescriptions: boolean
   onAddCard: (title: string) => void
   onOpenCard: (cardId: string) => void
   onClearColumn: () => void
   filtered?: boolean
 }
 
+// First guess before a card is measured; measured heights replace it.
+function estimateCardHeight(card: Card, showDescriptions: boolean) {
+  const base = showDescriptions ? 105 : 96
+  const titleWrap = card.title.length > 40 ? 19 : 0
+  const description = showDescriptions && card.description ? 38 : 0
+  return base + titleWrap + description
+}
+
 export function ColumnView({
   column,
   cards,
   isDropTarget,
+  activeCardId,
+  showDescriptions,
   onAddCard,
   onOpenCard,
   onClearColumn,
@@ -28,6 +44,32 @@ export function ColumnView({
     id: column.id,
     data: { type: 'column' },
   })
+  const scrollRef = useRef<HTMLDivElement | null>(null)
+  const activeIndex = activeCardId
+    ? cards.findIndex((card) => card.id === activeCardId)
+    : -1
+
+  // The app doesn't use React Compiler, so its auto-memoization caveat for
+  // useVirtualizer's returned functions doesn't apply here.
+  // oxlint-disable-next-line react/incompatible-library
+  const virtualizer = useVirtualizer({
+    count: cards.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: (index) => estimateCardHeight(cards[index], showDescriptions),
+    getItemKey: (index) => cards[index].id,
+    gap: CARD_GAP,
+    overscan: 6,
+    // Keep the dragged card mounted so dnd-kit never loses its active node.
+    rangeExtractor: (range) => {
+      const indexes = defaultRangeExtractor(range)
+      if (activeIndex === -1 || indexes.includes(activeIndex)) return indexes
+      return [...indexes, activeIndex].sort((a, b) => a - b)
+    },
+  })
+
+  useEffect(() => {
+    virtualizer.measure()
+  }, [virtualizer, showDescriptions])
 
   return (
     <section
@@ -72,10 +114,34 @@ export function ColumnView({
         items={cards.map((card) => card.id)}
         strategy={verticalListSortingStrategy}
       >
-        <div ref={setNodeRef} className="column__cards">
-          {cards.map((card) => (
-            <SortableCard key={card.id} card={card} onOpen={onOpenCard} />
-          ))}
+        <div
+          ref={(node) => {
+            setNodeRef(node)
+            scrollRef.current = node
+          }}
+          className="column__cards"
+        >
+          {cards.length > 0 && (
+            <div
+              className="column__window"
+              style={{ height: virtualizer.getTotalSize() }}
+            >
+              {virtualizer.getVirtualItems().map((item) => {
+                const card = cards[item.index]
+                return (
+                  <div
+                    key={card.id}
+                    ref={virtualizer.measureElement}
+                    className="column__item"
+                    data-index={item.index}
+                    style={{ transform: `translateY(${item.start}px)` }}
+                  >
+                    <SortableCard card={card} onOpen={onOpenCard} />
+                  </div>
+                )
+              })}
+            </div>
+          )}
           {cards.length === 0 && (
             <div className="column__empty">
               <StatusIcon status={column.id} />
