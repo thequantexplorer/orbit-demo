@@ -55,4 +55,14 @@ describe('subscribeToDayChange', () => {
     expect(listener).toHaveBeenCalledTimes(1)
     unsubscribeAgain()
   })
+
+  it('skips listeners removed earlier in the same notification', () => {
+    const second = vi.fn()
+    let unsubscribeSecond = () => {}
+    const unsubscribeFirst = subscribeToDayChange(() => unsubscribeSecond())
+    unsubscribeSecond = subscribeToDayChange(second)
+    vi.advanceTimersByTime(2 * MINUTE)
+    expect(second).not.toHaveBeenCalled()
+    unsubscribeFirst()
+  })
 })

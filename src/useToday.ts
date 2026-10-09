@@ -17,7 +17,9 @@ function checkDay() {
   const key = getTodayKey()
   if (key === lastKey) return
   lastKey = key
-  for (const listener of [...listeners]) listener()
+  for (const listener of [...listeners]) {
+    if (listeners.has(listener)) listener()
+  }
 }
 
 /** Calls `listener` when the local calendar day changes. */
