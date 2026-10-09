@@ -199,10 +199,17 @@ export default function App() {
     })
   }
 
-  function handleDragEnd({ active, over }: DragEndEvent) {
+  function handleDragEnd({ active, over, activatorEvent }: DragEndEvent) {
     if (!over) {
       handleDragCancel()
       return
+    }
+    if (activatorEvent instanceof KeyboardEvent) {
+      document
+        .querySelector<HTMLElement>(
+          `.board [data-card-id="${CSS.escape(String(active.id))}"]`,
+        )
+        ?.focus({ preventScroll: true })
     }
     dragSnapshot.current = null
     setActiveCardId(null)

@@ -1,5 +1,5 @@
-import { useRef } from 'react'
-import { useVirtualizer } from '@tanstack/react-virtual'
+import { useRef, useState } from 'react'
+import { defaultRangeExtractor, useVirtualizer } from '@tanstack/react-virtual'
 import type { Card, Column } from '../types'
 import { Avatar } from './Avatar'
 import { Icon, StatusIcon } from './Icon'
@@ -17,6 +17,7 @@ type Row =
 
 export function IssueList({ columns, onOpenCard }: IssueListProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null)
+  const [focusedCardId, setFocusedCardId] = useState<string | null>(null)
   const rows: Row[] = columns.flatMap((column): Row[] => [
     {
       kind: 'header',
@@ -31,6 +32,7 @@ export function IssueList({ columns, onOpenCard }: IssueListProps) {
       ? [{ kind: 'empty' as const, key: `empty-${column.id}` }]
       : []),
   ])
+  const focusedIndex = rows.findIndex((row) => row.key === focusedCardId)
 
   // The app doesn't use React Compiler, so its auto-memoization caveat for
   // useVirtualizer's returned functions doesn't apply here.
@@ -41,10 +43,31 @@ export function IssueList({ columns, onOpenCard }: IssueListProps) {
     estimateSize: (index) => (rows[index].kind === 'issue' ? 48 : 37),
     getItemKey: (index) => rows[index].key,
     overscan: 10,
+    rangeExtractor: (range) => {
+      const indexes = new Set(defaultRangeExtractor(range))
+      if (focusedIndex !== -1) {
+        for (let index = focusedIndex - 2; index <= focusedIndex + 2; index++) {
+          if (index >= 0 && index < rows.length) indexes.add(index)
+        }
+      }
+      return [...indexes].sort((a, b) => a - b)
+    },
   })
 
   return (
-    <div ref={scrollRef} className="issue-list" aria-label="Issue list">
+    <div
+      ref={scrollRef}
+      className="issue-list"
+      aria-label="Issue list"
+      onFocusCapture={(event) => {
+        const row = event.target.closest<HTMLElement>('[data-issue-id]')
+        if (row) setFocusedCardId(row.dataset.issueId ?? null)
+      }}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget))
+          setFocusedCardId(null)
+      }}
+    >
       <div
         className="issue-list__window"
         style={{ height: virtualizer.getTotalSize() }}
@@ -69,6 +92,7 @@ export function IssueList({ columns, onOpenCard }: IssueListProps) {
               {row.kind === 'issue' && (
                 <button
                   className="issue-row"
+                  data-issue-id={row.card.id}
                   onClick={() => onOpenCard(row.card.id)}
                 >
                   <span className="card__id">{row.card.id}</span>

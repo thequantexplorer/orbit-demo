@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { defaultRangeExtractor, useVirtualizer } from '@tanstack/react-virtual'
@@ -45,8 +45,12 @@ export function ColumnView({
     data: { type: 'column' },
   })
   const scrollRef = useRef<HTMLDivElement | null>(null)
+  const [focusedCardId, setFocusedCardId] = useState<string | null>(null)
   const activeIndex = activeCardId
     ? cards.findIndex((card) => card.id === activeCardId)
+    : -1
+  const focusedIndex = focusedCardId
+    ? cards.findIndex((card) => card.id === focusedCardId)
     : -1
 
   // The app doesn't use React Compiler, so its auto-memoization caveat for
@@ -59,11 +63,17 @@ export function ColumnView({
     getItemKey: (index) => cards[index].id,
     gap: CARD_GAP,
     overscan: 6,
-    // Keep the dragged card mounted so dnd-kit never loses its active node.
+    // Keep the active/focused card mounted; adjacent focus targets let Tab
+    // reach the next card even after scrolling the focused card out of view.
     rangeExtractor: (range) => {
-      const indexes = defaultRangeExtractor(range)
-      if (activeIndex === -1 || indexes.includes(activeIndex)) return indexes
-      return [...indexes, activeIndex].sort((a, b) => a - b)
+      const indexes = new Set(defaultRangeExtractor(range))
+      if (activeIndex !== -1) indexes.add(activeIndex)
+      if (focusedIndex !== -1) {
+        for (let index = focusedIndex - 1; index <= focusedIndex + 1; index++) {
+          if (index >= 0 && index < cards.length) indexes.add(index)
+        }
+      }
+      return [...indexes].sort((a, b) => a - b)
     },
   })
 
@@ -120,6 +130,14 @@ export function ColumnView({
             scrollRef.current = node
           }}
           className="column__cards"
+          onFocusCapture={(event) => {
+            const target = event.target.closest<HTMLElement>('[data-card-id]')
+            if (target) setFocusedCardId(target.dataset.cardId ?? null)
+          }}
+          onBlurCapture={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget))
+              setFocusedCardId(null)
+          }}
         >
           {cards.length > 0 && (
             <div
