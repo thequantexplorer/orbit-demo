@@ -71,7 +71,7 @@ describe('AddCardForm accessibility', () => {
     expect(placeholder.color).toBe('var(--secondary)')
     expect(placeholder.opacity).toBe('1')
     expect(focus['border-color']).toBe('var(--primary)')
-    expect(focus['box-shadow']).toBe('0 0 0 2px var(--primary)')
+    expect(focus['box-shadow']).toBe('inset 0 0 0 2px var(--primary)')
     expect(
       [...scopedCss.matchAll(/([^{}]+)\{/g)].map((match) => match[1].trim()),
     ).toEqual([
@@ -79,6 +79,16 @@ describe('AddCardForm accessibility', () => {
       '.add-card .add-card__input::placeholder',
       'form.add-card:focus-within',
     ])
+  })
+
+  it('keeps the focus ring inside the form, separated from the drop-target column border', () => {
+    const form = declarations(sharedCss, '.add-card')
+    const focusedForm = declarations(sharedCss, '.add-card:focus-within')
+
+    expect(focus['box-shadow']).toMatch(/^inset 0 0 0 2px /)
+    const horizontalMargin = parseFloat(form.margin.split(/\s+/)[1])
+    expect(horizontalMargin).toBeGreaterThanOrEqual(2)
+    expect(focusedForm.background).toBe('var(--surface)')
   })
 
   it.each([':root', ":root[data-theme='dark']"])(
