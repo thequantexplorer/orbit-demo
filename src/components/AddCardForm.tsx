@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useRef, useState, type FormEvent } from 'react'
 import { Icon } from './Icon'
 import './AddCardForm.a11y.css'
 
@@ -9,6 +9,7 @@ interface AddCardFormProps {
 
 export function AddCardForm({ columnTitle, onAdd }: AddCardFormProps) {
   const [title, setTitle] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -16,12 +17,14 @@ export function AddCardForm({ columnTitle, onAdd }: AddCardFormProps) {
     if (!trimmed) return
     onAdd(trimmed)
     setTitle('')
+    inputRef.current?.focus()
   }
 
   return (
     <form className="add-card" onSubmit={handleSubmit}>
       <Icon name="plus" size={14} />
       <input
+        ref={inputRef}
         id={`add-${columnTitle.replaceAll(' ', '-').toLowerCase()}`}
         className="add-card__input"
         type="text"
