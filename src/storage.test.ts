@@ -44,6 +44,15 @@ describe('loadBoard', () => {
     expect(loadBoard()).toEqual(board)
   })
 
+  it('loads boards saved before cards had due dates', () => {
+    const board = createSeedBoard()
+    for (const card of Object.values(board.cards)) delete card.dueDate
+    storage.setItem(STORAGE_KEY, JSON.stringify(board))
+    const loaded = loadBoard()
+    expect(loaded).toEqual(board)
+    expect(loaded!.cards['KB-1'].dueDate).toBeUndefined()
+  })
+
   it('returns null for invalid JSON', () => {
     storage.setItem(STORAGE_KEY, '{not json')
     expect(loadBoard()).toBeNull()

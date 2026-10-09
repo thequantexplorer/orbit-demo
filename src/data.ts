@@ -1,3 +1,4 @@
+import { addDays, formatDay } from './dates'
 import type { Assignee, BoardState, Card, Label, LabelId } from './types'
 
 export const LABELS: Record<LabelId, Label> = {
@@ -85,7 +86,26 @@ const seedCards: Card[] = [
   },
 ]
 
-export function createSeedBoard(): BoardState {
+const seedDueOffsets: Record<string, number> = {
+  'KB-1': 3,
+  'KB-2': 8,
+  'KB-4': -1,
+  'KB-5': 1,
+  'KB-6': -2,
+  'KB-7': 10,
+}
+
+function withSeedDueDates(cards: Card[], today: Date): Card[] {
+  return cards.map((card) => {
+    const offset = seedDueOffsets[card.id]
+    return offset === undefined
+      ? card
+      : { ...card, dueDate: formatDay(addDays(today, offset)) }
+  })
+}
+
+export function createSeedBoard(today: Date = new Date()): BoardState {
+  const cards = withSeedDueDates(seedCards, today)
   return {
     columns: [
       { id: 'backlog', title: 'Backlog', accent: '#94a3b8', cardIds: ['KB-1', 'KB-2', 'KB-3', 'KB-4'] },
@@ -93,7 +113,7 @@ export function createSeedBoard(): BoardState {
       { id: 'review', title: 'Review', accent: '#a855f7', cardIds: ['KB-7'] },
       { id: 'done', title: 'Done', accent: '#22c55e', cardIds: ['KB-8', 'KB-9'] },
     ],
-    cards: Object.fromEntries(seedCards.map((card) => [card.id, card])),
+    cards: Object.fromEntries(cards.map((card) => [card.id, card])),
     nextCardNumber: seedCards.length + 1,
   }
 }

@@ -3,6 +3,7 @@ import type { Card } from '../types'
 import { Avatar } from './Avatar'
 import { LabelPill } from './LabelPill'
 import { Icon } from './Icon'
+import { formatDueLabel, isDueThisWeek } from '../dates'
 
 interface CardViewProps extends HTMLAttributes<HTMLElement> {
   card: Card
@@ -49,6 +50,15 @@ export function CardView({
           {card.labels.map((labelId) => (
             <LabelPill key={labelId} labelId={labelId} />
           ))}
+          {card.dueDate && (
+            <span
+              className={`due-chip${isDueThisWeek(card.dueDate) ? ' due-chip--this-week' : ''}`}
+              title={`Due ${card.dueDate}`}
+            >
+              <Icon name="calendar" size={10} />
+              Due {formatDueLabel(card.dueDate)}
+            </span>
+          )}
         </div>
         <Avatar assigneeId={card.assigneeId} />
       </div>

@@ -25,6 +25,7 @@ export interface Card {
   description: string
   labels: LabelId[]
   assigneeId: string | null
+  dueDate?: string
 }
 
 export type ColumnId = 'backlog' | 'in-progress' | 'review' | 'done'

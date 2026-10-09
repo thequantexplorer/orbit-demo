@@ -1147,6 +1147,23 @@ details[open] > .toolbar-button {
   font-weight: 400;
   white-space: nowrap;
 }
+.due-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 5px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--secondary);
+  font-size: 9px;
+  line-height: 16px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.due-chip--this-week {
+  color: var(--primary);
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
+}
 .label-dot {
   width: 5px;
   height: 5px;
