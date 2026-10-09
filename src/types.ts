@@ -25,6 +25,8 @@ export interface Card {
   description: string
   labels: LabelId[]
   assigneeId: string | null
+  /** Local calendar date as YYYY-MM-DD. Absent on boards saved before due dates. */
+  dueDate?: string | null
 }
 
 export type ColumnId = 'backlog' | 'in-progress' | 'review' | 'done'

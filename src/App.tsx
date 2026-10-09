@@ -28,6 +28,7 @@ import type {
   WorkspaceView,
 } from './types'
 import { CardModal } from './components/CardModal'
+import { DueChip } from './components/DueChip'
 import { CardView } from './components/CardView'
 import { ColumnView } from './components/ColumnView'
 import { Avatar } from './components/Avatar'
@@ -240,7 +241,14 @@ export default function App() {
   const activeCard = activeCardId ? board.cards[activeCardId] : undefined
   const creating = openCardId === 'new'
   const openCard: Card | undefined = creating
-    ? { id: 'new', title: '', description: '', labels: [], assigneeId: null }
+    ? {
+        id: 'new',
+        title: '',
+        description: '',
+        labels: [],
+        assigneeId: null,
+        dueDate: null,
+      }
     : openCardId
       ? board.cards[openCardId]
       : undefined
@@ -774,6 +782,7 @@ export default function App() {
                           <span className="card__id">{card.id}</span>
                           <StatusIcon status={column.id} />
                           <strong>{card.title}</strong>
+                          <DueChip dueDate={card.dueDate} />
                           <span className="issue-row__labels">
                             {card.labels.map((label) => (
                               <LabelPill key={label} labelId={label} />

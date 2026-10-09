@@ -6,7 +6,9 @@ frame four columns: Backlog, In Progress, Review, and Done. Nine seeded issues
 have colored labels and assignee avatars; real pointer drag-and-drop supports
 reordering and movement across columns with live counts, a lifted overlay, and
 a dashed placeholder. Add cards inline or use the issue editor to update titles,
-descriptions, status, labels, and assignees. Board/list layouts, search, combined
+descriptions, status, labels, assignees, and due dates. Cards with a due date
+show a chip like “Due Oct 12”, which becomes “Due today” on the day and
+“Overdue” once it has passed. Board/list layouts, search, combined
 filters, a command palette, and a project overview make the workspace functional.
 Board state and appearance persist locally without accounts, APIs, or a backend.
 

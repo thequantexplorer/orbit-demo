@@ -1,4 +1,5 @@
-import type { BoardState } from './types'
+import { isDueDate } from './dueDate'
+import type { BoardState, Card } from './types'
 
 const STORAGE_KEY = 'kanban-board:v1'
 
@@ -7,7 +8,7 @@ export function loadBoard(): BoardState | null {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return null
     const parsed: unknown = JSON.parse(raw)
-    return isBoardState(parsed) ? parsed : null
+    return isBoardState(parsed) ? normalizeBoard(parsed) : null
   } catch {
     return null
   }
@@ -24,6 +25,19 @@ export function saveBoard(board: BoardState): boolean {
 
 export function clearBoard(): void {
   localStorage.removeItem(STORAGE_KEY)
+}
+
+function normalizeBoard(board: BoardState): BoardState {
+  const cards: Record<string, Card> = {}
+  for (const [id, card] of Object.entries(board.cards)) {
+    if (card.dueDate == null || isDueDate(card.dueDate)) {
+      cards[id] = card
+    } else {
+      const { dueDate: _invalid, ...rest } = card
+      cards[id] = rest
+    }
+  }
+  return { ...board, cards }
 }
 
 function isBoardState(value: unknown): value is BoardState {

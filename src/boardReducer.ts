@@ -14,7 +14,9 @@ export type BoardAction =
       type: 'add-card'
       columnId: ColumnId
       title: string
-      details?: Partial<Pick<Card, 'description' | 'labels' | 'assigneeId'>>
+      details?: Partial<
+        Pick<Card, 'description' | 'labels' | 'assigneeId' | 'dueDate'>
+      >
     }
   | { type: 'update-card'; cardId: string; patch: Partial<Omit<Card, 'id'>> }
   | { type: 'delete-card'; cardId: string }

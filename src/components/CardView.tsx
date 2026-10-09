@@ -1,6 +1,7 @@
 import type { HTMLAttributes, Ref } from 'react'
 import type { Card } from '../types'
 import { Avatar } from './Avatar'
+import { DueChip } from './DueChip'
 import { LabelPill } from './LabelPill'
 import { Icon } from './Icon'
 
@@ -46,6 +47,7 @@ export function CardView({
       )}
       <div className="card__footer">
         <div className="card__labels">
+          <DueChip dueDate={card.dueDate} />
           {card.labels.map((labelId) => (
             <LabelPill key={labelId} labelId={labelId} />
           ))}

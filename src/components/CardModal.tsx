@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { ASSIGNEES, LABELS, LABEL_ORDER } from '../data'
 import type { Card, Column, ColumnId, LabelId } from '../types'
+import { isDueDate } from '../dueDate'
 import { Avatar } from './Avatar'
 import { Dialog } from './Dialog'
 import { Icon, StatusIcon } from './Icon'
@@ -29,6 +30,7 @@ export function CardModal({
   const [labels, setLabels] = useState<LabelId[]>(card.labels)
   const [assigneeId, setAssigneeId] = useState<string | null>(card.assigneeId)
   const [status, setStatus] = useState(columnId)
+  const [dueDate, setDueDate] = useState(card.dueDate ?? '')
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   function toggleLabel(labelId: LabelId) {
@@ -48,6 +50,7 @@ export function CardModal({
         description: description.trim(),
         labels,
         assigneeId,
+        dueDate: isDueDate(dueDate) ? dueDate : null,
       },
       status,
     )
@@ -154,6 +157,29 @@ export function CardModal({
                   ))}
                 </select>
                 <Icon name="down" size={12} />
+              </div>
+            </div>
+            <div className="property-field">
+              <label htmlFor="issue-due-date">Due date</label>
+              <div className="select-wrap">
+                <Icon name="calendar" size={14} />
+                <input
+                  id="issue-due-date"
+                  type="date"
+                  value={dueDate}
+                  onChange={(event) => setDueDate(event.target.value)}
+                />
+                {dueDate && (
+                  <button
+                    type="button"
+                    className="icon-button due-date__clear"
+                    aria-label="Clear due date"
+                    title="Clear due date"
+                    onClick={() => setDueDate('')}
+                  >
+                    <Icon name="close" size={12} />
+                  </button>
+                )}
               </div>
             </div>
           </div>
