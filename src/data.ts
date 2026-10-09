@@ -26,6 +26,7 @@ const seedCards: Card[] = [
     description: 'Run lint, typecheck and tests on every pull request using GitHub Actions.',
     labels: ['devops'],
     assigneeId: 'marcus',
+    dueDate: null,
   },
   {
     id: 'KB-2',
@@ -33,6 +34,7 @@ const seedCards: Card[] = [
     description: 'Three-step welcome tour with progress dots and a skip option.',
     labels: ['design'],
     assigneeId: 'priya',
+    dueDate: null,
   },
   {
     id: 'KB-3',
@@ -40,6 +42,7 @@ const seedCards: Card[] = [
     description: 'Document the public REST endpoints with request/response examples.',
     labels: ['docs'],
     assigneeId: 'ava',
+    dueDate: null,
   },
   {
     id: 'KB-4',
@@ -47,6 +50,7 @@ const seedCards: Card[] = [
     description: 'After signing in with SSO the user lands on a blank page instead of the dashboard.',
     labels: ['bug', 'urgent'],
     assigneeId: 'leo',
+    dueDate: null,
   },
   {
     id: 'KB-5',
@@ -54,6 +58,7 @@ const seedCards: Card[] = [
     description: 'Respect the OS preference and add a manual toggle in settings.',
     labels: ['feature'],
     assigneeId: 'sofia',
+    dueDate: null,
   },
   {
     id: 'KB-6',
@@ -61,6 +66,7 @@ const seedCards: Card[] = [
     description: 'Replace the legacy webpack config and update the dev scripts.',
     labels: ['devops', 'feature'],
     assigneeId: 'marcus',
+    dueDate: null,
   },
   {
     id: 'KB-7',
@@ -68,6 +74,7 @@ const seedCards: Card[] = [
     description: 'Split token validation from session lookup so both can be unit tested.',
     labels: ['feature'],
     assigneeId: 'ava',
+    dueDate: null,
   },
   {
     id: 'KB-8',
@@ -75,6 +82,7 @@ const seedCards: Card[] = [
     description: 'Final copy for the hero, features and pricing sections.',
     labels: ['docs', 'design'],
     assigneeId: 'priya',
+    dueDate: null,
   },
   {
     id: 'KB-9',
@@ -82,6 +90,7 @@ const seedCards: Card[] = [
     description: 'Cover quantity changes, coupon codes and empty-cart edge cases.',
     labels: ['feature'],
     assigneeId: 'leo',
+    dueDate: null,
   },
 ]
 
