@@ -1,6 +1,5 @@
-import type { HTMLAttributes, Ref } from 'react'
+import { memo, useMemo, type HTMLAttributes, type Ref } from 'react'
 import { fromDateKey, getDueChip } from '../dueDate'
-import { useTodayKey } from '../useToday'
 import type { Card } from '../types'
 import { Avatar } from './Avatar'
 import { LabelPill } from './LabelPill'
@@ -8,13 +7,16 @@ import { Icon } from './Icon'
 
 interface CardViewProps extends HTMLAttributes<HTMLElement> {
   card: Card
+  /** Today's `YYYY-MM-DD`, passed down so cards don't each subscribe to it. */
+  todayKey: string
   ref?: Ref<HTMLElement>
   dragging?: boolean
   overlay?: boolean
 }
 
-export function CardView({
+export const CardView = memo(function CardView({
   card,
+  todayKey,
   ref,
   dragging = false,
   overlay = false,
@@ -29,8 +31,10 @@ export function CardView({
   ]
     .filter(Boolean)
     .join(' ')
-  const todayKey = useTodayKey()
-  const dueChip = getDueChip(card.dueDate, fromDateKey(todayKey))
+  const dueChip = useMemo(
+    () => getDueChip(card.dueDate, fromDateKey(todayKey)),
+    [card.dueDate, todayKey],
+  )
 
   return (
     <article ref={ref} className={classes} data-card-id={card.id} {...rest}>
@@ -67,4 +71,4 @@ export function CardView({
       </div>
     </article>
   )
-}
+})

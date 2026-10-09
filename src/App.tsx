@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from 'react'
 import { flushSync } from 'react-dom'
 import {
   DndContext,
@@ -17,10 +24,12 @@ import {
   type UniqueIdentifier,
 } from '@dnd-kit/core'
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
+import { countCards, filterColumns } from './boardFilter'
 import { boardReducer, findColumnOfCard } from './boardReducer'
 import { ASSIGNEES, LABELS, LABEL_ORDER, createSeedBoard } from './data'
 import { createGeneratedBoard, parseSeedCount } from './seed'
 import { loadBoard, saveBoard } from './storage'
+import { useTodayKey } from './useToday'
 import type {
   BoardState,
   Card,
@@ -47,6 +56,9 @@ const collisionDetection: CollisionDetection = (args) => {
   if (within.length > 0) return within
   return closestCorners(args)
 }
+
+const MEASURING = { droppable: { strategy: MeasuringStrategy.Always } }
+const DROP_ANIMATION = { duration: 200, easing: 'cubic-bezier(0.2, 0, 0, 1)' }
 
 // `?seed=N` loads N generated cards for benchmarking; they are never saved.
 const seedCount = parseSeedCount(window.location.search)
@@ -89,6 +101,8 @@ export default function App() {
     }
   })
   const dragSnapshot = useRef<BoardState | null>(null)
+  const previousVisibleCards = useRef<Partial<Record<ColumnId, Card[]>>>({})
+  const todayKey = useTodayKey()
 
   useEffect(() => {
     if (!activeCardId && !seedCount) setSaved(saveBoard(board))
@@ -261,12 +275,14 @@ export default function App() {
   const openCardColumn = openCardId
     ? board.columns.find((column) => column.cardIds.includes(openCardId))
     : undefined
-  const totalCards = Object.keys(board.cards).length
+  const totalCards = useMemo(
+    () => Object.keys(board.cards).length,
+    [board.cards],
+  )
+  const cardCounts = useMemo(() => countCards(board.cards), [board.cards])
   const doneCount =
     board.columns.find((column) => column.id === 'done')?.cardIds.length ?? 0
-  const mineCount = Object.values(board.cards).filter(
-    (card) => card.assigneeId === 'ava',
-  ).length
+  const mineCount = cardCounts.assignees.ava ?? 0
   const percentDone = totalCards
     ? Math.round((doneCount / totalCards) * 100)
     : 0
@@ -288,27 +304,35 @@ export default function App() {
     completed: 'Small wins. Meaningful progress. A little closer to launch.',
     overview: 'A clear view of where we are, and what comes next.',
   }
-  const visibleColumns = board.columns.map((column) => ({
-    ...column,
-    cards: column.cardIds
-      .map((id) => board.cards[id])
-      .filter(
-        (card) =>
-          card &&
-          `${card.title} ${card.id} ${card.description}`
-            .toLowerCase()
-            .includes(query.toLowerCase()) &&
-          (!labelFilter.length ||
-            labelFilter.some((label) => card.labels.includes(label))) &&
-          (!assigneeFilter || card.assigneeId === assigneeFilter) &&
-          (view !== 'mine' || card.assigneeId === 'ava') &&
-          (view !== 'completed' || column.id === 'done'),
+  const visibleCards = useMemo(
+    () =>
+      filterColumns(
+        board,
+        { query, labels: labelFilter, assigneeId: assigneeFilter, view },
+        previousVisibleCards.current,
       ),
-  }))
+    [board, query, labelFilter, assigneeFilter, view],
+  )
+  useEffect(() => {
+    previousVisibleCards.current = visibleCards
+  }, [visibleCards])
+  const visibleColumns = useMemo(
+    () =>
+      board.columns.map((column) => ({
+        ...column,
+        cards: visibleCards[column.id],
+      })),
+    [board.columns, visibleCards],
+  )
   const visibleCount = visibleColumns.reduce(
     (sum, column) => sum + column.cards.length,
     0,
   )
+  const handleAddCard = useCallback((columnId: ColumnId, title: string) => {
+    dispatch({ type: 'add-card', columnId, title })
+    setToast('Issue created')
+  }, [])
+  const openClearDone = useCallback(() => setClearDoneOpen(true), [])
   const clearFilters = () => {
     setQuery('')
     setLabelFilter([])
@@ -543,9 +567,7 @@ export default function App() {
                       <strong>{person.name}</strong>
                       <small>
                         {issueCountLabel(
-                          Object.values(board.cards).filter(
-                            (card) => card.assigneeId === person.id,
-                          ).length,
+                          cardCounts.assignees[person.id] ?? 0,
                         )}{' '}
                         assigned
                       </small>
@@ -613,11 +635,7 @@ export default function App() {
                         />
                         <LabelPill labelId={label} />
                         <span className="filter-option__count">
-                          {
-                            Object.values(board.cards).filter((card) =>
-                              card.labels.includes(label),
-                            ).length
-                          }
+                          {cardCounts.labels[label]}
                         </span>
                       </label>
                     ))}
@@ -740,7 +758,7 @@ export default function App() {
             <DndContext
               sensors={sensors}
               collisionDetection={collisionDetection}
-              measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
+              measuring={MEASURING}
               onDragStart={handleDragStart}
               onDragOver={handleDragOver}
               onDragEnd={handleDragEnd}
@@ -748,25 +766,19 @@ export default function App() {
             >
               {layout === 'board' ? (
                 <div className="board" aria-label="Issue board">
-                  {visibleColumns.map((column) => (
+                  {board.columns.map((column) => (
                     <ColumnView
                       key={column.id}
                       column={column}
-                      cards={column.cards}
+                      cards={visibleCards[column.id]}
+                      todayKey={todayKey}
                       filtered={hasFilters}
                       isDropTarget={
                         activeCardId !== null && overColumnId === column.id
                       }
-                      onAddCard={(title) => {
-                        dispatch({
-                          type: 'add-card',
-                          columnId: column.id,
-                          title,
-                        })
-                        setToast('Issue created')
-                      }}
+                      onAddCard={handleAddCard}
                       onOpenCard={setOpenCardId}
-                      onClearColumn={() => setClearDoneOpen(true)}
+                      onClearColumn={openClearDone}
                     />
                   ))}
                 </div>
@@ -804,13 +816,10 @@ export default function App() {
                   ))}
                 </div>
               )}
-              <DragOverlay
-                dropAnimation={{
-                  duration: 200,
-                  easing: 'cubic-bezier(0.2, 0, 0, 1)',
-                }}
-              >
-                {activeCard ? <CardView card={activeCard} overlay /> : null}
+              <DragOverlay dropAnimation={DROP_ANIMATION}>
+                {activeCard ? (
+                  <CardView card={activeCard} todayKey={todayKey} overlay />
+                ) : null}
               </DragOverlay>
             </DndContext>
           </>
