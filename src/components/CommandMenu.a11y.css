@@ -1,0 +1,17 @@
+.command-dialog .command-input input {
+  color: var(--text);
+}
+
+.command-dialog .command-input input::placeholder {
+  color: var(--secondary);
+  opacity: 1;
+}
+
+.command-dialog .key-button,
+.command-dialog .command-section-label,
+.command-dialog .command-result > small,
+.command-dialog .command-footer,
+.command-dialog .command-footer kbd,
+.command-dialog .command-empty p {
+  color: var(--secondary);
+}

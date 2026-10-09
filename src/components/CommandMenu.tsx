@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import type { Card } from '../types'
 import { Dialog } from './Dialog'
 import { Icon } from './Icon'
+import './CommandMenu.a11y.css'
 
 interface CommandMenuProps {
   cards: Card[]
@@ -97,10 +98,20 @@ export function CommandMenu({
           esc
         </button>
       </div>
-      <div className="command-section-label">
+      <div
+        className="command-section-label"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
         {query
-          ? `${items.length} ${items.length === 1 ? 'result' : 'results'}`
+          ? items.length === 0
+            ? 'No results found'
+            : `${items.length} ${items.length === 1 ? 'result' : 'results'}`
           : 'Quick actions & issues'}
+        {!query && (
+          <span className="visually-hidden"> {items.length} results</span>
+        )}
       </div>
       <div
         ref={itemsRef}
