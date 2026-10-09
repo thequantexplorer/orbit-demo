@@ -5,16 +5,39 @@ import { ASSIGNEES, LABEL_ORDER, LABELS, createSeedBoard } from '../data'
 import type { Card, ColumnId } from '../types'
 import { CardModal } from './CardModal'
 
-// jsdom does not implement HTMLDialogElement#showModal/#close.
+// jsdom does not implement HTMLDialogElement#showModal/#close, nor the
+// browser behaviour of turning an Escape keydown into a cancelable `cancel`
+// event on the open modal dialog (closing it unless the event is cancelled).
 const originalShowModal = HTMLDialogElement.prototype.showModal
 const originalClose = HTMLDialogElement.prototype.close
+const escapeHandlers = new WeakMap<
+  HTMLDialogElement,
+  (event: KeyboardEvent) => void
+>()
 
 beforeAll(() => {
   HTMLDialogElement.prototype.showModal = function showModal() {
     this.setAttribute('open', '')
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.key !== 'Escape' ||
+        event.defaultPrevented ||
+        !this.hasAttribute('open')
+      )
+        return
+      const cancel = new Event('cancel', { cancelable: true })
+      if (this.dispatchEvent(cancel)) this.close()
+    }
+    escapeHandlers.set(this, onKeyDown)
+    this.ownerDocument.addEventListener('keydown', onKeyDown)
   }
   HTMLDialogElement.prototype.close = function close() {
     this.removeAttribute('open')
+    const onKeyDown = escapeHandlers.get(this)
+    if (onKeyDown) {
+      this.ownerDocument.removeEventListener('keydown', onKeyDown)
+      escapeHandlers.delete(this)
+    }
   }
 })
 
@@ -447,6 +470,31 @@ describe('CardModal', () => {
       expect(onSave).not.toHaveBeenCalled()
       expect(dialog).toHaveAttribute('open')
     })
+
+    it.each(['Title', 'Description'])(
+      'closes when Escape is pressed with focus in the %s field',
+      async (field) => {
+        const { user, onClose, onSave } = renderModal()
+        const dialog = screen.getByRole('dialog')
+        const escapePrevented: boolean[] = []
+        const recordEscape = (event: KeyboardEvent) => {
+          if (event.key === 'Escape') escapePrevented.push(event.defaultPrevented)
+        }
+        document.addEventListener('keydown', recordEscape)
+
+        await user.click(screen.getByLabelText(field))
+        expect(screen.getByLabelText(field)).toHaveFocus()
+        await user.keyboard('{Escape}')
+        document.removeEventListener('keydown', recordEscape)
+
+        // CardModal's form onKeyDown must not swallow Escape.
+        expect(escapePrevented).toEqual([false])
+        expect(onClose).toHaveBeenCalledTimes(1)
+        expect(onSave).not.toHaveBeenCalled()
+        // Dialog cancels the native close and leaves unmounting to the parent.
+        expect(dialog).toHaveAttribute('open')
+      },
+    )
 
     it('closes when the backdrop outside the dialog box is clicked', () => {
       const { onClose } = renderModal()
