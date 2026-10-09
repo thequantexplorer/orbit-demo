@@ -1029,6 +1029,16 @@ details[open] > .toolbar-button {
   overflow-y: auto;
   overflow-x: hidden;
 }
+.column__window {
+  position: relative;
+  flex-shrink: 0;
+}
+.column__item {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
 .column__empty {
   display: flex;
   align-items: center;
@@ -1345,7 +1355,7 @@ details[open] > .toolbar-button {
   overflow: auto;
   padding: 12px 0 24px;
 }
-.list-group > header {
+.list-group__header {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1353,12 +1363,12 @@ details[open] > .toolbar-button {
   background: var(--board);
   border-block: 1px solid var(--border);
 }
-.list-group h2 {
+.list-group__header h2 {
   font-size: 11px;
   margin: 0;
   font-weight: 500;
 }
-.list-group > header > span:last-child {
+.list-group__header > span:last-child {
   color: var(--muted);
   font-size: 10px;
 }
@@ -1390,6 +1400,15 @@ details[open] > .toolbar-button {
 }
 .issue-row > .icon {
   color: var(--muted);
+}
+.issue-list__window {
+  position: relative;
+}
+.issue-list__item {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
 }
 .list-empty {
   padding: 14px 55px;
@@ -2230,7 +2249,7 @@ details[open] > .toolbar-button {
   .issue-row__labels {
     display: none;
   }
-  .list-group > header {
+  .list-group__header {
     padding-inline: 18px;
   }
   .list-empty {
