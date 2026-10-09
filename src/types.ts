@@ -25,6 +25,8 @@ export interface Card {
   description: string
   labels: LabelId[]
   assigneeId: string | null
+  /** Optional due day as `YYYY-MM-DD` (local calendar date). */
+  dueDate: string | null
 }
 
 export type ColumnId = 'backlog' | 'in-progress' | 'review' | 'done'

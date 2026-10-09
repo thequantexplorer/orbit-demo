@@ -44,6 +44,47 @@ describe('loadBoard', () => {
     expect(loadBoard()).toEqual(board)
   })
 
+  it('keeps a saved due date', () => {
+    const seed = createSeedBoard()
+    const board = {
+      ...seed,
+      cards: {
+        ...seed.cards,
+        'KB-1': { ...seed.cards['KB-1'], dueDate: '2026-10-12' },
+      },
+    }
+    saveBoard(board)
+    expect(loadBoard()?.cards['KB-1'].dueDate).toBe('2026-10-12')
+  })
+
+  it('loads boards saved before due dates existed', () => {
+    const board = createSeedBoard()
+    const legacy = {
+      ...board,
+      cards: Object.fromEntries(
+        Object.entries(board.cards).map(([id, card]) => {
+          const { dueDate: _dueDate, ...rest } = card
+          return [id, rest]
+        }),
+      ),
+    }
+    storage.setItem(STORAGE_KEY, JSON.stringify(legacy))
+    expect(loadBoard()).toEqual(board)
+  })
+
+  it('drops malformed due dates', () => {
+    const board = createSeedBoard()
+    const saved = JSON.parse(JSON.stringify(board))
+    saved.cards['KB-1'].dueDate = 'next week'
+    saved.cards['KB-2'].dueDate = 20261012
+    saved.cards['KB-3'].dueDate = '2026-02-30'
+    storage.setItem(STORAGE_KEY, JSON.stringify(saved))
+    const loaded = loadBoard()!
+    expect(loaded.cards['KB-1'].dueDate).toBeNull()
+    expect(loaded.cards['KB-2'].dueDate).toBeNull()
+    expect(loaded.cards['KB-3'].dueDate).toBeNull()
+  })
+
   it('returns null for invalid JSON', () => {
     storage.setItem(STORAGE_KEY, '{not json')
     expect(loadBoard()).toBeNull()

@@ -89,8 +89,19 @@ describe('boardReducer', () => {
         description: '',
         labels: ['bug'],
         assigneeId: null,
+        dueDate: null,
       })
       expect(cardIds(board, 'in-progress')).toEqual(['KB-5', 'KB-6', 'KB-10'])
+    })
+
+    it('keeps a due date passed in details', () => {
+      const board = boardReducer(createSeedBoard(), {
+        type: 'add-card',
+        columnId: 'backlog',
+        title: 'Launch',
+        details: { dueDate: '2026-10-12' },
+      })
+      expect(board.cards['KB-10'].dueDate).toBe('2026-10-12')
     })
 
     it('ignores a blank title', () => {
@@ -116,6 +127,21 @@ describe('boardReducer', () => {
       assigneeId: null,
       labels: ['design'],
     })
+  })
+
+  it('update-card sets and clears the due date', () => {
+    const withDate = boardReducer(createSeedBoard(), {
+      type: 'update-card',
+      cardId: 'KB-2',
+      patch: { dueDate: '2026-10-12' },
+    })
+    expect(withDate.cards['KB-2'].dueDate).toBe('2026-10-12')
+    const cleared = boardReducer(withDate, {
+      type: 'update-card',
+      cardId: 'KB-2',
+      patch: { dueDate: null },
+    })
+    expect(cleared.cards['KB-2'].dueDate).toBeNull()
   })
 
   it('delete-card removes the card and its column reference', () => {

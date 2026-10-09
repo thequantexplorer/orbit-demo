@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useRef, useState, type FormEvent } from 'react'
 import { ASSIGNEES, LABELS, LABEL_ORDER } from '../data'
 import type { Card, Column, ColumnId, LabelId } from '../types'
 import { Avatar } from './Avatar'
@@ -28,6 +28,8 @@ export function CardModal({
   const [description, setDescription] = useState(card.description)
   const [labels, setLabels] = useState<LabelId[]>(card.labels)
   const [assigneeId, setAssigneeId] = useState<string | null>(card.assigneeId)
+  const [dueDate, setDueDate] = useState<string | null>(card.dueDate)
+  const dueDateInput = useRef<HTMLInputElement>(null)
   const [status, setStatus] = useState(columnId)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
@@ -48,6 +50,7 @@ export function CardModal({
         description: description.trim(),
         labels,
         assigneeId,
+        dueDate,
       },
       status,
     )
@@ -154,6 +157,33 @@ export function CardModal({
                   ))}
                 </select>
                 <Icon name="down" size={12} />
+              </div>
+            </div>
+            <div className="property-field">
+              <label htmlFor="issue-due-date">Due date</label>
+              <div className="select-wrap">
+                <Icon name="calendar" size={14} />
+                <input
+                  ref={dueDateInput}
+                  id="issue-due-date"
+                  type="date"
+                  value={dueDate ?? ''}
+                  onChange={(event) => setDueDate(event.target.value || null)}
+                />
+                {dueDate && (
+                  <button
+                    type="button"
+                    className="icon-button due-date-clear"
+                    aria-label="Clear due date"
+                    title="Clear due date"
+                    onClick={() => {
+                      setDueDate(null)
+                      dueDateInput.current?.focus()
+                    }}
+                  >
+                    <Icon name="close" size={12} />
+                  </button>
+                )}
               </div>
             </div>
           </div>
