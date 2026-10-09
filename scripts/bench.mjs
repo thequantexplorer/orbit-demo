@@ -87,16 +87,26 @@ const median = (values) => {
   return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2
 }
 
-// Installed before any page script: marks when every card is in the DOM and
-// the following frame has been produced, and records long tasks.
-function instrument(expected) {
+// The board is loaded once the four column count badges add up to every card
+// and at least one card is rendered. Virtualized boards only mount the cards in
+// view; on a board that renders every card both happen in the same commit.
+function boardLoaded(expected) {
+  const counts = [...document.querySelectorAll('.board .column__count')]
+  const total = counts.reduce((sum, badge) => sum + Number(badge.textContent), 0)
+  return counts.length > 0 && total === expected && document.querySelector('.board [data-card-id]') !== null
+}
+
+// Installed before any page script: marks when the board is loaded and the
+// following frame has been produced, and records long tasks.
+function instrument(expected, boardLoadedSource) {
+  const boardLoaded = new Function(`return (${boardLoadedSource})`)()
   window.__bench = { longTasks: [] }
   new PerformanceObserver((list) => {
     for (const entry of list.getEntries())
       window.__bench.longTasks.push({ start: entry.startTime, duration: entry.duration })
   }).observe({ type: 'longtask', buffered: true })
   const poll = () => {
-    if (document.querySelectorAll('.board [data-card-id]').length >= expected) {
+    if (boardLoaded(expected)) {
       window.__bench.cardsInDom = performance.now()
       requestAnimationFrame(() => {
         const channel = new MessageChannel()
@@ -114,7 +124,7 @@ async function measureOnce(browser, url) {
   const context = await browser.createBrowserContext()
   const page = await context.newPage()
   await page.setViewport({ width: 1440, height: 900 })
-  await page.evaluateOnNewDocument(instrument, CARDS)
+  await page.evaluateOnNewDocument(instrument, CARDS, boardLoaded.toString())
   const cdp = await page.createCDPSession()
   await cdp.send('Performance.enable')
   try {
@@ -184,11 +194,7 @@ async function supportsSeed(browser, url) {
   try {
     await page.goto(`${url}/?seed=${CARDS}`, { waitUntil: 'load' })
     return await page
-      .waitForFunction(
-        (expected) => document.querySelectorAll('.board [data-card-id]').length >= expected,
-        { timeout: 60_000, polling: 250 },
-        CARDS,
-      )
+      .waitForFunction(boardLoaded, { timeout: 60_000, polling: 250 }, CARDS)
       .then(() => true, () => false)
   } finally {
     await page.close()
