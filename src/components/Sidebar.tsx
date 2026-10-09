@@ -1,6 +1,7 @@
 import type { WorkspaceView } from '../types'
 import { Avatar } from './Avatar'
 import { Icon, type IconName } from './Icon'
+import './Sidebar.a11y.css'
 
 interface SidebarProps {
   view: WorkspaceView

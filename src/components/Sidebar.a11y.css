@@ -1,0 +1,30 @@
+.sidebar {
+  --sidebar-caption: #646673;
+}
+
+:root[data-theme='dark'] .sidebar {
+  --sidebar-caption: #a0a1ae;
+}
+
+.sidebar .workspace-plan,
+.sidebar .quick-search kbd,
+.sidebar .nav-heading,
+.sidebar .nav-heading > span,
+.sidebar .nav-item__count,
+.sidebar .nav-project-caption,
+.sidebar .workspace-note p,
+.sidebar .reset-button,
+.sidebar .sidebar__profile div > span {
+  color: var(--sidebar-caption);
+}
+
+.sidebar .quick-search:hover,
+.sidebar .nav-item:hover {
+  color: var(--text);
+}
+
+@media (max-width: 760px) {
+  .sidebar:not(.sidebar--expanded) {
+    visibility: hidden;
+  }
+}
