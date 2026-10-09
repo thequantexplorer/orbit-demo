@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Icon } from './Icon'
+import './AddCardForm.a11y.css'
 
 interface AddCardFormProps {
   columnTitle: string
