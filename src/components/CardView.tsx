@@ -1,4 +1,6 @@
 import type { HTMLAttributes, Ref } from 'react'
+import { fromDateKey, getDueChip } from '../dueDate'
+import { useTodayKey } from '../useToday'
 import type { Card } from '../types'
 import { Avatar } from './Avatar'
 import { LabelPill } from './LabelPill'
@@ -27,6 +29,8 @@ export function CardView({
   ]
     .filter(Boolean)
     .join(' ')
+  const todayKey = useTodayKey()
+  const dueChip = getDueChip(card.dueDate, fromDateKey(todayKey))
 
   return (
     <article ref={ref} className={classes} data-card-id={card.id} {...rest}>
@@ -46,6 +50,15 @@ export function CardView({
       )}
       <div className="card__footer">
         <div className="card__labels">
+          {dueChip && (
+            <span
+              className={`due-chip due-chip--${dueChip.status}`}
+              title={dueChip.title}
+            >
+              <Icon name="calendar" size={10} />
+              {dueChip.label}
+            </span>
+          )}
           {card.labels.map((labelId) => (
             <LabelPill key={labelId} labelId={labelId} />
           ))}

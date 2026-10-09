@@ -57,7 +57,10 @@ const blankCard: Card = {
   description: '',
   labels: [],
   assigneeId: null,
+  dueDate: null,
 }
+
+const dueCard: Card = { ...seedCard, dueDate: '2026-11-05' }
 
 interface RenderOptions {
   card?: Card
@@ -228,6 +231,7 @@ describe('CardModal', () => {
       )
       await user.click(labelButton('feature'))
       await user.selectOptions(screen.getByLabelText('Assignee'), 'sofia')
+      await user.type(screen.getByLabelText('Due date'), '2026-12-01')
       await user.click(screen.getByRole('button', { name: /create issue/i }))
 
       expect(onSave).toHaveBeenCalledTimes(1)
@@ -237,6 +241,7 @@ describe('CardModal', () => {
           description: 'Stripe checkout',
           labels: ['feature'],
           assigneeId: 'sofia',
+          dueDate: '2026-12-01',
         },
         'in-progress',
       )
@@ -254,6 +259,7 @@ describe('CardModal', () => {
           description: seedCard.description,
           labels: seedCard.labels,
           assigneeId: seedCard.assigneeId,
+          dueDate: seedCard.dueDate,
         },
         'backlog',
       )
@@ -314,6 +320,66 @@ describe('CardModal', () => {
       await user.click(screen.getByRole('button', { name: /save changes/i }))
       expect(onSave).toHaveBeenCalledWith(
         expect.objectContaining({ assigneeId: null }),
+        'backlog',
+      )
+    })
+
+    it('starts with an empty due date and no clear button when none is set', () => {
+      renderModal()
+      expect(screen.getByLabelText('Due date')).toHaveValue('')
+      expect(
+        screen.queryByRole('button', { name: 'Clear due date' }),
+      ).not.toBeInTheDocument()
+    })
+
+    it('prefills an existing due date and offers to clear it', () => {
+      renderModal({ card: dueCard })
+      expect(screen.getByLabelText('Due date')).toHaveValue('2026-11-05')
+      expect(
+        screen.getByRole('button', { name: 'Clear due date' }),
+      ).toBeInTheDocument()
+    })
+
+    it('saves a newly picked due date', async () => {
+      const { user, onSave } = renderModal()
+      const dueDate = screen.getByLabelText('Due date')
+      await user.type(dueDate, '2027-01-15')
+      expect(dueDate).toHaveValue('2027-01-15')
+      expect(
+        screen.getByRole('button', { name: 'Clear due date' }),
+      ).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: /save changes/i }))
+      expect(onSave).toHaveBeenCalledWith(
+        expect.objectContaining({ dueDate: '2027-01-15' }),
+        'backlog',
+      )
+    })
+
+    it('clears the due date with the clear button and refocuses the date input', async () => {
+      const { user, onSave, onClose } = renderModal({ card: dueCard })
+      await user.click(screen.getByRole('button', { name: 'Clear due date' }))
+      const dueDate = screen.getByLabelText('Due date')
+      expect(dueDate).toHaveValue('')
+      expect(dueDate).toHaveFocus()
+      expect(
+        screen.queryByRole('button', { name: 'Clear due date' }),
+      ).not.toBeInTheDocument()
+      expect(onSave).not.toHaveBeenCalled()
+      expect(onClose).not.toHaveBeenCalled()
+
+      await user.click(screen.getByRole('button', { name: /save changes/i }))
+      expect(onSave).toHaveBeenCalledWith(
+        expect.objectContaining({ dueDate: null }),
+        'backlog',
+      )
+    })
+
+    it('saves null when the date input itself is emptied', async () => {
+      const { user, onSave } = renderModal({ card: dueCard })
+      await user.clear(screen.getByLabelText('Due date'))
+      await user.click(screen.getByRole('button', { name: /save changes/i }))
+      expect(onSave).toHaveBeenCalledWith(
+        expect.objectContaining({ dueDate: null }),
         'backlog',
       )
     })
