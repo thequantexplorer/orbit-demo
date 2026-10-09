@@ -82,19 +82,35 @@ async function measureOnce(browser, url) {
     await page.waitForFunction((n) => document.querySelectorAll('.board [data-card-id]').length >= n, { timeout: 180_000, polling: 100 }, CARDS)
     await new Promise((done) => setTimeout(done, 1500))
     await page.evaluate(() => new Promise((done) => requestIdleCallback(done, { timeout: 2000 })))
+    const expected = await page.evaluate((query) => {
+      const columns = [...document.querySelectorAll('[data-column-id]')]
+      return [...query].map((_, i) => columns.map((column) =>
+        [...column.querySelectorAll('[data-card-id]')]
+          .filter((card) =>
+            `${card.querySelector('.card__title').textContent} ${card.dataset.cardId} ${card.querySelector('.card__description')?.textContent ?? ''}`
+              .toLowerCase().includes(query.slice(0, i + 1).toLowerCase()),
+          ).map((card) => card.dataset.cardId),
+      ))
+    }, QUERY)
     await page.evaluate(() => window.__observeBoard())
     await page.focus('#board-search')
     const keys = []
     for (const [index, char] of [...QUERY].entries()) {
       await page.keyboard.type(char)
       await page.waitForFunction(
-        (i, quiet) => {
+        (i, quiet, expected) => {
           const entry = window.__probe.keys[i]
-          return entry?.input !== undefined && entry.settled !== undefined && performance.now() - entry.lastChange > quiet
+          if (entry?.input === undefined || entry.settled === undefined || performance.now() - entry.lastChange <= quiet) return false
+          return [...document.querySelectorAll('[data-column-id]')].every((column, index) => {
+            const ids = [...column.querySelectorAll('[data-card-id]')].map((card) => card.dataset.cardId)
+            return +column.querySelector('.column__count').textContent === expected[index].length &&
+              JSON.stringify(ids) === JSON.stringify(expected[index])
+          })
         },
         { polling: 50, timeout: 60_000 },
         index,
         QUIET_MS,
+        expected[index],
       )
       const counts = await page.$$eval('.column__count', (badges) => badges.map((badge) => badge.textContent).join('/'))
       const { input, settled } = await page.evaluate((i) => window.__probe.keys[i], index)

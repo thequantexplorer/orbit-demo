@@ -52,7 +52,11 @@ export function useWorkerFilter(
     worker.onmessage = ({ data }: MessageEvent<FromWorker>) => {
       const request = requests.get(data.requestId)
       for (const id of requests.keys()) if (id <= data.requestId) requests.delete(id)
-      if (!request || data.requestId <= appliedRequestId.current) return
+      if (
+        !request ||
+        data.requestId !== lastRequestId.current ||
+        data.requestId <= appliedRequestId.current
+      ) return
       appliedRequestId.current = data.requestId
       setResult(
         request.criteria ? { ...request, matched: new Set(data.matched) } : null,
