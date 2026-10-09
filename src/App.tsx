@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
+import {
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from 'react'
 import { flushSync } from 'react-dom'
 import {
   DndContext,
@@ -47,6 +55,18 @@ const collisionDetection: CollisionDetection = (args) => {
   if (within.length > 0) return within
   return closestCorners(args)
 }
+
+// dnd-kit's default: measure droppables only while dragging. Measuring always
+// re-measures every card and re-renders every sortable whenever cards mount,
+// which would make mounting cards in chunks quadratic.
+const measuring = {
+  droppable: { strategy: MeasuringStrategy.WhileDragging },
+}
+
+// Stable references: new sensor options re-create dnd-kit's internal context,
+// which re-renders every card even on a keystroke-only render.
+const pointerSensorOptions = { activationConstraint: { distance: 6 } }
+const keyboardSensorOptions = { coordinateGetter: sortableKeyboardCoordinates }
 
 // `?seed=N` loads N generated cards for benchmarking; they are never saved.
 const seedCount = parseSeedCount(window.location.search)
@@ -149,10 +169,8 @@ export default function App() {
   }, [activeCardId])
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
+    useSensor(PointerSensor, pointerSensorOptions),
+    useSensor(KeyboardSensor, keyboardSensorOptions),
   )
 
   const resolveColumn = useCallback(
@@ -271,8 +289,18 @@ export default function App() {
     ? Math.round((doneCount / totalCards) * 100)
     : 0
   const filterCount = labelFilter.length + (assigneeFilter ? 1 : 0)
+  // The board renders from deferred filters so typing stays responsive while
+  // the filtered board renders in the background.
+  const boardQuery = useDeferredValue(query)
+  const boardLabels = useDeferredValue(labelFilter)
+  const boardAssignee = useDeferredValue(assigneeFilter)
+  const boardView = useDeferredValue(view)
   const hasFilters = Boolean(
-    query || filterCount || view === 'mine' || view === 'completed',
+    boardQuery ||
+    boardLabels.length ||
+    boardAssignee ||
+    boardView === 'mine' ||
+    boardView === 'completed',
   )
   const titles: Record<WorkspaceView, string> = {
     project: 'Product launch',
@@ -288,23 +316,29 @@ export default function App() {
     completed: 'Small wins. Meaningful progress. A little closer to launch.',
     overview: 'A clear view of where we are, and what comes next.',
   }
-  const visibleColumns = board.columns.map((column) => ({
-    ...column,
-    cards: column.cardIds
-      .map((id) => board.cards[id])
-      .filter(
-        (card) =>
-          card &&
-          `${card.title} ${card.id} ${card.description}`
-            .toLowerCase()
-            .includes(query.toLowerCase()) &&
-          (!labelFilter.length ||
-            labelFilter.some((label) => card.labels.includes(label))) &&
-          (!assigneeFilter || card.assigneeId === assigneeFilter) &&
-          (view !== 'mine' || card.assigneeId === 'ava') &&
-          (view !== 'completed' || column.id === 'done'),
-      ),
-  }))
+  // Memoized so urgent renders (e.g. a keystroke) keep the same card arrays
+  // and the already-mounted card chunks can skip re-rendering.
+  const visibleColumns = useMemo(
+    () =>
+      board.columns.map((column) => ({
+        ...column,
+        cards: column.cardIds
+          .map((id) => board.cards[id])
+          .filter(
+            (card) =>
+              card &&
+              `${card.title} ${card.id} ${card.description}`
+                .toLowerCase()
+                .includes(boardQuery.toLowerCase()) &&
+              (!boardLabels.length ||
+                boardLabels.some((label) => card.labels.includes(label))) &&
+              (!boardAssignee || card.assigneeId === boardAssignee) &&
+              (boardView !== 'mine' || card.assigneeId === 'ava') &&
+              (boardView !== 'completed' || column.id === 'done'),
+          ),
+      })),
+    [board, boardQuery, boardLabels, boardAssignee, boardView],
+  )
   const visibleCount = visibleColumns.reduce(
     (sum, column) => sum + column.cards.length,
     0,
@@ -740,7 +774,7 @@ export default function App() {
             <DndContext
               sensors={sensors}
               collisionDetection={collisionDetection}
-              measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
+              measuring={measuring}
               onDragStart={handleDragStart}
               onDragOver={handleDragOver}
               onDragEnd={handleDragEnd}
@@ -754,6 +788,7 @@ export default function App() {
                       column={column}
                       cards={column.cards}
                       filtered={hasFilters}
+                      activeCardId={activeCardId}
                       isDropTarget={
                         activeCardId !== null && overColumnId === column.id
                       }
