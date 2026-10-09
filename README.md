@@ -22,6 +22,21 @@ npm run dev
 
 Then open http://localhost:5173. Other scripts: `npm run build`, `npm run lint`.
 
+## Board columns
+
+Every issue sits in one of four fixed columns, left to right:
+
+| Column | Use it for |
+|---|---|
+| **Backlog** | Issues that are captured but not started. Issues created with C or the command palette start here unless you pick another status. |
+| **In Progress** | Work someone is actively doing. Its count appears on **Overview**. |
+| **Review** | Finished work waiting for review or sign-off. |
+| **Done** | Completed issues. They drive **Overview** progress and the **Completed** view. The **Clear** button in the column header removes every Done issue after you confirm. |
+
+Each column header shows a live issue count, and every column ends with an
+**Add a card…** input for quick inline creation.
+Move issues between columns by dragging, or change **Status** in the issue editor.
+
 ## Working in Orbit
 
 - Use **Board** or **List**, search by title, description, or issue ID, and combine
