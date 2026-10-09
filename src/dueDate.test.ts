@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   formatDueDate,
+  fromDateKey,
   getDueChip,
   isValidDueDate,
   toDateKey,
@@ -12,6 +13,8 @@ describe('isValidDueDate', () => {
   it('accepts real YYYY-MM-DD dates', () => {
     expect(isValidDueDate('2026-10-12')).toBe(true)
     expect(isValidDueDate('2028-02-29')).toBe(true)
+    expect(isValidDueDate('0050-03-15')).toBe(true)
+    expect(isValidDueDate('0001-01-01')).toBe(true)
   })
 
   it('rejects other values', () => {
@@ -36,6 +39,19 @@ describe('toDateKey', () => {
   it('uses the local calendar day with zero padding', () => {
     expect(toDateKey(new Date(2026, 0, 5, 23, 59))).toBe('2026-01-05')
     expect(toDateKey(new Date(2026, 11, 31, 0, 0))).toBe('2026-12-31')
+  })
+})
+
+describe('fromDateKey', () => {
+  it('returns local midnight of the day and round-trips with toDateKey', () => {
+    const date = fromDateKey('2026-10-12')
+    expect(date.getFullYear()).toBe(2026)
+    expect(date.getMonth()).toBe(9)
+    expect(date.getDate()).toBe(12)
+    expect(date.getHours()).toBe(0)
+    for (const key of ['2026-10-12', '0050-03-15', '2028-02-29']) {
+      expect(toDateKey(fromDateKey(key))).toBe(key)
+    }
   })
 })
 

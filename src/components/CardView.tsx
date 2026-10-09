@@ -1,5 +1,6 @@
 import type { HTMLAttributes, Ref } from 'react'
-import { getDueChip } from '../dueDate'
+import { fromDateKey, getDueChip } from '../dueDate'
+import { useTodayKey } from '../useToday'
 import type { Card } from '../types'
 import { Avatar } from './Avatar'
 import { LabelPill } from './LabelPill'
@@ -28,7 +29,8 @@ export function CardView({
   ]
     .filter(Boolean)
     .join(' ')
-  const dueChip = getDueChip(card.dueDate)
+  const todayKey = useTodayKey()
+  const dueChip = getDueChip(card.dueDate, fromDateKey(todayKey))
 
   return (
     <article ref={ref} className={classes} data-card-id={card.id} {...rest}>
