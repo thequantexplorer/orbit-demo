@@ -5,6 +5,7 @@ import {
   searchTextOf,
   type BoardFilter,
 } from './boardFilter'
+import { createGeneratedBoard } from './seed'
 import type { BoardState, Card } from './types'
 
 function card(id: string, patch: Partial<Card> = {}): Card {
@@ -92,6 +93,29 @@ describe('filterColumns', () => {
     const completed = filterColumns(board, { ...all, view: 'completed' })
     expect(completed.backlog).toEqual([])
     expect(ids(completed.done)).toEqual(['KB-4'])
+  })
+
+  it('matches a naive filter on a generated board', () => {
+    const generated = createGeneratedBoard(600)
+    const filter: BoardFilter = {
+      query: 'On',
+      labels: ['bug', 'feature'],
+      assigneeId: '',
+      view: 'project',
+    }
+    const result = filterColumns(generated, filter)
+    for (const column of generated.columns) {
+      const expected = column.cardIds
+        .map((id) => generated.cards[id])
+        .filter(
+          (entry) =>
+            `${entry.title} ${entry.id} ${entry.description}`
+              .toLowerCase()
+              .includes('on') &&
+            filter.labels.some((label) => entry.labels.includes(label)),
+        )
+      expect(result[column.id]).toEqual(expected)
+    }
   })
 
   it('reuses previous arrays for columns whose matches did not change', () => {
