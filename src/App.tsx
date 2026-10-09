@@ -18,9 +18,11 @@ import {
 } from '@dnd-kit/core'
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { boardReducer, findColumnOfCard } from './boardReducer'
+import type { FilterCriteria } from './boardFilter'
 import { ASSIGNEES, LABELS, LABEL_ORDER, createSeedBoard } from './data'
 import { createGeneratedBoard, parseSeedCount } from './seed'
 import { loadBoard, saveBoard } from './storage'
+import { useWorkerFilter } from './useWorkerFilter'
 import type {
   BoardState,
   Card,
@@ -288,22 +290,24 @@ export default function App() {
     completed: 'Small wins. Meaningful progress. A little closer to launch.',
     overview: 'A clear view of where we are, and what comes next.',
   }
+  const criteria: FilterCriteria | null =
+    query || filterCount || view === 'mine'
+      ? {
+          query: query.toLowerCase(),
+          labels: labelFilter,
+          assigneeId: assigneeFilter,
+          mineOnly: view === 'mine',
+        }
+      : null
+  const isVisible = useWorkerFilter(board.cards, criteria)
   const visibleColumns = board.columns.map((column) => ({
     ...column,
-    cards: column.cardIds
-      .map((id) => board.cards[id])
-      .filter(
-        (card) =>
-          card &&
-          `${card.title} ${card.id} ${card.description}`
-            .toLowerCase()
-            .includes(query.toLowerCase()) &&
-          (!labelFilter.length ||
-            labelFilter.some((label) => card.labels.includes(label))) &&
-          (!assigneeFilter || card.assigneeId === assigneeFilter) &&
-          (view !== 'mine' || card.assigneeId === 'ava') &&
-          (view !== 'completed' || column.id === 'done'),
-      ),
+    cards:
+      view === 'completed' && column.id !== 'done'
+        ? []
+        : column.cardIds
+            .map((id) => board.cards[id])
+            .filter((card) => card && isVisible(card)),
   }))
   const visibleCount = visibleColumns.reduce(
     (sum, column) => sum + column.cards.length,
