@@ -21,6 +21,7 @@ import { boardReducer, findColumnOfCard } from './boardReducer'
 import { ASSIGNEES, LABELS, LABEL_ORDER, createSeedBoard } from './data'
 import { createGeneratedBoard, parseSeedCount } from './seed'
 import { loadBoard, saveBoard } from './storage'
+import { useWorkerFilter } from './useWorkerFilter'
 import type {
   BoardState,
   Card,
@@ -89,6 +90,12 @@ export default function App() {
     }
   })
   const dragSnapshot = useRef<BoardState | null>(null)
+  const visibleCardIds = useWorkerFilter(board, {
+    query,
+    labels: labelFilter,
+    assigneeId: assigneeFilter,
+    view,
+  })
 
   useEffect(() => {
     if (!activeCardId && !seedCount) setSaved(saveBoard(board))
@@ -290,20 +297,9 @@ export default function App() {
   }
   const visibleColumns = board.columns.map((column) => ({
     ...column,
-    cards: column.cardIds
+    cards: (visibleCardIds ? (visibleCardIds[column.id] ?? []) : column.cardIds)
       .map((id) => board.cards[id])
-      .filter(
-        (card) =>
-          card &&
-          `${card.title} ${card.id} ${card.description}`
-            .toLowerCase()
-            .includes(query.toLowerCase()) &&
-          (!labelFilter.length ||
-            labelFilter.some((label) => card.labels.includes(label))) &&
-          (!assigneeFilter || card.assigneeId === assigneeFilter) &&
-          (view !== 'mine' || card.assigneeId === 'ava') &&
-          (view !== 'completed' || column.id === 'done'),
-      ),
+      .filter((card): card is Card => card !== undefined),
   }))
   const visibleCount = visibleColumns.reduce(
     (sum, column) => sum + column.cards.length,
