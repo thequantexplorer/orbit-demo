@@ -1,7 +1,9 @@
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import type { Card, Column } from '../types'
+import { toChunks } from '../useReveal'
 import { AddCardForm } from './AddCardForm'
+import { RevealChunk } from './RevealChunk'
 import { SortableCard } from './SortableCard'
 import { Icon, StatusIcon } from './Icon'
 
@@ -13,6 +15,8 @@ interface ColumnViewProps {
   onOpenCard: (cardId: string) => void
   onClearColumn: () => void
   filtered?: boolean
+  activeCardId?: string | null
+  revealKey?: string
 }
 
 export function ColumnView({
@@ -23,6 +27,8 @@ export function ColumnView({
   onOpenCard,
   onClearColumn,
   filtered = false,
+  activeCardId = null,
+  revealKey = '',
 }: ColumnViewProps) {
   const { setNodeRef } = useDroppable({
     id: column.id,
@@ -73,8 +79,18 @@ export function ColumnView({
         strategy={verticalListSortingStrategy}
       >
         <div ref={setNodeRef} className="column__cards">
-          {cards.map((card) => (
-            <SortableCard key={card.id} card={card} onOpen={onOpenCard} />
+          {toChunks(cards).map((chunk, index) => (
+            <RevealChunk
+              key={index ? `${revealKey}:${index}` : 'first'}
+              priority={index}
+              eager={
+                index === 0 || chunk.some((card) => card.id === activeCardId)
+              }
+            >
+              {chunk.map((card) => (
+                <SortableCard key={card.id} card={card} onOpen={onOpenCard} />
+              ))}
+            </RevealChunk>
           ))}
           {cards.length === 0 && (
             <div className="column__empty">

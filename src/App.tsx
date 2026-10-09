@@ -21,6 +21,7 @@ import { boardReducer, findColumnOfCard } from './boardReducer'
 import { ASSIGNEES, LABELS, LABEL_ORDER, createSeedBoard } from './data'
 import { createGeneratedBoard, parseSeedCount } from './seed'
 import { loadBoard, saveBoard } from './storage'
+import { setRevealPaused, toChunks } from './useReveal'
 import type {
   BoardState,
   Card,
@@ -36,6 +37,7 @@ import { CommandMenu } from './components/CommandMenu'
 import { Dialog } from './components/Dialog'
 import { Icon, ProgressRing, StatusIcon } from './components/Icon'
 import { LabelPill } from './components/LabelPill'
+import { RevealChunk } from './components/RevealChunk'
 import { Sidebar } from './components/Sidebar'
 
 const collisionDetection: CollisionDetection = (args) => {
@@ -164,6 +166,7 @@ export default function App() {
   )
 
   function handleDragStart({ active }: DragStartEvent) {
+    setRevealPaused(true)
     dragSnapshot.current = board
     setActiveCardId(String(active.id))
     setOverColumnId(resolveColumn(active.id) ?? null)
@@ -203,6 +206,7 @@ export default function App() {
       handleDragCancel()
       return
     }
+    setRevealPaused(false)
     dragSnapshot.current = null
     setActiveCardId(null)
     setOverColumnId(null)
@@ -228,6 +232,7 @@ export default function App() {
   }
 
   function handleDragCancel() {
+    setRevealPaused(false)
     if (dragSnapshot.current)
       dispatch({ type: 'restore', board: dragSnapshot.current })
     dragSnapshot.current = null
@@ -305,6 +310,10 @@ export default function App() {
           (view !== 'completed' || column.id === 'done'),
       ),
   }))
+  // Changing what is shown restarts progressive rendering after the first chunk.
+  const revealKey = [view, layout, assigneeFilter, ...labelFilter, query].join(
+    '|',
+  )
   const visibleCount = visibleColumns.reduce(
     (sum, column) => sum + column.cards.length,
     0,
@@ -740,7 +749,9 @@ export default function App() {
             <DndContext
               sensors={sensors}
               collisionDetection={collisionDetection}
-              measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
+              measuring={{
+                droppable: { strategy: MeasuringStrategy.WhileDragging },
+              }}
               onDragStart={handleDragStart}
               onDragOver={handleDragOver}
               onDragEnd={handleDragEnd}
@@ -754,6 +765,8 @@ export default function App() {
                       column={column}
                       cards={column.cards}
                       filtered={hasFilters}
+                      activeCardId={activeCardId}
+                      revealKey={revealKey}
                       isDropTarget={
                         activeCardId !== null && overColumnId === column.id
                       }
@@ -779,7 +792,13 @@ export default function App() {
                         <h2>{column.title}</h2>
                         <span>{column.cards.length}</span>
                       </header>
-                      {column.cards.map((card) => (
+                      {toChunks(column.cards).map((chunk, index) => (
+                        <RevealChunk
+                          key={index ? `${revealKey}:${index}` : 'first'}
+                          priority={index}
+                          eager={index === 0}
+                        >
+                          {chunk.map((card) => (
                         <button
                           className="issue-row"
                           key={card.id}
@@ -796,6 +815,8 @@ export default function App() {
                           <Avatar assigneeId={card.assigneeId} />
                           <Icon name="chevron" size={12} />
                         </button>
+                          ))}
+                        </RevealChunk>
                       ))}
                       {column.cards.length === 0 && (
                         <p className="list-empty">No issues in this view</p>
