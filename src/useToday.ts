@@ -9,11 +9,17 @@ export function msUntilNextDay(now: Date): number {
 export function useToday(): Date {
   const [today, setToday] = useState(() => new Date())
   useEffect(() => {
+    let timer = 0
     const refresh = () => {
       const now = new Date()
-      if (now.toDateString() !== today.toDateString()) setToday(now)
+      if (now.toDateString() !== today.toDateString()) {
+        setToday(now)
+      } else {
+        window.clearTimeout(timer)
+        timer = window.setTimeout(refresh, msUntilNextDay(now))
+      }
     }
-    const timer = window.setTimeout(refresh, msUntilNextDay(today))
+    timer = window.setTimeout(refresh, msUntilNextDay(today))
     document.addEventListener('visibilitychange', refresh)
     return () => {
       window.clearTimeout(timer)
