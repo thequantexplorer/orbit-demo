@@ -57,6 +57,10 @@ const collisionDetection: CollisionDetection = (args) => {
   return closestCorners(args)
 }
 
+// Module-level so dnd-kit's sensors, activators and measuring config stay
+// referentially stable and don't re-render every draggable card.
+const pointerSensorOptions = { activationConstraint: { distance: 6 } }
+const keyboardSensorOptions = { coordinateGetter: sortableKeyboardCoordinates }
 const measuring = { droppable: { strategy: MeasuringStrategy.Always } }
 const dropAnimation = { duration: 200, easing: 'cubic-bezier(0.2, 0, 0, 1)' }
 
@@ -161,10 +165,8 @@ export default function App() {
   }, [activeCardId])
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
+    useSensor(PointerSensor, pointerSensorOptions),
+    useSensor(KeyboardSensor, keyboardSensorOptions),
   )
 
   const resolveColumn = useCallback(

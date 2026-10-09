@@ -29,6 +29,17 @@ export const CardView = memo(function CardView({
   ]
     .filter(Boolean)
     .join(' ')
+
+  return (
+    <article ref={ref} className={classes} data-card-id={card.id} {...rest}>
+      <CardContent card={card} />
+    </article>
+  )
+})
+
+// Separate from the <article> so drag style/transition changes on the wrapper
+// don't re-render the card's contents.
+const CardContent = memo(function CardContent({ card }: { card: Card }) {
   const todayKey = useTodayKey()
   const dueChip = useMemo(
     () => getDueChip(card.dueDate, fromDateKey(todayKey)),
@@ -36,7 +47,7 @@ export const CardView = memo(function CardView({
   )
 
   return (
-    <article ref={ref} className={classes} data-card-id={card.id} {...rest}>
+    <>
       <div className="card__topline">
         <span className="card__id">{card.id}</span>
         {card.labels.includes('urgent') ? (
@@ -68,6 +79,6 @@ export const CardView = memo(function CardView({
         </div>
         <Avatar assigneeId={card.assigneeId} />
       </div>
-    </article>
+    </>
   )
 })
