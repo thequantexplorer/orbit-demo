@@ -6,7 +6,7 @@ frame four columns: Backlog, In Progress, Review, and Done. Nine seeded issues
 have colored labels and assignee avatars; real pointer drag-and-drop supports
 reordering and movement across columns with live counts, a lifted overlay, and
 a dashed placeholder. Add cards inline or use the issue editor to update titles,
-descriptions, status, labels, and assignees. Board/list layouts, search, combined
+descriptions, status, labels, assignees, and due dates. Board/list layouts, search, combined
 filters, a command palette, and a project overview make the workspace functional.
 Board state and appearance persist locally without accounts, APIs, or a backend.
 
@@ -26,6 +26,8 @@ Then open http://localhost:5173. Other scripts: `npm run build`, `npm run lint`.
 
 - Use **Board** or **List**, search by title, description, or issue ID, and combine
   label and assignee filters.
+- Set an optional **Due date** in the issue editor. Cards show it as a chip:
+  "Due Oct 12", then "Due today" on the day and "Overdue" once it has passed.
 - **Display** controls descriptions and dark appearance. The sidebar also has an
   appearance toggle.
 - **Overview** shows live progress and team assignments. **My issues** uses Ava
