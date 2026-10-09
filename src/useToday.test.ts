@@ -1,9 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { subscribeToDayChange } from './useToday'
 
+const MINUTE = 60_000
+const DAY = 24 * 60 * MINUTE
+
 beforeEach(() => {
   vi.useFakeTimers()
-  vi.setSystemTime(new Date(2026, 9, 9, 23, 59, 0))
+  vi.setSystemTime(new Date(2026, 9, 9, 23, 58, 30))
 })
 
 afterEach(() => {
@@ -11,23 +14,45 @@ afterEach(() => {
 })
 
 describe('subscribeToDayChange', () => {
-  it('notifies subscribers after local midnight, every day', () => {
+  it('notifies once per local day change', () => {
     const listener = vi.fn()
     const unsubscribe = subscribeToDayChange(listener)
-    vi.advanceTimersByTime(59_000)
+    vi.advanceTimersByTime(MINUTE)
     expect(listener).not.toHaveBeenCalled()
-    vi.advanceTimersByTime(2_000)
+    vi.advanceTimersByTime(MINUTE)
     expect(listener).toHaveBeenCalledTimes(1)
-    vi.advanceTimersByTime(24 * 60 * 60 * 1000)
+    vi.advanceTimersByTime(DAY)
     expect(listener).toHaveBeenCalledTimes(2)
     unsubscribe()
   })
 
-  it('stops notifying once unsubscribed', () => {
+  it('notices clock jumps within a minute', () => {
+    const listener = vi.fn()
+    const unsubscribe = subscribeToDayChange(listener)
+    vi.setSystemTime(new Date(2026, 9, 7, 12, 0))
+    vi.advanceTimersByTime(MINUTE)
+    expect(listener).toHaveBeenCalledTimes(1)
+    unsubscribe()
+  })
+
+  it('stops its timer once the last listener unsubscribes', () => {
     const listener = vi.fn()
     subscribeToDayChange(listener)()
-    vi.advanceTimersByTime(2 * 24 * 60 * 60 * 1000)
-    expect(listener).not.toHaveBeenCalled()
     expect(vi.getTimerCount()).toBe(0)
+    vi.advanceTimersByTime(2 * DAY)
+    expect(listener).not.toHaveBeenCalled()
+  })
+
+  it('does not leave a timer behind when unsubscribing during a notification', () => {
+    const unsubscribe = subscribeToDayChange(() => unsubscribe())
+    vi.advanceTimersByTime(2 * MINUTE)
+    expect(vi.getTimerCount()).toBe(0)
+
+    const listener = vi.fn()
+    const unsubscribeAgain = subscribeToDayChange(listener)
+    expect(vi.getTimerCount()).toBe(1)
+    vi.advanceTimersByTime(DAY)
+    expect(listener).toHaveBeenCalledTimes(1)
+    unsubscribeAgain()
   })
 })

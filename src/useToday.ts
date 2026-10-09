@@ -1,35 +1,39 @@
 import { useSyncExternalStore } from 'react'
 import { toDateKey } from './dueDate'
 
+// Polling (rather than one timer until midnight) also catches clock and
+// time-zone changes, and timers that were paused while the machine slept.
+const CHECK_INTERVAL_MS = 60_000
+
 const listeners = new Set<() => void>()
-let timer: ReturnType<typeof setTimeout> | undefined
-
-function msUntilNextDay(now: Date): number {
-  const next = new Date(now)
-  next.setHours(24, 0, 0, 0)
-  return next.getTime() - now.getTime()
-}
-
-function scheduleDayChange() {
-  // A small buffer so the callback lands just after local midnight.
-  timer = setTimeout(() => {
-    for (const listener of listeners) listener()
-    scheduleDayChange()
-  }, msUntilNextDay(new Date()) + 1000)
-}
-
-/** Calls `listener` each time the local calendar day changes. */
-export function subscribeToDayChange(listener: () => void): () => void {
-  listeners.add(listener)
-  if (listeners.size === 1) scheduleDayChange()
-  return () => {
-    listeners.delete(listener)
-    if (listeners.size === 0) clearTimeout(timer)
-  }
-}
+let timer: ReturnType<typeof setInterval> | undefined
+let lastKey = ''
 
 function getTodayKey() {
   return toDateKey(new Date())
+}
+
+function checkDay() {
+  const key = getTodayKey()
+  if (key === lastKey) return
+  lastKey = key
+  for (const listener of [...listeners]) listener()
+}
+
+/** Calls `listener` when the local calendar day changes. */
+export function subscribeToDayChange(listener: () => void): () => void {
+  listeners.add(listener)
+  if (timer === undefined) {
+    lastKey = getTodayKey()
+    timer = setInterval(checkDay, CHECK_INTERVAL_MS)
+  }
+  return () => {
+    listeners.delete(listener)
+    if (listeners.size === 0 && timer !== undefined) {
+      clearInterval(timer)
+      timer = undefined
+    }
+  }
 }
 
 /** Today's local `YYYY-MM-DD`; re-renders the caller when the day changes. */
