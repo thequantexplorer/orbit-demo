@@ -19,6 +19,7 @@ import {
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { boardReducer, findColumnOfCard } from './boardReducer'
 import { ASSIGNEES, LABELS, LABEL_ORDER, createSeedBoard } from './data'
+import { createGeneratedBoard, parseSeedCount } from './seed'
 import { loadBoard, saveBoard } from './storage'
 import type {
   BoardState,
@@ -47,6 +48,9 @@ const collisionDetection: CollisionDetection = (args) => {
   return closestCorners(args)
 }
 
+// `?seed=N` loads N generated cards for benchmarking; they are never saved.
+const seedCount = parseSeedCount(window.location.search)
+
 function issueCountLabel(count: number) {
   return `${count} ${count === 1 ? 'issue' : 'issues'}`
 }
@@ -55,7 +59,10 @@ export default function App() {
   const [board, dispatch] = useReducer(
     boardReducer,
     undefined,
-    () => loadBoard() ?? createSeedBoard(),
+    () =>
+      seedCount
+        ? createGeneratedBoard(seedCount)
+        : (loadBoard() ?? createSeedBoard()),
   )
   const [activeCardId, setActiveCardId] = useState<string | null>(null)
   const [overColumnId, setOverColumnId] = useState<ColumnId | null>(null)
@@ -84,7 +91,7 @@ export default function App() {
   const dragSnapshot = useRef<BoardState | null>(null)
 
   useEffect(() => {
-    if (!activeCardId) setSaved(saveBoard(board))
+    if (!activeCardId && !seedCount) setSaved(saveBoard(board))
   }, [board, activeCardId])
 
   useEffect(() => {
