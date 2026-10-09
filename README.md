@@ -20,7 +20,7 @@ npm install
 npm run dev
 ```
 
-Then open http://localhost:5173. Other scripts: `npm run build`, `npm run lint`.
+Then open http://localhost:5173. Other scripts: `npm run build`, `npm run lint`, `npm test` (Vitest + React Testing Library), `npm run test:coverage`.
 
 ## Working in Orbit
 
