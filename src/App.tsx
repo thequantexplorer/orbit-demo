@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from 'react'
 import { flushSync } from 'react-dom'
 import {
   DndContext,
@@ -17,6 +24,7 @@ import {
   type UniqueIdentifier,
 } from '@dnd-kit/core'
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
+import { cardMatches, reuseIfSame } from './boardFilter'
 import { boardReducer, findColumnOfCard } from './boardReducer'
 import { ASSIGNEES, LABELS, LABEL_ORDER, createSeedBoard } from './data'
 import { createGeneratedBoard, parseSeedCount } from './seed'
@@ -34,6 +42,7 @@ import { ColumnView } from './components/ColumnView'
 import { Avatar } from './components/Avatar'
 import { CommandMenu } from './components/CommandMenu'
 import { Dialog } from './components/Dialog'
+import { IssueRow } from './components/IssueRow'
 import { Icon, ProgressRing, StatusIcon } from './components/Icon'
 import { LabelPill } from './components/LabelPill'
 import { Sidebar } from './components/Sidebar'
@@ -47,6 +56,9 @@ const collisionDetection: CollisionDetection = (args) => {
   if (within.length > 0) return within
   return closestCorners(args)
 }
+
+const measuring = { droppable: { strategy: MeasuringStrategy.Always } }
+const dropAnimation = { duration: 200, easing: 'cubic-bezier(0.2, 0, 0, 1)' }
 
 // `?seed=N` loads N generated cards for benchmarking; they are never saved.
 const seedCount = parseSeedCount(window.location.search)
@@ -236,13 +248,24 @@ export default function App() {
   }
 
   const closeModal = useCallback(() => setOpenCardId(null), [])
-  const navigate = (next: WorkspaceView) => {
+  const navigate = useCallback((next: WorkspaceView) => {
     setView(next)
     setQuery('')
     setLabelFilter([])
     setAssigneeFilter('')
     setSidebarOpen(false)
-  }
+  }, [])
+  const openCommandMenu = useCallback(() => setCommandOpen(true), [])
+  const closeCommandMenu = useCallback(() => setCommandOpen(false), [])
+  const createIssue = useCallback(() => setOpenCardId('new'), [])
+  const openReset = useCallback(() => setResetOpen(true), [])
+  const openHelp = useCallback(() => setHelpOpen(true), [])
+  const openClearDone = useCallback(() => setClearDoneOpen(true), [])
+  const themeToggle = useCallback(() => setDark((current) => !current), [])
+  const addCard = useCallback((columnId: ColumnId, title: string) => {
+    dispatch({ type: 'add-card', columnId, title })
+    setToast('Issue created')
+  }, [])
 
   const activeCard = activeCardId ? board.cards[activeCardId] : undefined
   const creating = openCardId === 'new'
@@ -261,12 +284,23 @@ export default function App() {
   const openCardColumn = openCardId
     ? board.columns.find((column) => column.cardIds.includes(openCardId))
     : undefined
-  const totalCards = Object.keys(board.cards).length
+  const allCards = useMemo(() => Object.values(board.cards), [board.cards])
+  const { labelCounts, assigneeCounts } = useMemo(() => {
+    const labelCounts: Partial<Record<LabelId, number>> = {}
+    const assigneeCounts: Record<string, number> = {}
+    for (const card of allCards) {
+      for (const label of card.labels)
+        labelCounts[label] = (labelCounts[label] ?? 0) + 1
+      if (card.assigneeId)
+        assigneeCounts[card.assigneeId] =
+          (assigneeCounts[card.assigneeId] ?? 0) + 1
+    }
+    return { labelCounts, assigneeCounts }
+  }, [allCards])
+  const totalCards = allCards.length
   const doneCount =
     board.columns.find((column) => column.id === 'done')?.cardIds.length ?? 0
-  const mineCount = Object.values(board.cards).filter(
-    (card) => card.assigneeId === 'ava',
-  ).length
+  const mineCount = assigneeCounts.ava ?? 0
   const percentDone = totalCards
     ? Math.round((doneCount / totalCards) * 100)
     : 0
@@ -288,25 +322,38 @@ export default function App() {
     completed: 'Small wins. Meaningful progress. A little closer to launch.',
     overview: 'A clear view of where we are, and what comes next.',
   }
-  const visibleColumns = board.columns.map((column) => ({
-    ...column,
-    cards: column.cardIds
-      .map((id) => board.cards[id])
-      .filter(
-        (card) =>
-          card &&
-          `${card.title} ${card.id} ${card.description}`
-            .toLowerCase()
-            .includes(query.toLowerCase()) &&
-          (!labelFilter.length ||
-            labelFilter.some((label) => card.labels.includes(label))) &&
-          (!assigneeFilter || card.assigneeId === assigneeFilter) &&
-          (view !== 'mine' || card.assigneeId === 'ava') &&
-          (view !== 'completed' || column.id === 'done'),
-      ),
-  }))
+  // The previous result per column, so a column whose visible cards did not
+  // change keeps the same array and its memoized ColumnView can skip rendering.
+  const previousVisible = useRef(new Map<ColumnId, Card[]>())
+  const visibleColumns = useMemo(() => {
+    const filter = {
+      query: query.toLowerCase(),
+      labels: labelFilter,
+      assigneeId: assigneeFilter,
+    }
+    const next = new Map<ColumnId, Card[]>()
+    const columns = board.columns.map((column) => {
+      const cards: Card[] = []
+      if (view !== 'completed' || column.id === 'done') {
+        for (const id of column.cardIds) {
+          const card = board.cards[id]
+          if (
+            card &&
+            cardMatches(card, filter) &&
+            (view !== 'mine' || card.assigneeId === 'ava')
+          )
+            cards.push(card)
+        }
+      }
+      const stable = reuseIfSame(previousVisible.current.get(column.id), cards)
+      next.set(column.id, stable)
+      return { column, cards: stable }
+    })
+    previousVisible.current = next
+    return columns
+  }, [board, query, labelFilter, assigneeFilter, view])
   const visibleCount = visibleColumns.reduce(
-    (sum, column) => sum + column.cards.length,
+    (sum, { cards }) => sum + cards.length,
     0,
   )
   const clearFilters = () => {
@@ -314,17 +361,16 @@ export default function App() {
     setLabelFilter([])
     setAssigneeFilter('')
   }
-  const themeToggle = () => setDark((current) => !current)
 
   return (
     <div className={`app${descriptions ? '' : ' app--compact'}`}>
       <Sidebar
         view={view}
         onNavigate={navigate}
-        onSearch={() => setCommandOpen(true)}
-        onCreate={() => setOpenCardId('new')}
-        onReset={() => setResetOpen(true)}
-        onHelp={() => setHelpOpen(true)}
+        onSearch={openCommandMenu}
+        onCreate={createIssue}
+        onReset={openReset}
+        onHelp={openHelp}
         dark={dark}
         onTheme={themeToggle}
         total={totalCards}
@@ -542,11 +588,7 @@ export default function App() {
                     <span>
                       <strong>{person.name}</strong>
                       <small>
-                        {issueCountLabel(
-                          Object.values(board.cards).filter(
-                            (card) => card.assigneeId === person.id,
-                          ).length,
-                        )}{' '}
+                        {issueCountLabel(assigneeCounts[person.id] ?? 0)}{' '}
                         assigned
                       </small>
                     </span>
@@ -613,11 +655,7 @@ export default function App() {
                         />
                         <LabelPill labelId={label} />
                         <span className="filter-option__count">
-                          {
-                            Object.values(board.cards).filter((card) =>
-                              card.labels.includes(label),
-                            ).length
-                          }
+                          {labelCounts[label] ?? 0}
                         </span>
                       </label>
                     ))}
@@ -740,7 +778,7 @@ export default function App() {
             <DndContext
               sensors={sensors}
               collisionDetection={collisionDetection}
-              measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
+              measuring={measuring}
               onDragStart={handleDragStart}
               onDragOver={handleDragOver}
               onDragEnd={handleDragEnd}
@@ -748,68 +786,46 @@ export default function App() {
             >
               {layout === 'board' ? (
                 <div className="board" aria-label="Issue board">
-                  {visibleColumns.map((column) => (
+                  {visibleColumns.map(({ column, cards }) => (
                     <ColumnView
                       key={column.id}
                       column={column}
-                      cards={column.cards}
+                      cards={cards}
                       filtered={hasFilters}
                       isDropTarget={
                         activeCardId !== null && overColumnId === column.id
                       }
-                      onAddCard={(title) => {
-                        dispatch({
-                          type: 'add-card',
-                          columnId: column.id,
-                          title,
-                        })
-                        setToast('Issue created')
-                      }}
+                      onAddCard={addCard}
                       onOpenCard={setOpenCardId}
-                      onClearColumn={() => setClearDoneOpen(true)}
+                      onClearColumn={openClearDone}
                     />
                   ))}
                 </div>
               ) : (
                 <div className="issue-list" aria-label="Issue list">
-                  {visibleColumns.map((column) => (
+                  {visibleColumns.map(({ column, cards }) => (
                     <section className="list-group" key={column.id}>
                       <header>
                         <StatusIcon status={column.id} />
                         <h2>{column.title}</h2>
-                        <span>{column.cards.length}</span>
+                        <span>{cards.length}</span>
                       </header>
-                      {column.cards.map((card) => (
-                        <button
-                          className="issue-row"
+                      {cards.map((card) => (
+                        <IssueRow
                           key={card.id}
-                          onClick={() => setOpenCardId(card.id)}
-                        >
-                          <span className="card__id">{card.id}</span>
-                          <StatusIcon status={column.id} />
-                          <strong>{card.title}</strong>
-                          <span className="issue-row__labels">
-                            {card.labels.map((label) => (
-                              <LabelPill key={label} labelId={label} />
-                            ))}
-                          </span>
-                          <Avatar assigneeId={card.assigneeId} />
-                          <Icon name="chevron" size={12} />
-                        </button>
+                          card={card}
+                          columnId={column.id}
+                          onOpen={setOpenCardId}
+                        />
                       ))}
-                      {column.cards.length === 0 && (
+                      {cards.length === 0 && (
                         <p className="list-empty">No issues in this view</p>
                       )}
                     </section>
                   ))}
                 </div>
               )}
-              <DragOverlay
-                dropAnimation={{
-                  duration: 200,
-                  easing: 'cubic-bezier(0.2, 0, 0, 1)',
-                }}
-              >
+              <DragOverlay dropAnimation={dropAnimation}>
                 {activeCard ? <CardView card={activeCard} overlay /> : null}
               </DragOverlay>
             </DndContext>
@@ -875,10 +891,10 @@ export default function App() {
       )}
       {commandOpen && (
         <CommandMenu
-          cards={Object.values(board.cards)}
-          onClose={() => setCommandOpen(false)}
+          cards={allCards}
+          onClose={closeCommandMenu}
           onOpen={setOpenCardId}
-          onCreate={() => setOpenCardId('new')}
+          onCreate={createIssue}
           onTheme={themeToggle}
         />
       )}

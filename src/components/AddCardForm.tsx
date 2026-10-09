@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { memo, useState, type FormEvent } from 'react'
 import { Icon } from './Icon'
 
 interface AddCardFormProps {
@@ -6,7 +6,10 @@ interface AddCardFormProps {
   onAdd: (title: string) => void
 }
 
-export function AddCardForm({ columnTitle, onAdd }: AddCardFormProps) {
+export const AddCardForm = memo(function AddCardForm({
+  columnTitle,
+  onAdd,
+}: AddCardFormProps) {
   const [title, setTitle] = useState('')
 
   function handleSubmit(event: FormEvent) {
@@ -40,4 +43,4 @@ export function AddCardForm({ columnTitle, onAdd }: AddCardFormProps) {
       </button>
     </form>
   )
-}
+})

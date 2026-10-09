@@ -1,6 +1,7 @@
+import { memo, useCallback, useMemo } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import type { Card, Column } from '../types'
+import type { Card, Column, ColumnId } from '../types'
 import { AddCardForm } from './AddCardForm'
 import { SortableCard } from './SortableCard'
 import { Icon, StatusIcon } from './Icon'
@@ -9,13 +10,15 @@ interface ColumnViewProps {
   column: Column
   cards: Card[]
   isDropTarget: boolean
-  onAddCard: (title: string) => void
+  onAddCard: (columnId: ColumnId, title: string) => void
   onOpenCard: (cardId: string) => void
   onClearColumn: () => void
   filtered?: boolean
 }
 
-export function ColumnView({
+const COLUMN_DATA = { type: 'column' }
+
+export const ColumnView = memo(function ColumnView({
   column,
   cards,
   isDropTarget,
@@ -26,8 +29,13 @@ export function ColumnView({
 }: ColumnViewProps) {
   const { setNodeRef } = useDroppable({
     id: column.id,
-    data: { type: 'column' },
+    data: COLUMN_DATA,
   })
+  const items = useMemo(() => cards.map((card) => card.id), [cards])
+  const handleAdd = useCallback(
+    (title: string) => onAddCard(column.id, title),
+    [onAddCard, column.id],
+  )
 
   return (
     <section
@@ -69,7 +77,7 @@ export function ColumnView({
 
       <SortableContext
         id={column.id}
-        items={cards.map((card) => card.id)}
+        items={items}
         strategy={verticalListSortingStrategy}
       >
         <div ref={setNodeRef} className="column__cards">
@@ -90,7 +98,7 @@ export function ColumnView({
         </div>
       </SortableContext>
 
-      <AddCardForm columnTitle={column.title} onAdd={onAddCard} />
+      <AddCardForm columnTitle={column.title} onAdd={handleAdd} />
     </section>
   )
-}
+})

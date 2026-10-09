@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import type { WorkspaceView } from '../types'
 import { Avatar } from './Avatar'
 import { Icon, type IconName } from './Icon'
@@ -18,7 +19,7 @@ interface SidebarProps {
   expanded: boolean
 }
 
-export function Sidebar({
+export const Sidebar = memo(function Sidebar({
   view,
   onNavigate,
   onSearch,
@@ -149,4 +150,4 @@ export function Sidebar({
       </div>
     </aside>
   )
-}
+})
