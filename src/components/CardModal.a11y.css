@@ -1,0 +1,38 @@
+.issue-dialog {
+  --issue-danger-text: #b23b41;
+}
+
+:root[data-theme='dark'] .issue-dialog {
+  --issue-danger-text: var(--danger);
+}
+
+.issue-dialog .property-field > label,
+.issue-dialog .label-picker legend,
+.issue-dialog .modal__hint {
+  color: var(--secondary);
+}
+
+.issue-dialog .modal__title-input::placeholder,
+.issue-dialog .modal__description::placeholder {
+  color: var(--secondary);
+  opacity: 1;
+}
+
+.issue-dialog .modal__title-input:focus,
+.issue-dialog .modal__description:focus {
+  border-color: var(--primary);
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.issue-dialog .delete-confirm .button--danger {
+  color: var(--issue-danger-text);
+}
+
+.issue-dialog .button--primary kbd {
+  color: #fff;
+}
+
+.issue-dialog .select-wrap > .modal__select-chevron {
+  color: var(--secondary);
+}

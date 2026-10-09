@@ -4,6 +4,7 @@ import type { Card, Column, ColumnId, LabelId } from '../types'
 import { Avatar } from './Avatar'
 import { Dialog } from './Dialog'
 import { Icon, StatusIcon } from './Icon'
+import './CardModal.a11y.css'
 
 interface CardModalProps {
   card: Card
@@ -135,7 +136,7 @@ export function CardModal({
                     </option>
                   ))}
                 </select>
-                <Icon name="down" size={12} />
+                <Icon name="down" size={12} className="modal__select-chevron" />
               </div>
             </div>
             <div className="property-field">
@@ -156,7 +157,7 @@ export function CardModal({
                     </option>
                   ))}
                 </select>
-                <Icon name="down" size={12} />
+                <Icon name="down" size={12} className="modal__select-chevron" />
               </div>
             </div>
             <div className="property-field">
