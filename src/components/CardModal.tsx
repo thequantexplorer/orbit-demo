@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent } from 'react'
+import { useLayoutEffect, useRef, useState, type FormEvent } from 'react'
 import { ASSIGNEES, LABELS, LABEL_ORDER } from '../data'
 import type { Card, Column, ColumnId, LabelId } from '../types'
 import { Avatar } from './Avatar'
@@ -33,6 +33,16 @@ export function CardModal({
   const dueDateInput = useRef<HTMLInputElement>(null)
   const [status, setStatus] = useState(columnId)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const deleteButton = useRef<HTMLButtonElement>(null)
+  const cancelDeletionButton = useRef<HTMLButtonElement>(null)
+  const previousConfirmDelete = useRef(confirmDelete)
+
+  useLayoutEffect(() => {
+    if (previousConfirmDelete.current === confirmDelete) return
+    previousConfirmDelete.current = confirmDelete
+    if (confirmDelete) cancelDeletionButton.current?.focus()
+    else deleteButton.current?.focus()
+  }, [confirmDelete])
 
   function toggleLabel(labelId: LabelId) {
     setLabels((current) =>
@@ -224,6 +234,7 @@ export function CardModal({
                 Delete issue
               </button>
               <button
+                ref={cancelDeletionButton}
                 type="button"
                 className="icon-button"
                 aria-label="Cancel deletion"
@@ -234,6 +245,7 @@ export function CardModal({
             </div>
           ) : (
             <button
+              ref={deleteButton}
               className="icon-button delete-button"
               type="button"
               onClick={() => setConfirmDelete(true)}
