@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import {
   DndContext,
   DragOverlay,
@@ -68,6 +69,7 @@ export default function App() {
   const [commandOpen, setCommandOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
   const [resetOpen, setResetOpen] = useState(false)
+  const [clearDoneOpen, setClearDoneOpen] = useState(false)
   const [starred, setStarred] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [saved, setSaved] = useState(true)
@@ -750,6 +752,7 @@ export default function App() {
                         setToast('Issue created')
                       }}
                       onOpenCard={setOpenCardId}
+                      onClearColumn={() => setClearDoneOpen(true)}
                     />
                   ))}
                 </div>
@@ -897,6 +900,49 @@ export default function App() {
               }}
             >
               Reset board
+            </button>
+          </footer>
+        </Dialog>
+      )}
+      {clearDoneOpen && (
+        <Dialog
+          className="small-dialog"
+          labelledBy="clear-done-title"
+          onClose={() => setClearDoneOpen(false)}
+        >
+          <span className="dialog-symbol">
+            <Icon name="trash" size={23} />
+          </span>
+          <h2 id="clear-done-title">Clear the Done column?</h2>
+          <p>
+            This will permanently remove {doneCount}{' '}
+            {doneCount === 1 ? 'issue' : 'issues'} from Done, including any
+            hidden by the current search or filters.
+          </p>
+          <footer>
+            <button
+              className="button"
+              autoFocus
+              onClick={() => setClearDoneOpen(false)}
+            >
+              Keep issues
+            </button>
+            <button
+              className="button button--danger"
+              onClick={() => {
+                flushSync(() => {
+                  dispatch({ type: 'clear-column', columnId: 'done' })
+                  setClearDoneOpen(false)
+                })
+                document
+                  .querySelector<HTMLElement>(
+                    '[data-column-id="done"] .column__add',
+                  )
+                  ?.focus()
+                setToast('Done column cleared')
+              }}
+            >
+              Clear done
             </button>
           </footer>
         </Dialog>
