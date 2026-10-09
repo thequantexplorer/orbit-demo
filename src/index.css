@@ -29,6 +29,7 @@
   --primary-subtle: #eeedfc;
   --green: #4b9474;
   --danger: #ca4f54;
+  --warning: #b7791f;
   --shadow: 0 1px 3px #16172c05, 0 1px 2px #16172c04;
   color-scheme: light;
 }
@@ -50,6 +51,7 @@
   --primary-subtle: #2c2a45;
   --green: #6cae8d;
   --danger: #ed8084;
+  --warning: #e0b260;
   --shadow: 0 1px 3px #00000014;
   color-scheme: dark;
 }
@@ -1147,6 +1149,28 @@ details[open] > .toolbar-button {
   font-weight: 400;
   white-space: nowrap;
 }
+.due-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 5px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--secondary);
+  font-size: 9px;
+  line-height: 16px;
+  white-space: nowrap;
+}
+.due-chip--today {
+  color: var(--warning);
+  border-color: color-mix(in srgb, var(--warning) 35%, var(--border));
+  background: color-mix(in srgb, var(--warning) 8%, var(--surface));
+}
+.due-chip--overdue {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 35%, var(--border));
+  background: color-mix(in srgb, var(--danger) 8%, var(--surface));
+}
 .label-dot {
   width: 5px;
   height: 5px;
@@ -1651,6 +1675,24 @@ details[open] > .toolbar-button {
   cursor: pointer;
   height: 22px;
 }
+.select-wrap input[type='date'] {
+  min-width: 0;
+  flex: 1;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  font-size: 11px;
+  color: inherit;
+  height: 22px;
+}
+.select-wrap input[type='date']::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.6;
+}
+.due-date-clear {
+  width: 20px;
+  height: 20px;
+}
 .select-wrap select option {
   background: var(--surface);
 }
@@ -1953,7 +1995,8 @@ details[open] > .toolbar-button {
   .card__footer {
     margin-top: 18px;
   }
-  .label-pill {
+  .label-pill,
+  .due-chip {
     font-size: 10px;
   }
   .column__title {
