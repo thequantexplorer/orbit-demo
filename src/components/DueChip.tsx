@@ -1,8 +1,10 @@
 import { getDueChip } from '../dueDate'
+import { useToday } from '../useToday'
 import { Icon } from './Icon'
 
 export function DueChip({ dueDate }: { dueDate?: string | null }) {
-  const chip = getDueChip(dueDate)
+  const today = useToday()
+  const chip = getDueChip(dueDate, today)
   if (!chip) return null
   return (
     <span className={`due-chip due-chip--${chip.status}`} title={chip.title}>

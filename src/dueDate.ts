@@ -13,7 +13,8 @@ export function parseDueDate(value: unknown): Date | null {
   const match = DATE_KEY.exec(value)
   if (!match) return null
   const [year, month, day] = match.slice(1).map(Number)
-  const date = new Date(year, month - 1, day)
+  const date = new Date(2000, 0, 1)
+  date.setFullYear(year, month - 1, day)
   return date.getFullYear() === year &&
     date.getMonth() === month - 1 &&
     date.getDate() === day
@@ -27,7 +28,8 @@ export function isDueDate(value: unknown): value is string {
 
 export function toDateKey(date: Date): string {
   const pad = (part: number) => String(part).padStart(2, '0')
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+  const year = String(date.getFullYear()).padStart(4, '0')
+  return `${year}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }
 
 export function getDueStatus(dueDate: string, now = new Date()): DueStatus {

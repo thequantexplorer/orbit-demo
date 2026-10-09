@@ -19,6 +19,13 @@ describe('parseDueDate / isDueDate', () => {
     expect(isDueDate('2026-10-12')).toBe(true)
   })
 
+  it('keeps years before 100 instead of mapping them to the 1900s', () => {
+    const date = parseDueDate('0042-03-04')
+    expect(date?.getFullYear()).toBe(42)
+    expect(isDueDate('0042-03-04')).toBe(true)
+    expect(toDateKey(date!)).toBe('0042-03-04')
+  })
+
   it('rejects malformed or impossible dates', () => {
     for (const value of [
       '',
