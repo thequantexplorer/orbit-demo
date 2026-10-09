@@ -1070,6 +1070,11 @@ details[open] > .toolbar-button {
   outline: 2px solid var(--primary);
   outline-offset: -2px;
 }
+.card--urgent,
+.card--urgent:hover {
+  padding-left: 12px;
+  border-left: 3px solid var(--danger);
+}
 .card__topline {
   display: flex;
   justify-content: space-between;

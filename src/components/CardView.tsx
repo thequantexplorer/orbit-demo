@@ -21,6 +21,7 @@ export function CardView({
 }: CardViewProps) {
   const classes = [
     'card',
+    card.labels.includes('urgent') && 'card--urgent',
     dragging && 'card--placeholder',
     overlay && 'card--overlay',
     className,
