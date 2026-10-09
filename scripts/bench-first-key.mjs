@@ -84,7 +84,7 @@ async function measureOnce(browser, url) {
     await page.waitForFunction(
       () => {
         const last = window.__bench.longTasks.at(-1)
-        return !last || performance.now() - (last.start + last.duration) > 1000
+        return performance.now() - Math.max(window.__bench.allCards, last ? last.start + last.duration : 0) > 1000
       },
       { timeout: 60_000, polling: 100 },
     )
@@ -109,6 +109,7 @@ async function measureOnce(browser, url) {
       bench.watch = (counts) => {
         const entry = bench.keys.at(-1)
         const columns = [...document.querySelectorAll('.board .column')]
+        let previousIds = null
         const check = () => {
           const badges = columns.every(
             (column, index) => Number(column.querySelector('.column__count').textContent) === counts[index],
@@ -120,8 +121,14 @@ async function measureOnce(browser, url) {
           const rendered = columns.every(
             (column, index) => column.querySelectorAll('[data-card-id]').length === counts[index],
           )
-          if (badges && rendered) bench.afterFrame((now) => (entry.settled = now - entry.start))
-          else requestAnimationFrame(check)
+          const ids = columns.map((column) =>
+            [...column.querySelectorAll('[data-card-id]')].map((card) => card.dataset.cardId).join(','),
+          ).join('|')
+          if (badges && rendered && ids === previousIds) bench.afterFrame((now) => (entry.settled = now - entry.start))
+          else {
+            previousIds = ids
+            requestAnimationFrame(check)
+          }
         }
         check()
       }
