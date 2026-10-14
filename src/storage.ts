@@ -4,8 +4,9 @@ import type { BoardState, Card, Column, ColumnId, LabelId } from './types'
 
 const STORAGE_KEY = 'kanban-board:v1'
 const CARD_NUMBER_PATTERN = /^KB-(\d+)$/
-// Far below Number.MAX_SAFE_INTEGER so `nextCardNumber + 1` stays exact.
-const MAX_CARD_NUMBER = 1_000_000_000
+// `add-card` stops at this number (see boardReducer), so every reachable
+// `nextCardNumber` and `nextCardNumber + 1` stay exact integers.
+const MAX_CARD_NUMBER = Number.MAX_SAFE_INTEGER
 
 export function loadBoard(): BoardState | null {
   try {
@@ -52,7 +53,7 @@ function cardNumber(id: string): number | null {
 function isValidNextCardNumber(value: unknown): value is number {
   return (
     typeof value === 'number' &&
-    Number.isInteger(value) &&
+    Number.isSafeInteger(value) &&
     value > 0 &&
     value <= MAX_CARD_NUMBER
   )

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { boardReducer } from './boardReducer'
 import { createSeedBoard } from './data'
 import { clearBoard, loadBoard, saveBoard } from './storage'
+import type { BoardState } from './types'
 
 const STORAGE_KEY = 'kanban-board:v1'
 
@@ -276,7 +277,7 @@ describe('loadBoard', () => {
 
   it('bumps nextCardNumber past every existing card number', () => {
     const seed = createSeedBoard()
-    for (const nextCardNumber of [1, 5, 9, 0, -3, 2.5, null, '20', 1e12]) {
+    for (const nextCardNumber of [1, 5, 9, 0, -3, 2.5, null, '20', 2 ** 53, 1e20]) {
       storage.setItem(STORAGE_KEY, JSON.stringify({ ...seed, nextCardNumber }))
       expect(loadBoard()!.nextCardNumber).toBe(10)
     }
@@ -299,9 +300,55 @@ describe('loadBoard', () => {
     expect(Object.keys(loaded.cards)).toHaveLength(12)
   })
 
+  it('keeps large card numbers that can still be incremented safely', () => {
+    const board: BoardState = {
+      columns: createSeedBoard().columns.map((column) => ({
+        ...column,
+        cardIds: column.id === 'backlog' ? ['KB-1000000000'] : [],
+      })),
+      cards: {
+        'KB-1000000000': {
+          id: 'KB-1000000000',
+          title: 'new',
+          description: '',
+          labels: [],
+          assigneeId: null,
+          dueDate: null,
+        },
+      },
+      nextCardNumber: 1_000_000_001,
+    }
+    storage.setItem(STORAGE_KEY, JSON.stringify(board))
+    expect(loadBoard()).toEqual(board)
+
+    const nearMax = { ...board, nextCardNumber: Number.MAX_SAFE_INTEGER }
+    saveBoard(nearMax)
+    expect(loadBoard()).toEqual(nearMax)
+  })
+
+  it('round-trips every board add-card can produce near the limit', () => {
+    for (const start of [999_999_999, Number.MAX_SAFE_INTEGER - 2]) {
+      saveBoard({ ...createSeedBoard(), nextCardNumber: start })
+      let board = loadBoard()!
+      for (let i = 0; i < 4; i++) {
+        board = boardReducer(board, {
+          type: 'add-card',
+          columnId: 'backlog',
+          title: `New ${i}`,
+        })
+        saveBoard(board)
+        expect(loadBoard()).toEqual(board)
+      }
+    }
+  })
+
   it('drops cards whose number is too large to increment safely', () => {
     const saved = JSON.parse(JSON.stringify(createSeedBoard()))
-    for (const id of ['KB-1000000000', 'KB-99999999999999999999']) {
+    for (const id of [
+      `KB-${Number.MAX_SAFE_INTEGER}`,
+      'KB-9007199254740993',
+      'KB-99999999999999999999',
+    ]) {
       saved.cards[id] = { ...saved.cards['KB-1'], id }
       saved.columns[0].cardIds.push(id)
     }

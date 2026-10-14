@@ -80,7 +80,10 @@ export function boardReducer(
       }
     case 'add-card': {
       const title = action.title.trim()
-      if (!title) return board
+      // Past this, `nextCardNumber + 1` loses precision and ids would repeat.
+      if (!title || board.nextCardNumber >= Number.MAX_SAFE_INTEGER) {
+        return board
+      }
       const id = `KB-${board.nextCardNumber}`
       const card: Card = {
         id,

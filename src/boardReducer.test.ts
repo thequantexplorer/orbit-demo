@@ -113,6 +113,23 @@ describe('boardReducer', () => {
       })
       expect(board).toBe(seed)
     })
+
+    it('stops before nextCardNumber can no longer be incremented exactly', () => {
+      const atLimit = {
+        ...createSeedBoard(),
+        nextCardNumber: Number.MAX_SAFE_INTEGER - 1,
+      }
+      const board = boardReducer(atLimit, {
+        type: 'add-card',
+        columnId: 'backlog',
+        title: 'Last',
+      })
+      expect(board.cards[`KB-${Number.MAX_SAFE_INTEGER - 1}`].title).toBe('Last')
+      expect(board.nextCardNumber).toBe(Number.MAX_SAFE_INTEGER)
+      expect(
+        boardReducer(board, { type: 'add-card', columnId: 'backlog', title: 'x' }),
+      ).toBe(board)
+    })
   })
 
   it('update-card merges the patch into the card', () => {
