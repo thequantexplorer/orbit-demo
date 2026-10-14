@@ -33,13 +33,15 @@ interface WipLimitControlProps {
 
 function WipLimitControl({ column, count, onSetWipLimit }: WipLimitControlProps) {
   const [draft, setDraft] = useState<string | null>(null)
+  // Set when Enter/Escape closes the editor so focus returns to the button.
+  const refocusButton = useRef(false)
   const { wipLimit } = column
   const label = `${column.title} work-in-progress limit`
 
   if (draft !== null) {
-    const commit = () => {
-      const value = draft.trim() === '' ? null : Number(draft)
-      onSetWipLimit(value)
+    const close = (save: boolean, refocus: boolean) => {
+      if (save) onSetWipLimit(draft.trim() === '' ? null : Number(draft))
+      refocusButton.current = refocus
       setDraft(null)
     }
     return (
@@ -62,15 +64,15 @@ function WipLimitControl({ column, count, onSetWipLimit }: WipLimitControlProps)
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           onFocus={(event) => event.target.select()}
-          onBlur={commit}
+          onBlur={() => close(true, false)}
           onKeyDown={(event) => {
             if (event.key === 'Enter') {
               event.preventDefault()
-              commit()
+              close(true, true)
             } else if (event.key === 'Escape') {
               event.preventDefault()
               event.stopPropagation()
-              setDraft(null)
+              close(false, true)
             }
           }}
         />
@@ -80,6 +82,12 @@ function WipLimitControl({ column, count, onSetWipLimit }: WipLimitControlProps)
 
   return (
     <button
+      ref={(node) => {
+        if (node && refocusButton.current) {
+          refocusButton.current = false
+          node.focus()
+        }
+      }}
       type="button"
       className="column__wip column__wip-button"
       aria-label={
