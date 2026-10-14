@@ -1609,6 +1609,25 @@ details[open] > .toolbar-button {
   padding: 13px 19px;
   border-bottom: 1px solid var(--border);
 }
+.modal__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.copy-id-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 9px;
+  border-radius: 5px;
+  font-size: 11px;
+  color: var(--secondary);
+}
+.copy-id-button:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
 .modal__breadcrumb {
   display: flex;
   align-items: center;
@@ -1963,8 +1982,14 @@ details[open] > .toolbar-button {
   font-size: 12px;
   animation: toast-in 0.2s ease;
 }
+.toast--centered {
+  left: 50%;
+}
 .toast > .icon {
   color: var(--green);
+}
+.toast--error > .icon {
+  color: var(--danger);
 }
 .toast .icon-button {
   width: 22px;

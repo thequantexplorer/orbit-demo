@@ -38,6 +38,7 @@ import { Icon, ProgressRing, StatusIcon } from './components/Icon'
 import { IssueList } from './components/IssueList'
 import { LabelPill } from './components/LabelPill'
 import { Sidebar } from './components/Sidebar'
+import { Toast } from './components/Toast'
 
 const collisionDetection: CollisionDetection = (args) => {
   const within = pointerWithin(args)
@@ -103,12 +104,6 @@ export default function App() {
       /* The theme still works without storage. */
     }
   }, [dark])
-
-  useEffect(() => {
-    if (!toast) return
-    const timer = window.setTimeout(() => setToast(''), 3200)
-    return () => window.clearTimeout(timer)
-  }, [toast])
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -984,19 +979,7 @@ export default function App() {
           </dl>
         </Dialog>
       )}
-      {toast && (
-        <div className="toast" role="status">
-          <Icon name="circleCheck" size={17} />
-          <span>{toast}</span>
-          <button
-            className="icon-button"
-            aria-label="Dismiss notification"
-            onClick={() => setToast('')}
-          >
-            <Icon name="close" size={13} />
-          </button>
-        </div>
-      )}
+      {toast && <Toast message={toast} onDismiss={() => setToast('')} />}
     </div>
   )
 }
