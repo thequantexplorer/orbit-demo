@@ -40,7 +40,7 @@ export function IssueList({ columns, onOpenCard }: IssueListProps) {
   const virtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: (index) => (rows[index].kind === 'issue' ? 48 : 37),
+    estimateSize: (index) => (rows[index].kind === 'issue' ? 30 : 28),
     getItemKey: (index) => rows[index].key,
     overscan: 10,
     rangeExtractor: (range) => {

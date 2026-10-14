@@ -8,9 +8,9 @@ interface LabelPillProps {
 export function LabelPill({ labelId }: LabelPillProps) {
   const label = LABELS[labelId]
   return (
-    <span className="label-pill">
+    <span className="label-pill" title={label.name}>
       <span className="label-dot" style={{ background: label.color }} />
-      {label.name}
+      <span className="label-pill__name">{label.name}</span>
     </span>
   )
 }

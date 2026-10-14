@@ -1,10 +1,22 @@
 import type { HTMLAttributes, Ref } from 'react'
-import { fromDateKey, getDueChip } from '../dueDate'
+import { formatDueDate, fromDateKey, getDueChip } from '../dueDate'
 import { useTodayKey } from '../useToday'
 import type { Card } from '../types'
 import { Avatar } from './Avatar'
 import { LabelPill } from './LabelPill'
 import { Icon } from './Icon'
+
+const DAY_MS = 86_400_000
+
+// Terse chip text for dense cards; the chip title keeps the full date.
+function shortDueLabel(dueDate: string, status: string, today: Date) {
+  if (status === 'today') return 'Today'
+  if (status === 'overdue') {
+    const days = Math.round((today.getTime() - fromDateKey(dueDate).getTime()) / DAY_MS)
+    return `${days}d late`
+  }
+  return formatDueDate(dueDate, today)
+}
 
 interface CardViewProps extends HTMLAttributes<HTMLElement> {
   card: Card
@@ -30,7 +42,8 @@ export function CardView({
     .filter(Boolean)
     .join(' ')
   const todayKey = useTodayKey()
-  const dueChip = getDueChip(card.dueDate, fromDateKey(todayKey))
+  const today = fromDateKey(todayKey)
+  const dueChip = getDueChip(card.dueDate, today)
 
   return (
     <article ref={ref} className={classes} data-card-id={card.id} {...rest}>
@@ -44,7 +57,9 @@ export function CardView({
           <Icon name="signal" size={13} className="card__priority" />
         )}
       </div>
-      <h3 className="card__title">{card.title}</h3>
+      <h3 className="card__title" title={card.title}>
+        {card.title}
+      </h3>
       {card.description && (
         <p className="card__description">{card.description}</p>
       )}
@@ -56,7 +71,8 @@ export function CardView({
               title={dueChip.title}
             >
               <Icon name="calendar" size={10} />
-              {dueChip.label}
+              {card.dueDate &&
+                shortDueLabel(card.dueDate, dueChip.status, today)}
             </span>
           )}
           {card.labels.map((labelId) => (

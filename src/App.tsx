@@ -382,7 +382,7 @@ export default function App() {
         <section className="project-header">
           <div className="project-heading">
             <div className="project-emblem">
-              <Icon name="layers" size={25} />
+              <Icon name="layers" size={15} />
             </div>
             <div className="project-heading__copy">
               <div className="project-title-row">
@@ -807,9 +807,30 @@ export default function App() {
                 : 'Storage unavailable — changes won’t survive refresh'}
           </span>
           <span className="footer-tip">
-            {view === 'overview'
-              ? 'Built for the way you work.'
-              : 'Drag to move · Click to edit'}
+            {view === 'overview' ? (
+              'Built for the way you work.'
+            ) : (
+              <span className="footer-keys" aria-label="Keyboard shortcuts">
+                <span>
+                  <kbd>C</kbd> new
+                </span>
+                <span>
+                  <kbd>/</kbd> search
+                </span>
+                <span>
+                  <kbd>⌘K</kbd> jump
+                </span>
+                <span>
+                  <kbd>Space</kbd> grab
+                </span>
+                <span>
+                  <kbd>←↑↓→</kbd> move
+                </span>
+                <span>
+                  <kbd>↵</kbd> open
+                </span>
+              </span>
+            )}
             <span className="footer-divider" />
             <button onClick={() => setHelpOpen(true)}>
               <kbd>?</kbd> Shortcuts
