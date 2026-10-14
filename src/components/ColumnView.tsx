@@ -7,7 +7,7 @@ import { AddCardForm } from './AddCardForm'
 import { SortableCard } from './SortableCard'
 import { Icon, StatusIcon } from './Icon'
 
-const CARD_GAP = 9
+const CARD_GAP = 14
 
 interface ColumnViewProps {
   column: Column

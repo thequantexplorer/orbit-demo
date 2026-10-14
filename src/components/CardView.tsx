@@ -33,7 +33,7 @@ export function CardView({
   const dueChip = getDueChip(card.dueDate, fromDateKey(todayKey))
 
   return (
-    <article ref={ref} className={classes} data-card-id={card.id} {...rest}>
+    <div ref={ref} className={classes} data-card-id={card.id} {...rest}>
       <div className="card__topline">
         <span className="card__id">{card.id}</span>
         {card.labels.includes('urgent') ? (
@@ -65,6 +65,6 @@ export function CardView({
         </div>
         <Avatar assigneeId={card.assigneeId} />
       </div>
-    </article>
+    </div>
   )
 }
