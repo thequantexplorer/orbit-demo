@@ -829,6 +829,10 @@ details[open] > .toolbar-button {
   height: 12px;
   margin-right: 4px;
 }
+.filter-option input:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
 .filter-option .label-pill {
   border: 0;
   background: transparent;
@@ -845,6 +849,10 @@ details[open] > .toolbar-button {
   border-radius: 5px;
   background: var(--surface);
   font-size: 11px;
+}
+.filter-select:focus-visible {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-subtle);
 }
 .clear-filter-button {
   width: 100%;
@@ -1859,6 +1867,10 @@ details[open] > .toolbar-button {
   padding: 17px 20px;
   border-bottom: 1px solid var(--border);
   color: var(--muted);
+}
+.command-input:focus-within {
+  border-bottom-color: var(--primary);
+  box-shadow: 0 1px 0 var(--primary);
 }
 .command-input input {
   flex: 1;
