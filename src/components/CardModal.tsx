@@ -1,5 +1,6 @@
 import { useRef, useState, type FormEvent } from 'react'
 import { ASSIGNEES, LABELS, LABEL_ORDER } from '../data'
+import { isColumnFull } from '../wipLimit'
 import type { Card, Column, ColumnId, LabelId } from '../types'
 import { Avatar } from './Avatar'
 import { Dialog } from './Dialog'
@@ -30,7 +31,18 @@ export function CardModal({
   const [assigneeId, setAssigneeId] = useState<string | null>(card.assigneeId)
   const [dueDate, setDueDate] = useState<string | null>(card.dueDate)
   const dueDateInput = useRef<HTMLInputElement>(null)
-  const [status, setStatus] = useState(columnId)
+  const [status, setStatus] = useState(() => {
+    if (creating) {
+      const initial = columns.find((column) => column.id === columnId)
+      if (initial && isColumnFull(initial)) {
+        return (
+          columns.find((column) => !isColumnFull(column))?.id ?? columnId
+        )
+      }
+    }
+    return columnId
+  })
+  const allFull = creating && columns.every((column) => isColumnFull(column))
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   function toggleLabel(labelId: LabelId) {
@@ -129,11 +141,22 @@ export function CardModal({
                     if (column) setStatus(column.id)
                   }}
                 >
-                  {columns.map((column) => (
-                    <option key={column.id} value={column.id}>
-                      {column.title}
-                    </option>
-                  ))}
+                  {columns.map((column) => {
+                    const blocked =
+                      isColumnFull(column) &&
+                      (creating || column.id !== columnId)
+                    return (
+                      <option
+                        key={column.id}
+                        value={column.id}
+                        disabled={blocked}
+                      >
+                        {blocked
+                          ? `${column.title} (at WIP limit)`
+                          : column.title}
+                      </option>
+                    )
+                  })}
                 </select>
                 <Icon name="down" size={12} />
               </div>
@@ -210,7 +233,9 @@ export function CardModal({
         <footer className="modal__footer">
           {creating ? (
             <span className="modal__hint">
-              Good work starts with a clear issue.
+              {allFull
+                ? 'Every column is at its WIP limit.'
+                : 'Good work starts with a clear issue.'}
             </span>
           ) : confirmDelete ? (
             <div className="delete-confirm">
@@ -249,7 +274,7 @@ export function CardModal({
             <button
               className="button button--primary"
               type="submit"
-              disabled={!title.trim()}
+              disabled={!title.trim() || allFull}
             >
               {creating ? 'Create issue' : 'Save changes'} <kbd>↵</kbd>
             </button>

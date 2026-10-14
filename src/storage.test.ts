@@ -85,6 +85,38 @@ describe('loadBoard', () => {
     expect(loaded.cards['KB-3'].dueDate).toBeNull()
   })
 
+  it('round-trips a saved WIP limit', () => {
+    const board = createSeedBoard()
+    board.columns[1].wipLimit = 3
+    saveBoard(board)
+    expect(loadBoard()?.columns[1].wipLimit).toBe(3)
+  })
+
+  it('loads boards saved before WIP limits existed', () => {
+    const board = createSeedBoard()
+    const legacy = {
+      ...board,
+      columns: board.columns.map((column) => {
+        const { wipLimit: _wipLimit, ...rest } = column
+        return rest
+      }),
+    }
+    storage.setItem(STORAGE_KEY, JSON.stringify(legacy))
+    expect(loadBoard()).toEqual(board)
+  })
+
+  it('drops malformed WIP limits', () => {
+    const board = JSON.parse(JSON.stringify(createSeedBoard()))
+    board.columns[0].wipLimit = 0
+    board.columns[1].wipLimit = '3'
+    board.columns[2].wipLimit = 2.5
+    storage.setItem(STORAGE_KEY, JSON.stringify(board))
+    const loaded = loadBoard()!
+    expect(loaded.columns[0].wipLimit).toBeNull()
+    expect(loaded.columns[1].wipLimit).toBeNull()
+    expect(loaded.columns[2].wipLimit).toBeNull()
+  })
+
   it('returns null for invalid JSON', () => {
     storage.setItem(STORAGE_KEY, '{not json')
     expect(loadBoard()).toBeNull()

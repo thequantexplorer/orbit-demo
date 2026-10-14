@@ -951,6 +951,75 @@ details[open] > .toolbar-button {
   border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
   background: var(--primary-subtle);
 }
+.column--drop-blocked {
+  border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
+  background: color-mix(in srgb, var(--danger) 7%, transparent);
+  cursor: not-allowed;
+}
+.column--at-limit .column__header {
+  background: color-mix(in srgb, var(--warning) 12%, transparent);
+  border-radius: 6px;
+}
+.column--at-limit .column__header .column__count,
+.column--at-limit .column__header .column__limit {
+  color: var(--warning);
+  font-weight: 600;
+}
+.column--over-limit .column__header {
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  border-radius: 6px;
+}
+.column--over-limit .column__header .column__count,
+.column--over-limit .column__header .column__limit {
+  color: var(--danger);
+  font-weight: 600;
+}
+.column__wip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+  font: inherit;
+  border: none;
+  background: none;
+  padding: 1px 4px;
+  margin-left: -4px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.column__wip:hover {
+  background: var(--surface-hover);
+}
+.column__wip-form {
+  display: inline-flex;
+  margin-left: -4px;
+}
+.column__wip-input {
+  width: 46px;
+  height: 20px;
+  font-size: 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+  padding: 0 4px;
+}
+.column__limit {
+  font-size: 10px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.column__limit-note {
+  margin: 6px 2px 0;
+  padding: 8px 10px;
+  font-size: 10.5px;
+  color: var(--secondary);
+  border: 1px dashed var(--border-strong);
+  border-radius: 7px;
+}
+.column__add:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 .column__header {
   display: flex;
   align-items: center;
@@ -1965,6 +2034,9 @@ details[open] > .toolbar-button {
 }
 .toast > .icon {
   color: var(--green);
+}
+.toast--warning > .icon {
+  color: var(--warning);
 }
 .toast .icon-button {
   width: 22px;
