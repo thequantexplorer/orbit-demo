@@ -1,13 +1,19 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { defaultRangeExtractor, useVirtualizer } from '@tanstack/react-virtual'
-import type { Card, Column } from '../types'
+import type { Card, Column, ColumnId } from '../types'
 import { AddCardForm } from './AddCardForm'
 import { SortableCard } from './SortableCard'
 import { Icon, StatusIcon } from './Icon'
 
-const CARD_GAP = 9
+const CARD_GAP = 4
+
+// Display-only work-in-progress limits shown in column headers.
+const WIP_LIMITS: Partial<Record<ColumnId, number>> = {
+  'in-progress': 3,
+  review: 2,
+}
 
 interface ColumnViewProps {
   column: Column
@@ -23,9 +29,9 @@ interface ColumnViewProps {
 
 // First guess before a card is measured; measured heights replace it.
 function estimateCardHeight(card: Card, showDescriptions: boolean) {
-  const base = showDescriptions ? 105 : 96
-  const titleWrap = card.title.length > 40 ? 19 : 0
-  const description = showDescriptions && card.description ? 38 : 0
+  const base = 52
+  const titleWrap = showDescriptions && card.title.length > 34 ? 17 : 0
+  const description = showDescriptions && card.description ? 36 : 0
   return base + titleWrap + description
 }
 
@@ -49,6 +55,8 @@ export function ColumnView({
   const activeIndex = activeCardId
     ? cards.findIndex((card) => card.id === activeCardId)
     : -1
+  const wipLimit = WIP_LIMITS[column.id]
+  const totalCount = column.cardIds.length
   const focusedIndex = focusedCardId
     ? cards.findIndex((card) => card.id === focusedCardId)
     : -1
@@ -93,6 +101,30 @@ export function ColumnView({
         <span className="column__count" data-testid={`count-${column.id}`}>
           {cards.length}
         </span>
+        {filtered && (
+          <span className="column__total" title="Total in column">
+            /{totalCount}
+          </span>
+        )}
+        {wipLimit !== undefined && (
+          <>
+            <span
+              className={`column__wip${totalCount > wipLimit ? ' column__wip--over' : ''}`}
+              title={`Work-in-progress limit: ${wipLimit}`}
+            >
+              WIP {totalCount}/{wipLimit}
+            </span>
+            <span
+              className="column__meter"
+              aria-hidden="true"
+              style={
+                {
+                  '--wip-fill': `${Math.min(100, (totalCount / wipLimit) * 100)}%`,
+                } as CSSProperties
+              }
+            />
+          </>
+        )}
         {column.id === 'done' && column.cardIds.length > 0 && (
           <button
             className="column__clear"
@@ -115,7 +147,7 @@ export function ColumnView({
               ?.focus()
           }
         >
-          <Icon name="plus" size={15} />
+          <Icon name="plus" size={14} />
         </button>
       </header>
 

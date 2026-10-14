@@ -568,7 +568,11 @@ export default function App() {
           <>
             <div className="board-toolbar">
               <div className="toolbar-left">
-                <div className="view-switch" aria-label="Issue layout">
+                <div
+                  className="view-switch"
+                  role="group"
+                  aria-label="Issue layout"
+                >
                   <button
                     className={layout === 'board' ? 'is-selected' : ''}
                     aria-pressed={layout === 'board'}
@@ -807,9 +811,37 @@ export default function App() {
                 : 'Storage unavailable — changes won’t survive refresh'}
           </span>
           <span className="footer-tip">
-            {view === 'overview'
-              ? 'Built for the way you work.'
-              : 'Drag to move · Click to edit'}
+            {view === 'overview' ? (
+              'Built for the way you work.'
+            ) : (
+              <>
+                {layout === 'board' && (
+                  <>
+                    <span className="footer-hint">
+                      <kbd>Space</kbd> grab
+                    </span>
+                    <span className="footer-hint">
+                      <kbd>←</kbd>
+                      <kbd>↑</kbd>
+                      <kbd>↓</kbd>
+                      <kbd>→</kbd> move
+                    </span>
+                  </>
+                )}
+                <span className="footer-hint">
+                  <kbd>↵</kbd> open
+                </span>
+                <span className="footer-hint footer-hint--extra">
+                  <kbd>C</kbd> new
+                </span>
+                <span className="footer-hint footer-hint--extra">
+                  <kbd>/</kbd> search
+                </span>
+                <span className="footer-hint footer-hint--extra">
+                  <kbd>⌘K</kbd> commands
+                </span>
+              </>
+            )}
             <span className="footer-divider" />
             <button onClick={() => setHelpOpen(true)}>
               <kbd>?</kbd> Shortcuts

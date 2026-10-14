@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import { ASSIGNEES } from '../data'
 
 interface AvatarProps {
@@ -11,6 +12,7 @@ export function Avatar({ assigneeId, size = 'sm' }: AvatarProps) {
     return (
       <span
         className={`avatar avatar--${size} avatar--empty`}
+        role="img"
         title="Unassigned"
         aria-label="Unassigned"
       >
@@ -21,7 +23,8 @@ export function Avatar({ assigneeId, size = 'sm' }: AvatarProps) {
   return (
     <span
       className={`avatar avatar--${size}`}
-      style={{ background: assignee.color }}
+      style={{ '--avatar-color': assignee.color } as CSSProperties}
+      role="img"
       title={assignee.name}
       aria-label={assignee.name}
     >
