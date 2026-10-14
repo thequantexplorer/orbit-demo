@@ -39,6 +39,8 @@ import { IssueList } from './components/IssueList'
 import { LabelPill } from './components/LabelPill'
 import { Sidebar } from './components/Sidebar'
 
+const THEME_KEY = 'orbit-editorial-theme'
+
 const collisionDetection: CollisionDetection = (args) => {
   const within = pointerWithin(args)
   const cardHits = within.filter(
@@ -84,9 +86,9 @@ export default function App() {
   const [toast, setToast] = useState('')
   const [dark, setDark] = useState(() => {
     try {
-      return localStorage.getItem('kanban-theme') === 'dark'
+      return localStorage.getItem(THEME_KEY) !== 'light'
     } catch {
-      return false
+      return true
     }
   })
   const dragSnapshot = useRef<BoardState | null>(null)
@@ -98,7 +100,7 @@ export default function App() {
   useEffect(() => {
     document.documentElement.dataset.theme = dark ? 'dark' : 'light'
     try {
-      localStorage.setItem('kanban-theme', dark ? 'dark' : 'light')
+      localStorage.setItem(THEME_KEY, dark ? 'dark' : 'light')
     } catch {
       /* The theme still works without storage. */
     }
@@ -385,6 +387,7 @@ export default function App() {
               <Icon name="layers" size={25} />
             </div>
             <div className="project-heading__copy">
+              <span className="project-kicker">Sprint 42 · Product</span>
               <div className="project-title-row">
                 <h1>{titles[view]}</h1>
                 <button
