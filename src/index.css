@@ -113,6 +113,18 @@ textarea:focus,
 select:focus {
   outline: none;
 }
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.board-search input:focus-visible,
+.add-card__input:focus-visible,
+.command-input input:focus-visible,
+.select-wrap select:focus-visible,
+.modal__title-input:focus-visible {
+  outline: none;
+}
 ::selection {
   background: #7774e52e;
 }
@@ -758,7 +770,7 @@ details[open] > .toolbar-button {
   width: 186px;
 }
 .board-search:focus-within {
-  border-color: var(--border-strong);
+  border-color: var(--primary);
   background: var(--surface);
   box-shadow: 0 0 0 2px var(--primary-subtle);
 }
