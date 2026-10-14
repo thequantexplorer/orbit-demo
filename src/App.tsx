@@ -90,6 +90,8 @@ export default function App() {
   const [saved, setSaved] = useState(true)
   const [toast, setToast] = useState('')
   const [toastWarning, setToastWarning] = useState(false)
+  // Bumped on every notification so a repeated message restarts its timer.
+  const [toastKey, setToastKey] = useState(0)
   const [dark, setDark] = useState(() => {
     try {
       return localStorage.getItem('kanban-theme') === 'dark'
@@ -115,13 +117,14 @@ export default function App() {
   const notify = useCallback((message: string, warning = false) => {
     setToast(message)
     setToastWarning(warning)
+    setToastKey((key) => key + 1)
   }, [])
 
   useEffect(() => {
     if (!toast) return
     const timer = window.setTimeout(() => setToast(''), 3200)
     return () => window.clearTimeout(timer)
-  }, [toast])
+  }, [toast, toastKey])
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
