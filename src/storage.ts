@@ -1,5 +1,6 @@
+import { isValidWipLimit } from './boardReducer'
 import { isValidDueDate } from './dueDate'
-import type { BoardState, Card } from './types'
+import type { BoardState, Card, Column } from './types'
 
 const STORAGE_KEY = 'kanban-board:v1'
 
@@ -47,5 +48,9 @@ function normalizeBoard(board: BoardState): BoardState {
       dueDate: isValidDueDate(card.dueDate) ? card.dueDate : null,
     }
   }
-  return { ...board, cards }
+  const columns: Column[] = board.columns.map((column) => ({
+    ...column,
+    wipLimit: isValidWipLimit(column.wipLimit) ? column.wipLimit : null,
+  }))
+  return { ...board, cards, columns }
 }

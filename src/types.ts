@@ -42,6 +42,8 @@ export interface Column {
   title: string
   accent: string
   cardIds: string[]
+  /** Optional work-in-progress limit; `null` means unlimited. */
+  wipLimit: number | null
 }
 
 export interface BoardState {

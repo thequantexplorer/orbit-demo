@@ -2,8 +2,10 @@ import { useEffect, useRef, useState } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { defaultRangeExtractor, useVirtualizer } from '@tanstack/react-virtual'
+import { isColumnFull } from '../boardReducer'
 import type { Card, Column } from '../types'
 import { AddCardForm } from './AddCardForm'
+import { WipLimitEditor } from './WipLimitEditor'
 import { SortableCard } from './SortableCard'
 import { Icon, StatusIcon } from './Icon'
 
@@ -13,11 +15,13 @@ interface ColumnViewProps {
   column: Column
   cards: Card[]
   isDropTarget: boolean
+  dropBlocked: boolean
   activeCardId: string | null
   showDescriptions: boolean
   onAddCard: (title: string) => void
   onOpenCard: (cardId: string) => void
   onClearColumn: () => void
+  onSetLimit: (limit: number | null) => void
   filtered?: boolean
 }
 
@@ -33,13 +37,20 @@ export function ColumnView({
   column,
   cards,
   isDropTarget,
+  dropBlocked,
   activeCardId,
   showDescriptions,
   onAddCard,
   onOpenCard,
   onClearColumn,
+  onSetLimit,
   filtered = false,
 }: ColumnViewProps) {
+  const full = isColumnFull(column)
+  const limitLabel =
+    column.wipLimit === null
+      ? null
+      : `${column.cardIds.length} / ${column.wipLimit}`
   const { setNodeRef } = useDroppable({
     id: column.id,
     data: { type: 'column' },
@@ -83,16 +94,44 @@ export function ColumnView({
 
   return (
     <section
-      className={`column${isDropTarget ? ' column--drop-target' : ''}`}
+      className={`column${isDropTarget ? ' column--drop-target' : ''}${
+        dropBlocked ? ' column--blocked' : ''
+      }`}
       data-column-id={column.id}
       aria-label={`${column.title} column`}
     >
-      <header className="column__header">
+      <header
+        className={`column__header${full ? ' column__header--full' : ''}`}
+        title={
+          full
+            ? `${column.title} is at its WIP limit (${limitLabel})`
+            : undefined
+        }
+      >
         <StatusIcon status={column.id} />
         <h2 className="column__title">{column.title}</h2>
-        <span className="column__count" data-testid={`count-${column.id}`}>
-          {cards.length}
+        <span
+          className="column__count"
+          data-testid={`count-${column.id}`}
+          aria-label={
+            limitLabel
+              ? `${limitLabel} issues, WIP limit ${column.wipLimit}`
+              : undefined
+          }
+        >
+          {column.wipLimit === null ? cards.length : column.cardIds.length}
         </span>
+        {column.wipLimit !== null && (
+          <span className="column__limit" data-testid={`limit-${column.id}`}>
+            / {column.wipLimit}
+          </span>
+        )}
+        <WipLimitEditor
+          columnTitle={column.title}
+          limit={column.wipLimit}
+          count={column.cardIds.length}
+          onChange={onSetLimit}
+        />
         {column.id === 'done' && column.cardIds.length > 0 && (
           <button
             className="column__clear"
@@ -106,7 +145,8 @@ export function ColumnView({
         <button
           className="icon-button column__add"
           aria-label={`New issue in ${column.title}`}
-          title={`Add to ${column.title}`}
+          title={full ? `${column.title} is at its WIP limit` : `Add to ${column.title}`}
+          disabled={full}
           onClick={() =>
             document
               .getElementById(
@@ -174,7 +214,17 @@ export function ColumnView({
         </div>
       </SortableContext>
 
-      <AddCardForm columnTitle={column.title} onAdd={onAddCard} />
+      {full ? (
+        <p className="column__notice" role="status">
+          <Icon name="signal" size={13} />
+          <span>
+            WIP limit reached ({limitLabel}). Move or close an issue before
+            adding more.
+          </span>
+        </p>
+      ) : (
+        <AddCardForm columnTitle={column.title} onAdd={onAddCard} />
+      )}
     </section>
   )
 }

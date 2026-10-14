@@ -1,5 +1,6 @@
 import { useRef, useState, type FormEvent } from 'react'
 import { ASSIGNEES, LABELS, LABEL_ORDER } from '../data'
+import { isColumnFull } from '../boardReducer'
 import type { Card, Column, ColumnId, LabelId } from '../types'
 import { Avatar } from './Avatar'
 import { Dialog } from './Dialog'
@@ -129,11 +130,20 @@ export function CardModal({
                     if (column) setStatus(column.id)
                   }}
                 >
-                  {columns.map((column) => (
-                    <option key={column.id} value={column.id}>
-                      {column.title}
-                    </option>
-                  ))}
+                  {columns.map((column) => {
+                    const full =
+                      column.id !== columnId && isColumnFull(column)
+                    return (
+                      <option
+                        key={column.id}
+                        value={column.id}
+                        disabled={full}
+                      >
+                        {column.title}
+                        {full ? ' (at WIP limit)' : ''}
+                      </option>
+                    )
+                  })}
                 </select>
                 <Icon name="down" size={12} />
               </div>

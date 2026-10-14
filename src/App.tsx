@@ -17,7 +17,13 @@ import {
   type UniqueIdentifier,
 } from '@dnd-kit/core'
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
-import { boardReducer, findColumnOfCard } from './boardReducer'
+import {
+  boardReducer,
+  canAcceptCard,
+  findColumnOfCard,
+  isColumnFull,
+  wipLimitMessage,
+} from './boardReducer'
 import { ASSIGNEES, LABELS, LABEL_ORDER, createSeedBoard } from './data'
 import { createGeneratedBoard, parseSeedCount } from './seed'
 import { loadBoard, saveBoard } from './storage'
@@ -82,6 +88,7 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [saved, setSaved] = useState(true)
   const [toast, setToast] = useState('')
+  const [toastTone, setToastTone] = useState<'success' | 'warning'>('success')
   const [dark, setDark] = useState(() => {
     try {
       return localStorage.getItem('kanban-theme') === 'dark'
@@ -90,6 +97,11 @@ export default function App() {
     }
   })
   const dragSnapshot = useRef<BoardState | null>(null)
+
+  function notify(message: string, tone: 'success' | 'warning' = 'success') {
+    setToastTone(tone)
+    setToast(message)
+  }
 
   useEffect(() => {
     if (!activeCardId && !seedCount) setSaved(saveBoard(board))
@@ -179,7 +191,7 @@ export default function App() {
     if (fromColumn === toColumn) return
 
     const target = board.columns.find((column) => column.id === toColumn)
-    if (!target) return
+    if (!target || isColumnFull(target)) return
 
     let toIndex = target.cardIds.length
     if (over.id !== toColumn) {
@@ -216,7 +228,13 @@ export default function App() {
     setOverColumnId(null)
     const fromColumn = resolveColumn(active.id)
     const toColumn = resolveColumn(over.id)
-    if (!fromColumn || !toColumn || fromColumn !== toColumn) return
+    if (!fromColumn || !toColumn) return
+    if (fromColumn !== toColumn) {
+      const target = board.columns.find((entry) => entry.id === toColumn)
+      if (target && isColumnFull(target))
+        notify(wipLimitMessage(target), 'warning')
+      return
+    }
 
     const column = board.columns.find((entry) => entry.id === fromColumn)
     if (!column) return
@@ -253,6 +271,9 @@ export default function App() {
   }
 
   const activeCard = activeCardId ? board.cards[activeCardId] : undefined
+  const activeCardColumn = activeCardId
+    ? findColumnOfCard(board, activeCardId)
+    : undefined
   const creating = openCardId === 'new'
   const openCard: Card | undefined = creating
     ? {
@@ -767,16 +788,38 @@ export default function App() {
                       isDropTarget={
                         activeCardId !== null && overColumnId === column.id
                       }
+                      dropBlocked={
+                        activeCardId !== null &&
+                        overColumnId === column.id &&
+                        activeCardColumn !== column.id &&
+                        isColumnFull(column)
+                      }
                       onAddCard={(title) => {
+                        if (!canAcceptCard(board, column.id)) {
+                          notify(wipLimitMessage(column), 'warning')
+                          return
+                        }
                         dispatch({
                           type: 'add-card',
                           columnId: column.id,
                           title,
                         })
-                        setToast('Issue created')
+                        notify('Issue created')
                       }}
                       onOpenCard={setOpenCardId}
                       onClearColumn={() => setClearDoneOpen(true)}
+                      onSetLimit={(limit) => {
+                        dispatch({
+                          type: 'set-wip-limit',
+                          columnId: column.id,
+                          limit,
+                        })
+                        notify(
+                          limit === null
+                            ? `WIP limit removed from ${column.title}`
+                            : `WIP limit for ${column.title} set to ${limit}`,
+                        )
+                      }}
                     />
                   ))}
                 </div>
@@ -825,7 +868,18 @@ export default function App() {
           columns={board.columns}
           creating={creating}
           onSave={(patch, columnId) => {
+            const target = board.columns.find(
+              (column) => column.id === columnId,
+            )
+            const movingIntoFull =
+              target !== undefined &&
+              columnId !== openCardColumn?.id &&
+              isColumnFull(target)
             if (creating) {
+              if (movingIntoFull) {
+                notify(wipLimitMessage(target), 'warning')
+                return
+              }
               dispatch({
                 type: 'add-card',
                 columnId,
@@ -835,6 +889,10 @@ export default function App() {
               navigate('project')
             } else {
               dispatch({ type: 'update-card', cardId: openCard.id, patch })
+              if (movingIntoFull) {
+                notify(wipLimitMessage(target), 'warning')
+                return
+              }
               if (columnId !== openCardColumn?.id)
                 dispatch({
                   type: 'move-card',
@@ -845,12 +903,12 @@ export default function App() {
                       ?.cardIds.length ?? 0,
                 })
             }
-            setToast(creating ? 'Issue created' : 'Issue updated')
+            notify(creating ? 'Issue created' : 'Issue updated')
           }}
           onDelete={() => {
             dispatch({ type: 'delete-card', cardId: openCard.id })
             closeModal()
-            setToast('Issue deleted')
+            notify('Issue deleted')
           }}
           onClose={closeModal}
         />
@@ -892,7 +950,7 @@ export default function App() {
                 dispatch({ type: 'reset' })
                 navigate('project')
                 setResetOpen(false)
-                setToast('Board reset to the original issues')
+                notify('Board reset to the original issues')
               }}
             >
               Reset board
@@ -935,7 +993,7 @@ export default function App() {
                     '[data-column-id="done"] .column__add',
                   )
                   ?.focus()
-                setToast('Done column cleared')
+                notify('Done column cleared')
               }}
             >
               Clear done
@@ -985,8 +1043,11 @@ export default function App() {
         </Dialog>
       )}
       {toast && (
-        <div className="toast" role="status">
-          <Icon name="circleCheck" size={17} />
+        <div
+          className={`toast${toastTone === 'warning' ? ' toast--warning' : ''}`}
+          role="status"
+        >
+          <Icon name={toastTone === 'warning' ? 'signal' : 'circleCheck'} size={17} />
           <span>{toast}</span>
           <button
             className="icon-button"
