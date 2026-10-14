@@ -14,13 +14,28 @@ Board state and appearance persist locally without accounts, APIs, or a backend.
 
 ## Run it
 
-```bash
-cd kanban-board
+You need [Node.js](https://nodejs.org/) 22.12 or newer (npm comes with it; CI
+uses Node 22). Check with `node -v`.
+
+The same commands work in a macOS or Linux terminal and in Windows PowerShell or
+Command Prompt. The app lives at the repository root, so there is no
+subfolder to `cd` into after cloning.
+
+```sh
+git clone https://github.com/thequantexplorer/orbit-demo.git
+cd orbit-demo
 npm install
 npm run dev
 ```
 
-Then open http://localhost:5173. Other scripts: `npm run build`, `npm run lint`.
+Then open http://localhost:5173.
+
+`npm install` may report high severity vulnerabilities. They come from
+development-only tooling (`puppeteer` and Vite's `postcss`), not from the app
+itself; you can run the app without fixing them. Don't run
+`npm audit fix --force`, which upgrades `puppeteer` to a breaking major version.
+
+Other scripts: `npm run build`, `npm run lint`, `npm test`.
 
 ## Working in Orbit
 
