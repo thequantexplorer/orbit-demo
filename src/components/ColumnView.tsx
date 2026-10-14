@@ -163,11 +163,11 @@ export function ColumnView({
           {cards.length === 0 && (
             <div className="column__empty">
               <StatusIcon status={column.id} />
-              <span>{filtered ? 'No matching issues' : 'No issues yet'}</span>
+              <span>{filtered ? 'Nothing matches… yet' : 'All clear here!'}</span>
               <small>
                 {filtered
                   ? 'Try another search or filter'
-                  : 'Drop an issue here to get started'}
+                  : 'Drop an issue in to get rolling'}
               </small>
             </div>
           )}
