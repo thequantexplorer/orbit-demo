@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { ASSIGNEES, LABELS, LABEL_ORDER } from '../data'
 import type { Card, Column, ColumnId, LabelId } from '../types'
 import { Avatar } from './Avatar'
@@ -32,6 +32,22 @@ export function CardModal({
   const dueDateInput = useRef<HTMLInputElement>(null)
   const [status, setStatus] = useState(columnId)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [toast, setToast] = useState('')
+
+  useEffect(() => {
+    if (!toast) return
+    const timer = window.setTimeout(() => setToast(''), 2000)
+    return () => window.clearTimeout(timer)
+  }, [toast])
+
+  async function copyId() {
+    try {
+      await navigator.clipboard.writeText(card.id)
+      setToast('Copied')
+    } catch {
+      setToast("Couldn't copy issue ID")
+    }
+  }
 
   function toggleLabel(labelId: LabelId) {
     setLabels((current) =>
@@ -80,14 +96,26 @@ export function CardModal({
               {creating ? 'New issue' : card.id}
             </span>
           </div>
-          <button
-            className="icon-button"
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-          >
-            <Icon name="close" />
-          </button>
+          <div className="modal__header-actions">
+            {!creating && (
+              <button
+                className="button copy-id-button"
+                type="button"
+                onClick={copyId}
+                title={`Copy ${card.id}`}
+              >
+                <Icon name="copy" size={13} /> Copy ID
+              </button>
+            )}
+            <button
+              className="icon-button"
+              type="button"
+              onClick={onClose}
+              aria-label="Close"
+            >
+              <Icon name="close" />
+            </button>
+          </div>
         </header>
         <div className="modal__body">
           <label htmlFor="modal-title" className="visually-hidden">
@@ -256,6 +284,20 @@ export function CardModal({
           </div>
         </footer>
       </form>
+      {toast && (
+        <div className="toast toast--dialog" role="status">
+          <Icon name="circleCheck" size={17} />
+          <span>{toast}</span>
+          <button
+            className="icon-button"
+            type="button"
+            aria-label="Dismiss notification"
+            onClick={() => setToast('')}
+          >
+            <Icon name="close" size={13} />
+          </button>
+        </div>
+      )}
     </Dialog>
   )
 }

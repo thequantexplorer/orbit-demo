@@ -32,6 +32,7 @@ const paths = {
   command:
     'M9 7V5a2 2 0 1 0-2 2h10a2 2 0 1 0-2-2v14a2 2 0 1 0 2-2H7a2 2 0 1 0 2 2V7',
   sidebar: 'M3 4h18v16H3z M9 4v16',
+  copy: 'M9 9h11v11H9z M5 15H4V4h11v1',
 } as const
 
 export type IconName = keyof typeof paths
