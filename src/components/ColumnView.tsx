@@ -7,7 +7,7 @@ import { AddCardForm } from './AddCardForm'
 import { SortableCard } from './SortableCard'
 import { Icon, StatusIcon } from './Icon'
 
-const CARD_GAP = 9
+const CARD_GAP = 10
 
 interface ColumnViewProps {
   column: Column
@@ -23,9 +23,9 @@ interface ColumnViewProps {
 
 // First guess before a card is measured; measured heights replace it.
 function estimateCardHeight(card: Card, showDescriptions: boolean) {
-  const base = showDescriptions ? 105 : 96
-  const titleWrap = card.title.length > 40 ? 19 : 0
-  const description = showDescriptions && card.description ? 38 : 0
+  const base = showDescriptions ? 122 : 106
+  const titleWrap = card.title.length > 40 ? 20 : 0
+  const description = showDescriptions && card.description ? 37 : 0
   return base + titleWrap + description
 }
 
@@ -162,12 +162,14 @@ export function ColumnView({
           )}
           {cards.length === 0 && (
             <div className="column__empty">
-              <StatusIcon status={column.id} />
-              <span>{filtered ? 'No matching issues' : 'No issues yet'}</span>
+              <span className="column__empty-art" aria-hidden="true">
+                <StatusIcon status={column.id} />
+              </span>
+              <span>{filtered ? 'No matches here' : 'Nothing here yet!'}</span>
               <small>
                 {filtered
                   ? 'Try another search or filter'
-                  : 'Drop an issue here to get started'}
+                  : 'Drag a card in or add one below'}
               </small>
             </div>
           )}

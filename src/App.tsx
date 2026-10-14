@@ -21,6 +21,7 @@ import { boardReducer, findColumnOfCard } from './boardReducer'
 import { ASSIGNEES, LABELS, LABEL_ORDER, createSeedBoard } from './data'
 import { createGeneratedBoard, parseSeedCount } from './seed'
 import { loadBoard, saveBoard } from './storage'
+import { useReducedMotion } from './useReducedMotion'
 import type {
   BoardState,
   Card,
@@ -90,6 +91,7 @@ export default function App() {
     }
   })
   const dragSnapshot = useRef<BoardState | null>(null)
+  const reducedMotion = useReducedMotion()
 
   useEffect(() => {
     if (!activeCardId && !seedCount) setSaved(saveBoard(board))
@@ -604,7 +606,7 @@ export default function App() {
                     )}
                   </summary>
                   <div className="popover-panel">
-                    <h3>Filter issues</h3>
+                    <h2>Filter issues</h2>
                     <span className="popover-label">Labels</span>
                     {LABEL_ORDER.map((label) => (
                       <label key={label} className="filter-option">
@@ -690,7 +692,7 @@ export default function App() {
                     <span>Display</span>
                   </summary>
                   <div className="popover-panel">
-                    <h3>Display options</h3>
+                    <h2>Display options</h2>
                     <label className="display-option">
                       <span>Show descriptions</span>
                       <input
@@ -787,10 +789,14 @@ export default function App() {
                 />
               )}
               <DragOverlay
-                dropAnimation={{
-                  duration: 200,
-                  easing: 'cubic-bezier(0.2, 0, 0, 1)',
-                }}
+                dropAnimation={
+                  reducedMotion
+                    ? null
+                    : {
+                        duration: 280,
+                        easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+                      }
+                }
               >
                 {activeCard ? <CardView card={activeCard} overlay /> : null}
               </DragOverlay>
