@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useReducer,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react'
 import { flushSync } from 'react-dom'
 import {
   DndContext,
@@ -56,6 +63,18 @@ function issueCountLabel(count: number) {
   return `${count} ${count === 1 ? 'issue' : 'issues'}`
 }
 
+const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)'
+
+function subscribeReducedMotion(onChange: () => void) {
+  const media = window.matchMedia(REDUCED_MOTION_QUERY)
+  media.addEventListener('change', onChange)
+  return () => media.removeEventListener('change', onChange)
+}
+
+function getReducedMotion() {
+  return window.matchMedia(REDUCED_MOTION_QUERY).matches
+}
+
 export default function App() {
   const [board, dispatch] = useReducer(
     boardReducer,
@@ -70,6 +89,11 @@ export default function App() {
   const [openCardId, setOpenCardId] = useState<string | null>(null)
   const [view, setView] = useState<WorkspaceView>('project')
   const [layout, setLayout] = useState<'board' | 'list'>('board')
+  const reducedMotion = useSyncExternalStore(
+    subscribeReducedMotion,
+    getReducedMotion,
+    () => false,
+  )
   const [query, setQuery] = useState('')
   const [labelFilter, setLabelFilter] = useState<LabelId[]>([])
   const [assigneeFilter, setAssigneeFilter] = useState('')
@@ -604,7 +628,7 @@ export default function App() {
                     )}
                   </summary>
                   <div className="popover-panel">
-                    <h3>Filter issues</h3>
+                    <h2>Filter issues</h2>
                     <span className="popover-label">Labels</span>
                     {LABEL_ORDER.map((label) => (
                       <label key={label} className="filter-option">
@@ -690,7 +714,7 @@ export default function App() {
                     <span>Display</span>
                   </summary>
                   <div className="popover-panel">
-                    <h3>Display options</h3>
+                    <h2>Display options</h2>
                     <label className="display-option">
                       <span>Show descriptions</span>
                       <input
@@ -787,10 +811,11 @@ export default function App() {
                 />
               )}
               <DragOverlay
-                dropAnimation={{
-                  duration: 200,
-                  easing: 'cubic-bezier(0.2, 0, 0, 1)',
-                }}
+                dropAnimation={
+                  reducedMotion
+                    ? null
+                    : { duration: 200, easing: 'cubic-bezier(0.2, 0, 0, 1)' }
+                }
               >
                 {activeCard ? <CardView card={activeCard} overlay /> : null}
               </DragOverlay>
