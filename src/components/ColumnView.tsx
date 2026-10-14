@@ -59,6 +59,7 @@ export function ColumnView({
   const [editingWip, setEditingWip] = useState(false)
   const wipButtonRef = useRef<HTMLButtonElement | null>(null)
   const wipCommitted = useRef(false)
+  const restoreWipFocus = useRef(false)
   const full = isColumnFull(column)
   const activeIndex = activeCardId
     ? cards.findIndex((card) => card.id === activeCardId)
@@ -95,28 +96,35 @@ export function ColumnView({
     virtualizer.measure()
   }, [virtualizer, showDescriptions])
 
-  function commitWipLimit(value: string) {
+  useEffect(() => {
+    if (!editingWip && restoreWipFocus.current) {
+      restoreWipFocus.current = false
+      wipButtonRef.current?.focus()
+    }
+  }, [editingWip])
+
+  function commitWipLimit(value: string, restoreFocus: boolean) {
     if (wipCommitted.current) return
     wipCommitted.current = true
+    restoreWipFocus.current = restoreFocus
     const trimmed = value.trim()
     if (trimmed === '') {
       onSetWipLimit(null)
     } else {
       const limit = Number(trimmed)
       if (!isValidWipLimit(limit)) {
-        cancelWipEdit()
+        cancelWipEdit(restoreFocus)
         return
       }
       onSetWipLimit(limit)
     }
     setEditingWip(false)
-    wipButtonRef.current?.focus()
   }
 
-  function cancelWipEdit() {
+  function cancelWipEdit(restoreFocus: boolean) {
     wipCommitted.current = true
+    restoreWipFocus.current = restoreFocus
     setEditingWip(false)
-    wipButtonRef.current?.focus()
   }
 
   const sectionClass = `column${isDropTarget ? ' column--drop-target' : ''}${
@@ -142,7 +150,10 @@ export function ColumnView({
             onSubmit={(event) => {
               event.preventDefault()
               const input = event.currentTarget.elements.namedItem('wip')
-              commitWipLimit(input instanceof HTMLInputElement ? input.value : '')
+              commitWipLimit(
+                input instanceof HTMLInputElement ? input.value : '',
+                true,
+              )
             }}
           >
             <input
@@ -157,11 +168,11 @@ export function ColumnView({
               placeholder="None"
               defaultValue={column.wipLimit ?? ''}
               autoFocus
-              onBlur={(event) => commitWipLimit(event.target.value)}
+              onBlur={(event) => commitWipLimit(event.target.value, false)}
               onKeyDown={(event) => {
                 if (event.key === 'Escape') {
                   event.stopPropagation()
-                  cancelWipEdit()
+                  cancelWipEdit(true)
                 }
               }}
             />

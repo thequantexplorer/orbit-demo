@@ -208,6 +208,7 @@ export default function App() {
   }
 
   function handleDragEnd({ active, over, activatorEvent }: DragEndEvent) {
+    const snapshot = dragSnapshot.current
     if (!over) {
       handleDragCancel()
       return
@@ -229,6 +230,7 @@ export default function App() {
         (column) => column.id === toColumn,
       )
       if (targetColumn && isColumnFull(targetColumn)) {
+        if (snapshot) dispatch({ type: 'restore', board: snapshot })
         showToast(wipLimitMessage(targetColumn), 'warning')
       }
       return
@@ -867,11 +869,15 @@ export default function App() {
             const target = board.columns.find(
               (column) => column.id === columnId,
             )
+            const blocked =
+              target !== undefined &&
+              isColumnFull(target) &&
+              (creating || columnId !== openCardColumn?.id)
+            if (blocked) {
+              showToast(wipLimitMessage(target), 'warning')
+              return false
+            }
             if (creating) {
-              if (target && isColumnFull(target)) {
-                showToast(wipLimitMessage(target), 'warning')
-                return
-              }
               dispatch({
                 type: 'add-card',
                 columnId,
@@ -882,10 +888,6 @@ export default function App() {
             } else {
               dispatch({ type: 'update-card', cardId: openCard.id, patch })
               if (columnId !== openCardColumn?.id) {
-                if (target && isColumnFull(target)) {
-                  showToast(wipLimitMessage(target), 'warning')
-                  return
-                }
                 dispatch({
                   type: 'move-card',
                   cardId: openCard.id,
@@ -895,6 +897,7 @@ export default function App() {
               }
             }
             showToast(creating ? 'Issue created' : 'Issue updated')
+            return true
           }}
           onDelete={() => {
             dispatch({ type: 'delete-card', cardId: openCard.id })

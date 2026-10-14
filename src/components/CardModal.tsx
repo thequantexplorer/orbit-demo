@@ -11,7 +11,7 @@ interface CardModalProps {
   columnId: ColumnId
   columns: Column[]
   creating?: boolean
-  onSave: (patch: Omit<Card, 'id'>, columnId: ColumnId) => void
+  onSave: (patch: Omit<Card, 'id'>, columnId: ColumnId) => boolean
   onDelete: () => void
   onClose: () => void
 }
@@ -56,7 +56,7 @@ export function CardModal({
   function handleSave(event: FormEvent) {
     event.preventDefault()
     if (!title.trim()) return
-    onSave(
+    const saved = onSave(
       {
         title: title.trim(),
         description: description.trim(),
@@ -66,7 +66,7 @@ export function CardModal({
       },
       status,
     )
-    onClose()
+    if (saved) onClose()
   }
 
   return (
