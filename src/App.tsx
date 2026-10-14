@@ -223,6 +223,7 @@ export default function App() {
         )
         ?.focus({ preventScroll: true })
     }
+    const snapshot = dragSnapshot.current
     dragSnapshot.current = null
     setActiveCardId(null)
     setOverColumnId(null)
@@ -230,9 +231,13 @@ export default function App() {
     const toColumn = resolveColumn(over.id)
     if (!fromColumn || !toColumn) return
     if (fromColumn !== toColumn) {
+      // Drag-over never moves a card into a full column, so landing on one
+      // means the drop was rejected: put the card back where it started.
       const target = board.columns.find((entry) => entry.id === toColumn)
-      if (target && isColumnFull(target))
+      if (target && isColumnFull(target)) {
+        if (snapshot) dispatch({ type: 'restore', board: snapshot })
         notify(wipLimitMessage(target), 'warning')
+      }
       return
     }
 
@@ -864,7 +869,11 @@ export default function App() {
         <CardModal
           key={openCard.id}
           card={openCard}
-          columnId={openCardColumn?.id ?? 'backlog'}
+          columnId={
+            openCardColumn?.id ??
+            board.columns.find((column) => !isColumnFull(column))?.id ??
+            'backlog'
+          }
           columns={board.columns}
           creating={creating}
           onSave={(patch, columnId) => {
@@ -875,11 +884,11 @@ export default function App() {
               target !== undefined &&
               columnId !== openCardColumn?.id &&
               isColumnFull(target)
+            if (movingIntoFull) {
+              notify(wipLimitMessage(target), 'warning')
+              return false
+            }
             if (creating) {
-              if (movingIntoFull) {
-                notify(wipLimitMessage(target), 'warning')
-                return
-              }
               dispatch({
                 type: 'add-card',
                 columnId,
@@ -889,10 +898,6 @@ export default function App() {
               navigate('project')
             } else {
               dispatch({ type: 'update-card', cardId: openCard.id, patch })
-              if (movingIntoFull) {
-                notify(wipLimitMessage(target), 'warning')
-                return
-              }
               if (columnId !== openCardColumn?.id)
                 dispatch({
                   type: 'move-card',
@@ -904,6 +909,7 @@ export default function App() {
                 })
             }
             notify(creating ? 'Issue created' : 'Issue updated')
+            return true
           }}
           onDelete={() => {
             dispatch({ type: 'delete-card', cardId: openCard.id })

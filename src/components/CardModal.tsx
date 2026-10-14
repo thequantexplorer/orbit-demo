@@ -11,7 +11,8 @@ interface CardModalProps {
   columnId: ColumnId
   columns: Column[]
   creating?: boolean
-  onSave: (patch: Omit<Card, 'id'>, columnId: ColumnId) => void
+  /** Return `false` to keep the modal open (e.g. the target column is full). */
+  onSave: (patch: Omit<Card, 'id'>, columnId: ColumnId) => boolean | void
   onDelete: () => void
   onClose: () => void
 }
@@ -45,7 +46,7 @@ export function CardModal({
   function handleSave(event: FormEvent) {
     event.preventDefault()
     if (!title.trim()) return
-    onSave(
+    const saved = onSave(
       {
         title: title.trim(),
         description: description.trim(),
@@ -55,7 +56,7 @@ export function CardModal({
       },
       status,
     )
-    onClose()
+    if (saved !== false) onClose()
   }
 
   return (
