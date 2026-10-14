@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import { LABELS } from '../data'
 import type { LabelId } from '../types'
 
@@ -9,7 +10,10 @@ export function LabelPill({ labelId }: LabelPillProps) {
   const label = LABELS[labelId]
   return (
     <span className="label-pill">
-      <span className="label-dot" style={{ background: label.color }} />
+      <span
+        className="label-dot"
+        style={{ '--label-color': label.color } as CSSProperties}
+      />
       {label.name}
     </span>
   )

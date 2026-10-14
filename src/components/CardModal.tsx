@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent } from 'react'
+import { useRef, useState, type CSSProperties, type FormEvent } from 'react'
 import { ASSIGNEES, LABELS, LABEL_ORDER } from '../data'
 import type { Card, Column, ColumnId, LabelId } from '../types'
 import { Avatar } from './Avatar'
@@ -199,7 +199,9 @@ export function CardModal({
               >
                 <span
                   className="label-dot"
-                  style={{ background: LABELS[labelId].color }}
+                  style={
+                    { '--label-color': LABELS[labelId].color } as CSSProperties
+                  }
                 />
                 {LABELS[labelId].name}
                 {labels.includes(labelId) && <Icon name="check" size={12} />}

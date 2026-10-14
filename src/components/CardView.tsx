@@ -6,9 +6,9 @@ import { Avatar } from './Avatar'
 import { LabelPill } from './LabelPill'
 import { Icon } from './Icon'
 
-interface CardViewProps extends HTMLAttributes<HTMLElement> {
+interface CardViewProps extends HTMLAttributes<HTMLDivElement> {
   card: Card
-  ref?: Ref<HTMLElement>
+  ref?: Ref<HTMLDivElement>
   dragging?: boolean
   overlay?: boolean
 }
@@ -31,20 +31,18 @@ export function CardView({
     .join(' ')
   const todayKey = useTodayKey()
   const dueChip = getDueChip(card.dueDate, fromDateKey(todayKey))
+  const urgent = card.labels.includes('urgent')
 
   return (
-    <article ref={ref} className={classes} data-card-id={card.id} {...rest}>
-      <div className="card__topline">
-        <span className="card__id">{card.id}</span>
-        {card.labels.includes('urgent') ? (
+    <div ref={ref} className={classes} data-card-id={card.id} {...rest}>
+      <div className="card__heading">
+        <h3 className="card__title">{card.title}</h3>
+        {urgent && (
           <span className="priority priority--urgent" title="Urgent">
             !
           </span>
-        ) : (
-          <Icon name="signal" size={13} className="card__priority" />
         )}
       </div>
-      <h3 className="card__title">{card.title}</h3>
       {card.description && (
         <p className="card__description">{card.description}</p>
       )}
@@ -63,8 +61,12 @@ export function CardView({
             <LabelPill key={labelId} labelId={labelId} />
           ))}
         </div>
+        <span className="card__meta">
+          {!urgent && <Icon name="signal" size={12} className="card__priority" />}
+          <span className="card__id">{card.id}</span>
+        </span>
         <Avatar assigneeId={card.assigneeId} />
       </div>
-    </article>
+    </div>
   )
 }
