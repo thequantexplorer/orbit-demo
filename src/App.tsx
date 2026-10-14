@@ -84,9 +84,9 @@ export default function App() {
   const [toast, setToast] = useState('')
   const [dark, setDark] = useState(() => {
     try {
-      return localStorage.getItem('kanban-theme') === 'dark'
+      return localStorage.getItem('kanban-theme') !== 'light'
     } catch {
-      return false
+      return true
     }
   })
   const dragSnapshot = useRef<BoardState | null>(null)
@@ -604,7 +604,7 @@ export default function App() {
                     )}
                   </summary>
                   <div className="popover-panel">
-                    <h3>Filter issues</h3>
+                    <h2>Filter issues</h2>
                     <span className="popover-label">Labels</span>
                     {LABEL_ORDER.map((label) => (
                       <label key={label} className="filter-option">
@@ -690,7 +690,7 @@ export default function App() {
                     <span>Display</span>
                   </summary>
                   <div className="popover-panel">
-                    <h3>Display options</h3>
+                    <h2>Display options</h2>
                     <label className="display-option">
                       <span>Show descriptions</span>
                       <input
