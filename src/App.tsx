@@ -56,6 +56,9 @@ function issueCountLabel(count: number) {
   return `${count} ${count === 1 ? 'issue' : 'issues'}`
 }
 
+const prefersReducedMotion = () =>
+  window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false
+
 export default function App() {
   const [board, dispatch] = useReducer(
     boardReducer,
@@ -787,10 +790,11 @@ export default function App() {
                 />
               )}
               <DragOverlay
-                dropAnimation={{
-                  duration: 200,
-                  easing: 'cubic-bezier(0.2, 0, 0, 1)',
-                }}
+                dropAnimation={
+                  prefersReducedMotion()
+                    ? null
+                    : { duration: 200, easing: 'cubic-bezier(0.2, 0, 0, 1)' }
+                }
               >
                 {activeCard ? <CardView card={activeCard} overlay /> : null}
               </DragOverlay>
