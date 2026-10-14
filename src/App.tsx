@@ -17,7 +17,11 @@ import {
   type UniqueIdentifier,
 } from '@dnd-kit/core'
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
-import { boardReducer, findColumnOfCard } from './boardReducer'
+import {
+  boardReducer,
+  findColumnOfCard,
+  isColumnAtLimit,
+} from './boardReducer'
 import { ASSIGNEES, LABELS, LABEL_ORDER, createSeedBoard } from './data'
 import { createGeneratedBoard, parseSeedCount } from './seed'
 import { loadBoard, saveBoard } from './storage'
@@ -90,6 +94,7 @@ export default function App() {
     }
   })
   const dragSnapshot = useRef<BoardState | null>(null)
+  const limitToastFor = useRef<ColumnId | null>(null)
 
   useEffect(() => {
     if (!activeCardId && !seedCount) setSaved(saveBoard(board))
@@ -166,6 +171,7 @@ export default function App() {
 
   function handleDragStart({ active }: DragStartEvent) {
     dragSnapshot.current = board
+    limitToastFor.current = null
     setActiveCardId(String(active.id))
     setOverColumnId(resolveColumn(active.id) ?? null)
   }
@@ -180,6 +186,16 @@ export default function App() {
 
     const target = board.columns.find((column) => column.id === toColumn)
     if (!target) return
+    if (isColumnAtLimit(target)) {
+      if (limitToastFor.current !== toColumn) {
+        limitToastFor.current = toColumn
+        setToast(
+          `${target.title} is at its WIP limit (${target.wipLimit}) — move an issue out first`,
+        )
+      }
+      return
+    }
+    limitToastFor.current = null
 
     let toIndex = target.cardIds.length
     if (over.id !== toColumn) {
@@ -768,6 +784,12 @@ export default function App() {
                         activeCardId !== null && overColumnId === column.id
                       }
                       onAddCard={(title) => {
+                        if (isColumnAtLimit(column)) {
+                          setToast(
+                            `${column.title} is at its WIP limit (${column.wipLimit})`,
+                          )
+                          return
+                        }
                         dispatch({
                           type: 'add-card',
                           columnId: column.id,
@@ -777,6 +799,13 @@ export default function App() {
                       }}
                       onOpenCard={setOpenCardId}
                       onClearColumn={() => setClearDoneOpen(true)}
+                      onSetLimit={(limit) =>
+                        dispatch({
+                          type: 'set-wip-limit',
+                          columnId: column.id,
+                          limit,
+                        })
+                      }
                     />
                   ))}
                 </div>
@@ -826,6 +855,15 @@ export default function App() {
           creating={creating}
           onSave={(patch, columnId) => {
             if (creating) {
+              const target = board.columns.find(
+                (column) => column.id === columnId,
+              )
+              if (target && isColumnAtLimit(target)) {
+                setToast(
+                  `${target.title} is at its WIP limit (${target.wipLimit}) — issue not created there`,
+                )
+                return
+              }
               dispatch({
                 type: 'add-card',
                 columnId,
@@ -835,15 +873,23 @@ export default function App() {
               navigate('project')
             } else {
               dispatch({ type: 'update-card', cardId: openCard.id, patch })
-              if (columnId !== openCardColumn?.id)
+              if (columnId !== openCardColumn?.id) {
+                const target = board.columns.find(
+                  (column) => column.id === columnId,
+                )
+                if (target && isColumnAtLimit(target)) {
+                  setToast(
+                    `${target.title} is at its WIP limit (${target.wipLimit}) — issue not moved`,
+                  )
+                  return
+                }
                 dispatch({
                   type: 'move-card',
                   cardId: openCard.id,
                   toColumn: columnId,
-                  toIndex:
-                    board.columns.find((column) => column.id === columnId)
-                      ?.cardIds.length ?? 0,
+                  toIndex: target?.cardIds.length ?? 0,
                 })
+              }
             }
             setToast(creating ? 'Issue created' : 'Issue updated')
           }}

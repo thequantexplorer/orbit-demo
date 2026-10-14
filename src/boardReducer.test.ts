@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { boardReducer, findColumnOfCard } from './boardReducer'
+import {
+  boardReducer,
+  findColumnOfCard,
+  isColumnAtLimit,
+} from './boardReducer'
 import { createSeedBoard } from './data'
 import type { BoardState, ColumnId } from './types'
 
@@ -175,6 +179,132 @@ describe('boardReducer', () => {
       expect(
         boardReducer(cleared, { type: 'clear-column', columnId: 'done' }),
       ).toBe(cleared)
+    })
+  })
+
+  describe('set-wip-limit', () => {
+    it('sets a limit on a column', () => {
+      const board = boardReducer(createSeedBoard(), {
+        type: 'set-wip-limit',
+        columnId: 'in-progress',
+        limit: 4,
+      })
+      expect(
+        board.columns.find((column) => column.id === 'in-progress')!.wipLimit,
+      ).toBe(4)
+      expect(
+        board.columns.find((column) => column.id === 'backlog')!.wipLimit,
+      ).toBeNull()
+    })
+
+    it('clears the limit with null', () => {
+      const limited = boardReducer(createSeedBoard(), {
+        type: 'set-wip-limit',
+        columnId: 'review',
+        limit: 2,
+      })
+      const cleared = boardReducer(limited, {
+        type: 'set-wip-limit',
+        columnId: 'review',
+        limit: null,
+      })
+      expect(
+        cleared.columns.find((column) => column.id === 'review')!.wipLimit,
+      ).toBeNull()
+    })
+
+    it('treats non-positive or non-integer limits as no limit', () => {
+      for (const limit of [0, -2, 1.5]) {
+        const board = boardReducer(createSeedBoard(), {
+          type: 'set-wip-limit',
+          columnId: 'backlog',
+          limit,
+        })
+        expect(
+          board.columns.find((column) => column.id === 'backlog')!.wipLimit,
+        ).toBeNull()
+      }
+    })
+  })
+
+  describe('wip limits', () => {
+    function boardWithLimit(limit: number) {
+      return boardReducer(createSeedBoard(), {
+        type: 'set-wip-limit',
+        columnId: 'in-progress',
+        limit,
+      })
+    }
+
+    it('isColumnAtLimit reports a column at or over its limit', () => {
+      const board = boardWithLimit(2)
+      const full = board.columns.find(
+        (column) => column.id === 'in-progress',
+      )!
+      const open = board.columns.find((column) => column.id === 'backlog')!
+      expect(isColumnAtLimit(full)).toBe(true)
+      expect(isColumnAtLimit(open)).toBe(false)
+    })
+
+    it('rejects a move into a column at its limit', () => {
+      const seed = boardWithLimit(2)
+      const board = boardReducer(seed, {
+        type: 'move-card',
+        cardId: 'KB-1',
+        toColumn: 'in-progress',
+        toIndex: 0,
+      })
+      expect(board).toBe(seed)
+      expect(cardIds(board, 'in-progress')).toEqual(['KB-5', 'KB-6'])
+      expect(cardIds(board, 'backlog')).toEqual([
+        'KB-1',
+        'KB-2',
+        'KB-3',
+        'KB-4',
+      ])
+    })
+
+    it('allows a move into a column below its limit', () => {
+      const board = boardReducer(boardWithLimit(3), {
+        type: 'move-card',
+        cardId: 'KB-1',
+        toColumn: 'in-progress',
+        toIndex: 0,
+      })
+      expect(cardIds(board, 'in-progress')).toEqual(['KB-1', 'KB-5', 'KB-6'])
+    })
+
+    it('still reorders within a column at its limit', () => {
+      const board = boardReducer(boardWithLimit(2), {
+        type: 'move-card',
+        cardId: 'KB-6',
+        toColumn: 'in-progress',
+        toIndex: 0,
+      })
+      expect(cardIds(board, 'in-progress')).toEqual(['KB-6', 'KB-5'])
+    })
+
+    it('rejects adding a card to a column at its limit', () => {
+      const seed = boardWithLimit(2)
+      const board = boardReducer(seed, {
+        type: 'add-card',
+        columnId: 'in-progress',
+        title: 'One too many',
+      })
+      expect(board).toBe(seed)
+      expect(board.cards['KB-10']).toBeUndefined()
+    })
+
+    it('keeps the limit on the column after other actions', () => {
+      const board = boardReducer(boardWithLimit(3), {
+        type: 'move-card',
+        cardId: 'KB-5',
+        toColumn: 'done',
+        toIndex: 0,
+      })
+      expect(
+        board.columns.find((column) => column.id === 'in-progress')!.wipLimit,
+      ).toBe(3)
     })
   })
 

@@ -4,13 +4,19 @@ import { Icon } from './Icon'
 interface AddCardFormProps {
   columnTitle: string
   onAdd: (title: string) => void
+  disabled?: boolean
 }
 
-export function AddCardForm({ columnTitle, onAdd }: AddCardFormProps) {
+export function AddCardForm({
+  columnTitle,
+  onAdd,
+  disabled = false,
+}: AddCardFormProps) {
   const [title, setTitle] = useState('')
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
+    if (disabled) return
     const trimmed = title.trim()
     if (!trimmed) return
     onAdd(trimmed)
@@ -26,14 +32,15 @@ export function AddCardForm({ columnTitle, onAdd }: AddCardFormProps) {
         type="text"
         value={title}
         onChange={(event) => setTitle(event.target.value)}
-        placeholder="Add a card…"
+        placeholder={disabled ? 'Column is at its WIP limit' : 'Add a card…'}
         aria-label={`Add a card to ${columnTitle}`}
         maxLength={200}
+        disabled={disabled}
       />
       <button
         className="add-card__button"
         type="submit"
-        disabled={!title.trim()}
+        disabled={disabled || !title.trim()}
         aria-label="Add card"
       >
         <span aria-hidden="true">↵</span>

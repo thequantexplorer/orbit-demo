@@ -1,5 +1,5 @@
 import { arrayMove } from '@dnd-kit/sortable'
-import type { BoardState, Card, ColumnId } from './types'
+import type { BoardState, Card, Column, ColumnId } from './types'
 import { createSeedBoard } from './data'
 
 export type BoardAction =
@@ -19,8 +19,13 @@ export type BoardAction =
   | { type: 'update-card'; cardId: string; patch: Partial<Omit<Card, 'id'>> }
   | { type: 'delete-card'; cardId: string }
   | { type: 'clear-column'; columnId: ColumnId }
+  | { type: 'set-wip-limit'; columnId: ColumnId; limit: number | null }
   | { type: 'reset' }
   | { type: 'restore'; board: BoardState }
+
+export function isColumnAtLimit(column: Column): boolean {
+  return column.wipLimit !== null && column.cardIds.length >= column.wipLimit
+}
 
 export function findColumnOfCard(
   board: BoardState,
@@ -37,6 +42,12 @@ export function boardReducer(
     case 'move-card': {
       const fromColumn = findColumnOfCard(board, action.cardId)
       if (!fromColumn) return board
+      if (fromColumn !== action.toColumn) {
+        const target = board.columns.find(
+          (column) => column.id === action.toColumn,
+        )
+        if (target && isColumnAtLimit(target)) return board
+      }
       return {
         ...board,
         columns: board.columns.map((column) => {
@@ -81,6 +92,10 @@ export function boardReducer(
     case 'add-card': {
       const title = action.title.trim()
       if (!title) return board
+      const target = board.columns.find(
+        (column) => column.id === action.columnId,
+      )
+      if (target && isColumnAtLimit(target)) return board
       const id = `KB-${board.nextCardNumber}`
       const card: Card = {
         id,
@@ -137,6 +152,20 @@ export function boardReducer(
         ),
         columns: board.columns.map((column) =>
           column.id === action.columnId ? { ...column, cardIds: [] } : column,
+        ),
+      }
+    }
+    case 'set-wip-limit': {
+      const limit =
+        action.limit !== null &&
+        Number.isInteger(action.limit) &&
+        action.limit > 0
+          ? action.limit
+          : null
+      return {
+        ...board,
+        columns: board.columns.map((column) =>
+          column.id === action.columnId ? { ...column, wipLimit: limit } : column,
         ),
       }
     }

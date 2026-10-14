@@ -992,6 +992,77 @@ details[open] > .toolbar-button {
 .column__clear + .column__add {
   margin-left: 0;
 }
+.column__header--at-limit {
+  background: color-mix(in srgb, var(--warning) 10%, var(--board));
+  border-radius: 6px;
+}
+.column__count--button {
+  cursor: pointer;
+  list-style: none;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+.column__count--button::-webkit-details-marker {
+  display: none;
+}
+.column__count--button:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+.column__count--at-limit {
+  color: var(--warning);
+  font-weight: 600;
+}
+.column__limit-editor .popover-panel {
+  width: 184px;
+  font-weight: 400;
+}
+.popover-hint {
+  font-size: 10px;
+  color: var(--muted);
+  margin: -6px 0 10px;
+}
+.limit-form {
+  display: flex;
+  gap: 6px;
+}
+.limit-form__input {
+  flex: 1;
+  min-width: 0;
+  height: 26px;
+  padding: 0 7px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 11px;
+}
+.limit-form .button {
+  height: 26px;
+  padding: 0 10px;
+  font-size: 11px;
+}
+.column__limit-editor .clear-filter-button {
+  margin-top: 8px;
+}
+.column__limit-note {
+  margin: 0 2px 8px;
+  padding: 6px 8px;
+  border: 1px solid color-mix(in srgb, var(--warning) 35%, var(--border));
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--warning) 8%, var(--surface));
+  color: var(--warning);
+  font-size: 10px;
+  line-height: 1.4;
+}
+.column__add:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.add-card__input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 .status-icon {
   width: 13px;
   height: 13px;

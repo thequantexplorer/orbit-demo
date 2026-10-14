@@ -42,6 +42,8 @@ export interface Column {
   title: string
   accent: string
   cardIds: string[]
+  /** Max cards allowed in the column, or null for no limit. */
+  wipLimit: number | null
 }
 
 export interface BoardState {
