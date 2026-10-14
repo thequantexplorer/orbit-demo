@@ -6,9 +6,9 @@ import { Avatar } from './Avatar'
 import { LabelPill } from './LabelPill'
 import { Icon } from './Icon'
 
-interface CardViewProps extends HTMLAttributes<HTMLElement> {
+interface CardViewProps extends HTMLAttributes<HTMLDivElement> {
   card: Card
-  ref?: Ref<HTMLElement>
+  ref?: Ref<HTMLDivElement>
   dragging?: boolean
   overlay?: boolean
 }
