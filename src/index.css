@@ -2028,7 +2028,7 @@ details[open] > .toolbar-button {
 }
 ::selection {
   background: var(--ring-halo);
-  color: #000;
+  color: var(--text);
 }
 ::-webkit-scrollbar {
   width: 10px;
@@ -2039,7 +2039,7 @@ details[open] > .toolbar-button {
   border: 2px solid var(--board);
   border-radius: 0;
 }
-button:focus-visible,
+button:focus-visible:not(.sidebar-scrim),
 summary:focus-visible,
 a:focus-visible,
 .display-option input:focus-visible,
@@ -2635,6 +2635,10 @@ details[open] > .toolbar-button {
   border-bottom: var(--stroke-bold) solid var(--rule);
 }
 .column__title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 21px;
   font-weight: 800;
   line-height: 1.05;
@@ -3581,5 +3585,15 @@ details[open] > .toolbar-button {
     animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;
+  }
+}
+@media (max-width: 1200px) {
+  .column {
+    min-width: 236px;
+    flex-basis: 236px;
+  }
+  .column__title {
+    font-size: 17px;
+    letter-spacing: -0.5px;
   }
 }
