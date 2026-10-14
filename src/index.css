@@ -2921,14 +2921,14 @@ kbd {
     padding-inline: 17px;
   }
   .board {
-    gap: 24px;
+    gap: 0;
     padding: 22px 34px;
   }
   .card {
     padding: 15px 17px;
   }
   .card__title {
-    font-size: 13px;
+    font-size: 17px;
   }
   .card__description {
     font-size: 11px;
@@ -2941,7 +2941,7 @@ kbd {
     font-size: 10px;
   }
   .column__title {
-    font-size: 12px;
+    font-size: 22px;
   }
 }
 @media (max-width: 1200px) {
