@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { defaultRangeExtractor, useVirtualizer } from '@tanstack/react-virtual'
 import type { Card, Column } from '../types'
+import { MAX_WIP_LIMIT, isColumnFull } from '../wipLimit'
 import { AddCardForm } from './AddCardForm'
 import { SortableCard } from './SortableCard'
 import { Icon, StatusIcon } from './Icon'
@@ -13,11 +14,13 @@ interface ColumnViewProps {
   column: Column
   cards: Card[]
   isDropTarget: boolean
+  isDropBlocked?: boolean
   activeCardId: string | null
   showDescriptions: boolean
   onAddCard: (title: string) => void
   onOpenCard: (cardId: string) => void
   onClearColumn: () => void
+  onSetWipLimit: (limit: number | null) => void
   filtered?: boolean
 }
 
@@ -33,11 +36,13 @@ export function ColumnView({
   column,
   cards,
   isDropTarget,
+  isDropBlocked = false,
   activeCardId,
   showDescriptions,
   onAddCard,
   onOpenCard,
   onClearColumn,
+  onSetWipLimit,
   filtered = false,
 }: ColumnViewProps) {
   const { setNodeRef } = useDroppable({
@@ -45,6 +50,26 @@ export function ColumnView({
     data: { type: 'column' },
   })
   const scrollRef = useRef<HTMLDivElement | null>(null)
+  const [editingLimit, setEditingLimit] = useState(false)
+  const limit = column.wipLimit
+  const atLimit = isColumnFull(column)
+  const blockedReason = atLimit
+    ? `At WIP limit of ${limit} — move an issue out`
+    : undefined
+
+  function commitLimit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const raw = new FormData(event.currentTarget).get('wip-limit')
+    const value = typeof raw === 'string' ? raw.trim() : ''
+    const next = value === '' ? null : Number(value)
+    if (
+      next === null ||
+      (Number.isInteger(next) && next >= 1 && next <= MAX_WIP_LIMIT)
+    ) {
+      if (next !== limit) onSetWipLimit(next)
+      setEditingLimit(false)
+    }
+  }
   const [focusedCardId, setFocusedCardId] = useState<string | null>(null)
   const activeIndex = activeCardId
     ? cards.findIndex((card) => card.id === activeCardId)
@@ -83,16 +108,67 @@ export function ColumnView({
 
   return (
     <section
-      className={`column${isDropTarget ? ' column--drop-target' : ''}`}
+      className={`column${isDropTarget && !isDropBlocked ? ' column--drop-target' : ''}${isDropBlocked ? ' column--drop-blocked' : ''}`}
       data-column-id={column.id}
       aria-label={`${column.title} column`}
     >
-      <header className="column__header">
+      <header
+        className={`column__header${atLimit ? ' column__header--at-limit' : ''}`}
+        title={atLimit ? `${column.title} is at its WIP limit` : undefined}
+      >
         <StatusIcon status={column.id} />
         <h2 className="column__title">{column.title}</h2>
         <span className="column__count" data-testid={`count-${column.id}`}>
-          {cards.length}
+          {limit === null ? cards.length : column.cardIds.length}
         </span>
+        {editingLimit ? (
+          <form
+            className="column__limit-form"
+            onSubmit={commitLimit}
+            onBlur={(event) => {
+              const form = event.currentTarget
+              if (form.contains(event.relatedTarget)) return
+              if (form.checkValidity()) form.requestSubmit()
+              else setEditingLimit(false)
+            }}
+          >
+            <span aria-hidden="true">/</span>
+            <input
+              name="wip-limit"
+              className="column__limit-input"
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={MAX_WIP_LIMIT}
+              step={1}
+              defaultValue={limit ?? ''}
+              placeholder="∞"
+              aria-label={`WIP limit for ${column.title} (empty for none)`}
+              autoFocus
+              onFocus={(event) => event.currentTarget.select()}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape') {
+                  event.stopPropagation()
+                  setEditingLimit(false)
+                }
+              }}
+            />
+          </form>
+        ) : (
+          <button
+            className={`column__limit${limit === null ? ' column__limit--unset' : ''}`}
+            data-testid={`limit-${column.id}`}
+            aria-label={
+              limit === null
+                ? `Set WIP limit for ${column.title}`
+                : `Edit WIP limit for ${column.title}, ${column.cardIds.length} of ${limit}`
+            }
+            title={limit === null ? 'Set a WIP limit' : 'Edit WIP limit'}
+            onClick={() => setEditingLimit(true)}
+          >
+            {limit === null ? 'Limit' : `/ ${limit}`}
+          </button>
+        )}
         {column.id === 'done' && column.cardIds.length > 0 && (
           <button
             className="column__clear"
@@ -106,7 +182,8 @@ export function ColumnView({
         <button
           className="icon-button column__add"
           aria-label={`New issue in ${column.title}`}
-          title={`Add to ${column.title}`}
+          title={blockedReason ?? `Add to ${column.title}`}
+          disabled={atLimit}
           onClick={() =>
             document
               .getElementById(
@@ -174,7 +251,11 @@ export function ColumnView({
         </div>
       </SortableContext>
 
-      <AddCardForm columnTitle={column.title} onAdd={onAddCard} />
+      <AddCardForm
+        columnTitle={column.title}
+        onAdd={onAddCard}
+        blockedReason={blockedReason}
+      />
     </section>
   )
 }

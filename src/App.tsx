@@ -21,9 +21,11 @@ import { boardReducer, findColumnOfCard } from './boardReducer'
 import { ASSIGNEES, LABELS, LABEL_ORDER, createSeedBoard } from './data'
 import { createGeneratedBoard, parseSeedCount } from './seed'
 import { loadBoard, saveBoard } from './storage'
+import { isColumnFull } from './wipLimit'
 import type {
   BoardState,
   Card,
+  Column,
   ColumnId,
   LabelId,
   WorkspaceView,
@@ -52,6 +54,10 @@ const collisionDetection: CollisionDetection = (args) => {
 // `?seed=N` loads N generated cards for benchmarking; they are never saved.
 const seedCount = parseSeedCount(window.location.search)
 
+function wipLimitMessage(column: Column) {
+  return `${column.title} is at its WIP limit (${column.cardIds.length} / ${column.wipLimit}). Move an issue out or raise the limit.`
+}
+
 function issueCountLabel(count: number) {
   return `${count} ${count === 1 ? 'issue' : 'issues'}`
 }
@@ -67,6 +73,7 @@ export default function App() {
   )
   const [activeCardId, setActiveCardId] = useState<string | null>(null)
   const [overColumnId, setOverColumnId] = useState<ColumnId | null>(null)
+  const [dragOrigin, setDragOrigin] = useState<ColumnId | null>(null)
   const [openCardId, setOpenCardId] = useState<string | null>(null)
   const [view, setView] = useState<WorkspaceView>('project')
   const [layout, setLayout] = useState<'board' | 'list'>('board')
@@ -82,6 +89,7 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [saved, setSaved] = useState(true)
   const [toast, setToast] = useState('')
+  const [toastWarning, setToastWarning] = useState(false)
   const [dark, setDark] = useState(() => {
     try {
       return localStorage.getItem('kanban-theme') === 'dark'
@@ -103,6 +111,11 @@ export default function App() {
       /* The theme still works without storage. */
     }
   }, [dark])
+
+  const notify = useCallback((message: string, warning = false) => {
+    setToast(message)
+    setToastWarning(warning)
+  }, [])
 
   useEffect(() => {
     if (!toast) return
@@ -168,6 +181,7 @@ export default function App() {
     dragSnapshot.current = board
     setActiveCardId(String(active.id))
     setOverColumnId(resolveColumn(active.id) ?? null)
+    setDragOrigin(resolveColumn(active.id) ?? null)
   }
 
   function handleDragOver({ active, over }: DragOverEvent) {
@@ -180,6 +194,9 @@ export default function App() {
 
     const target = board.columns.find((column) => column.id === toColumn)
     if (!target) return
+    // A card may always return to the column it was picked up from.
+    const returning = toColumn === dragOrigin
+    if (!returning && isColumnFull(target)) return
 
     let toIndex = target.cardIds.length
     if (over.id !== toColumn) {
@@ -196,12 +213,26 @@ export default function App() {
       cardId: String(active.id),
       toColumn,
       toIndex,
+      ignoreWipLimit: returning,
     })
   }
 
   function handleDragEnd({ active, over, activatorEvent }: DragEndEvent) {
     if (!over) {
       handleDragCancel()
+      return
+    }
+    const dropColumn = board.columns.find(
+      (column) => column.id === resolveColumn(over.id),
+    )
+    if (
+      dropColumn &&
+      dropColumn.id !== dragOrigin &&
+      !dropColumn.cardIds.includes(String(active.id)) &&
+      isColumnFull(dropColumn)
+    ) {
+      handleDragCancel()
+      notify(wipLimitMessage(dropColumn), true)
       return
     }
     if (activatorEvent instanceof KeyboardEvent) {
@@ -214,6 +245,7 @@ export default function App() {
     dragSnapshot.current = null
     setActiveCardId(null)
     setOverColumnId(null)
+    setDragOrigin(null)
     const fromColumn = resolveColumn(active.id)
     const toColumn = resolveColumn(over.id)
     if (!fromColumn || !toColumn || fromColumn !== toColumn) return
@@ -241,6 +273,7 @@ export default function App() {
     dragSnapshot.current = null
     setActiveCardId(null)
     setOverColumnId(null)
+    setDragOrigin(null)
   }
 
   const closeModal = useCallback(() => setOpenCardId(null), [])
@@ -767,16 +800,39 @@ export default function App() {
                       isDropTarget={
                         activeCardId !== null && overColumnId === column.id
                       }
+                      isDropBlocked={
+                        activeCardId !== null &&
+                        overColumnId === column.id &&
+                        dragOrigin !== column.id &&
+                        !column.cardIds.includes(activeCardId) &&
+                        isColumnFull(column)
+                      }
                       onAddCard={(title) => {
+                        if (isColumnFull(column)) {
+                          notify(wipLimitMessage(column), true)
+                          return
+                        }
                         dispatch({
                           type: 'add-card',
                           columnId: column.id,
                           title,
                         })
-                        setToast('Issue created')
+                        notify('Issue created')
                       }}
                       onOpenCard={setOpenCardId}
                       onClearColumn={() => setClearDoneOpen(true)}
+                      onSetWipLimit={(limit) => {
+                        dispatch({
+                          type: 'set-wip-limit',
+                          columnId: column.id,
+                          limit,
+                        })
+                        notify(
+                          limit === null
+                            ? `WIP limit removed from ${column.title}`
+                            : `${column.title} WIP limit set to ${limit}`,
+                        )
+                      }}
                     />
                   ))}
                 </div>
@@ -825,6 +881,17 @@ export default function App() {
           columns={board.columns}
           creating={creating}
           onSave={(patch, columnId) => {
+            const target = board.columns.find(
+              (column) => column.id === columnId,
+            )
+            const blocked =
+              target &&
+              (creating || columnId !== openCardColumn?.id) &&
+              isColumnFull(target)
+            if (blocked && creating) {
+              notify(wipLimitMessage(target), true)
+              return
+            }
             if (creating) {
               dispatch({
                 type: 'add-card',
@@ -835,6 +902,10 @@ export default function App() {
               navigate('project')
             } else {
               dispatch({ type: 'update-card', cardId: openCard.id, patch })
+              if (blocked) {
+                notify(wipLimitMessage(target), true)
+                return
+              }
               if (columnId !== openCardColumn?.id)
                 dispatch({
                   type: 'move-card',
@@ -845,12 +916,12 @@ export default function App() {
                       ?.cardIds.length ?? 0,
                 })
             }
-            setToast(creating ? 'Issue created' : 'Issue updated')
+            notify(creating ? 'Issue created' : 'Issue updated')
           }}
           onDelete={() => {
             dispatch({ type: 'delete-card', cardId: openCard.id })
             closeModal()
-            setToast('Issue deleted')
+            notify('Issue deleted')
           }}
           onClose={closeModal}
         />
@@ -892,7 +963,7 @@ export default function App() {
                 dispatch({ type: 'reset' })
                 navigate('project')
                 setResetOpen(false)
-                setToast('Board reset to the original issues')
+                notify('Board reset to the original issues')
               }}
             >
               Reset board
@@ -935,7 +1006,7 @@ export default function App() {
                     '[data-column-id="done"] .column__add',
                   )
                   ?.focus()
-                setToast('Done column cleared')
+                notify('Done column cleared')
               }}
             >
               Clear done
@@ -985,8 +1056,11 @@ export default function App() {
         </Dialog>
       )}
       {toast && (
-        <div className="toast" role="status">
-          <Icon name="circleCheck" size={17} />
+        <div
+          className={`toast${toastWarning ? ' toast--warning' : ''}`}
+          role="status"
+        >
+          <Icon name={toastWarning ? 'flag' : 'circleCheck'} size={17} />
           <span>{toast}</span>
           <button
             className="icon-button"

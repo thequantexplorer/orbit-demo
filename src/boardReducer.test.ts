@@ -178,6 +178,114 @@ describe('boardReducer', () => {
     })
   })
 
+  describe('set-wip-limit', () => {
+    it('sets and clears a column limit', () => {
+      const limited = boardReducer(createSeedBoard(), {
+        type: 'set-wip-limit',
+        columnId: 'review',
+        limit: 2,
+      })
+      expect(limited.columns.find((c) => c.id === 'review')!.wipLimit).toBe(2)
+      expect(limited.columns.find((c) => c.id === 'backlog')!.wipLimit).toBeNull()
+      const cleared = boardReducer(limited, {
+        type: 'set-wip-limit',
+        columnId: 'review',
+        limit: null,
+      })
+      expect(cleared.columns.find((c) => c.id === 'review')!.wipLimit).toBeNull()
+    })
+
+    it('allows a limit below the current card count', () => {
+      const board = boardReducer(createSeedBoard(), {
+        type: 'set-wip-limit',
+        columnId: 'backlog',
+        limit: 1,
+      })
+      expect(board.columns.find((c) => c.id === 'backlog')!.wipLimit).toBe(1)
+      expect(cardIds(board, 'backlog')).toHaveLength(4)
+    })
+
+    it('ignores invalid limits and no-op changes', () => {
+      const seed = createSeedBoard()
+      for (const limit of [0, -1, 2.5, Number.NaN, 1000]) {
+        expect(
+          boardReducer(seed, { type: 'set-wip-limit', columnId: 'review', limit }),
+        ).toBe(seed)
+      }
+      expect(
+        boardReducer(seed, {
+          type: 'set-wip-limit',
+          columnId: 'review',
+          limit: null,
+        }),
+      ).toBe(seed)
+    })
+  })
+
+  describe('WIP limits', () => {
+    function withLimit(columnId: ColumnId, limit: number) {
+      return boardReducer(createSeedBoard(), {
+        type: 'set-wip-limit',
+        columnId,
+        limit,
+      })
+    }
+
+    it('rejects a move into a full column', () => {
+      const full = withLimit('in-progress', 2)
+      expect(
+        boardReducer(full, {
+          type: 'move-card',
+          cardId: 'KB-1',
+          toColumn: 'in-progress',
+          toIndex: 0,
+        }),
+      ).toBe(full)
+    })
+
+    it('allows a move into a column below its limit', () => {
+      const board = boardReducer(withLimit('in-progress', 3), {
+        type: 'move-card',
+        cardId: 'KB-1',
+        toColumn: 'in-progress',
+        toIndex: 2,
+      })
+      expect(cardIds(board, 'in-progress')).toEqual(['KB-5', 'KB-6', 'KB-1'])
+    })
+
+    it('still reorders within a full column', () => {
+      const board = boardReducer(withLimit('in-progress', 2), {
+        type: 'move-card',
+        cardId: 'KB-5',
+        toColumn: 'in-progress',
+        toIndex: 1,
+      })
+      expect(cardIds(board, 'in-progress')).toEqual(['KB-6', 'KB-5'])
+    })
+
+    it('lets a move skip the limit when asked', () => {
+      const board = boardReducer(withLimit('in-progress', 2), {
+        type: 'move-card',
+        cardId: 'KB-1',
+        toColumn: 'in-progress',
+        toIndex: 0,
+        ignoreWipLimit: true,
+      })
+      expect(cardIds(board, 'in-progress')).toEqual(['KB-1', 'KB-5', 'KB-6'])
+    })
+
+    it('rejects adding a card to a full column', () => {
+      const full = withLimit('review', 1)
+      expect(
+        boardReducer(full, {
+          type: 'add-card',
+          columnId: 'review',
+          title: 'One too many',
+        }),
+      ).toBe(full)
+    })
+  })
+
   it('reset restores the seed board', () => {
     const changed = boardReducer(createSeedBoard(), {
       type: 'clear-column',

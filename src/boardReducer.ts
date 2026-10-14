@@ -1,9 +1,17 @@
 import { arrayMove } from '@dnd-kit/sortable'
 import type { BoardState, Card, ColumnId } from './types'
 import { createSeedBoard } from './data'
+import { isColumnFull, normalizeWipLimit } from './wipLimit'
 
 export type BoardAction =
-  | { type: 'move-card'; cardId: string; toColumn: ColumnId; toIndex: number }
+  | {
+      type: 'move-card'
+      cardId: string
+      toColumn: ColumnId
+      toIndex: number
+      /** Skip the WIP check, e.g. when a drag returns a card to its origin. */
+      ignoreWipLimit?: boolean
+    }
   | {
       type: 'reorder-card'
       columnId: ColumnId
@@ -19,6 +27,7 @@ export type BoardAction =
   | { type: 'update-card'; cardId: string; patch: Partial<Omit<Card, 'id'>> }
   | { type: 'delete-card'; cardId: string }
   | { type: 'clear-column'; columnId: ColumnId }
+  | { type: 'set-wip-limit'; columnId: ColumnId; limit: number | null }
   | { type: 'reset' }
   | { type: 'restore'; board: BoardState }
 
@@ -37,6 +46,16 @@ export function boardReducer(
     case 'move-card': {
       const fromColumn = findColumnOfCard(board, action.cardId)
       if (!fromColumn) return board
+      const target = board.columns.find(
+        (column) => column.id === action.toColumn,
+      )
+      if (
+        target &&
+        fromColumn !== action.toColumn &&
+        !action.ignoreWipLimit &&
+        isColumnFull(target)
+      )
+        return board
       return {
         ...board,
         columns: board.columns.map((column) => {
@@ -81,6 +100,10 @@ export function boardReducer(
     case 'add-card': {
       const title = action.title.trim()
       if (!title) return board
+      const target = board.columns.find(
+        (column) => column.id === action.columnId,
+      )
+      if (target && isColumnFull(target)) return board
       const id = `KB-${board.nextCardNumber}`
       const card: Card = {
         id,
@@ -137,6 +160,22 @@ export function boardReducer(
         ),
         columns: board.columns.map((column) =>
           column.id === action.columnId ? { ...column, cardIds: [] } : column,
+        ),
+      }
+    }
+    case 'set-wip-limit': {
+      const limit = normalizeWipLimit(action.limit)
+      if (action.limit !== null && limit === null) return board
+      const target = board.columns.find(
+        (column) => column.id === action.columnId,
+      )
+      if (!target || target.wipLimit === limit) return board
+      return {
+        ...board,
+        columns: board.columns.map((column) =>
+          column.id === action.columnId
+            ? { ...column, wipLimit: limit }
+            : column,
         ),
       }
     }

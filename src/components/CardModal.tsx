@@ -1,6 +1,7 @@
 import { useRef, useState, type FormEvent } from 'react'
 import { ASSIGNEES, LABELS, LABEL_ORDER } from '../data'
 import type { Card, Column, ColumnId, LabelId } from '../types'
+import { isColumnFull } from '../wipLimit'
 import { Avatar } from './Avatar'
 import { Dialog } from './Dialog'
 import { Icon, StatusIcon } from './Icon'
@@ -32,6 +33,12 @@ export function CardModal({
   const dueDateInput = useRef<HTMLInputElement>(null)
   const [status, setStatus] = useState(columnId)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const statusColumn = columns.find((column) => column.id === status)
+  const statusBlocked = Boolean(
+    statusColumn &&
+      (creating || status !== columnId) &&
+      isColumnFull(statusColumn),
+  )
 
   function toggleLabel(labelId: LabelId) {
     setLabels((current) =>
@@ -43,7 +50,7 @@ export function CardModal({
 
   function handleSave(event: FormEvent) {
     event.preventDefault()
-    if (!title.trim()) return
+    if (!title.trim() || statusBlocked) return
     onSave(
       {
         title: title.trim(),
@@ -132,11 +139,21 @@ export function CardModal({
                   {columns.map((column) => (
                     <option key={column.id} value={column.id}>
                       {column.title}
+                      {(creating || column.id !== columnId) &&
+                      isColumnFull(column)
+                        ? ' (at WIP limit)'
+                        : ''}
                     </option>
                   ))}
                 </select>
                 <Icon name="down" size={12} />
               </div>
+              {statusBlocked && statusColumn && (
+                <p className="property-field__error" role="alert">
+                  {statusColumn.title} is at its WIP limit of{' '}
+                  {statusColumn.wipLimit}. Pick another status.
+                </p>
+              )}
             </div>
             <div className="property-field">
               <label htmlFor="issue-assignee">Assignee</label>
@@ -249,7 +266,7 @@ export function CardModal({
             <button
               className="button button--primary"
               type="submit"
-              disabled={!title.trim()}
+              disabled={!title.trim() || statusBlocked}
             >
               {creating ? 'Create issue' : 'Save changes'} <kbd>↵</kbd>
             </button>
