@@ -17,7 +17,12 @@ import {
   type UniqueIdentifier,
 } from '@dnd-kit/core'
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
-import { boardReducer, findColumnOfCard } from './boardReducer'
+import {
+  boardReducer,
+  canAcceptCard,
+  findColumnOfCard,
+  wipLimitMessage,
+} from './boardReducer'
 import { ASSIGNEES, LABELS, LABEL_ORDER, createSeedBoard } from './data'
 import { createGeneratedBoard, parseSeedCount } from './seed'
 import { loadBoard, saveBoard } from './storage'
@@ -52,6 +57,11 @@ const collisionDetection: CollisionDetection = (args) => {
 // `?seed=N` loads N generated cards for benchmarking; they are never saved.
 const seedCount = parseSeedCount(window.location.search)
 
+interface Toast {
+  message: string
+  tone: 'success' | 'warning'
+}
+
 function issueCountLabel(count: number) {
   return `${count} ${count === 1 ? 'issue' : 'issues'}`
 }
@@ -67,6 +77,9 @@ export default function App() {
   )
   const [activeCardId, setActiveCardId] = useState<string | null>(null)
   const [overColumnId, setOverColumnId] = useState<ColumnId | null>(null)
+  const [blockedColumnId, setBlockedColumnId] = useState<ColumnId | null>(
+    null,
+  )
   const [openCardId, setOpenCardId] = useState<string | null>(null)
   const [view, setView] = useState<WorkspaceView>('project')
   const [layout, setLayout] = useState<'board' | 'list'>('board')
@@ -81,7 +94,7 @@ export default function App() {
   const [starred, setStarred] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [saved, setSaved] = useState(true)
-  const [toast, setToast] = useState('')
+  const [toast, setToast] = useState<Toast | null>(null)
   const [dark, setDark] = useState(() => {
     try {
       return localStorage.getItem('kanban-theme') === 'dark'
@@ -106,7 +119,7 @@ export default function App() {
 
   useEffect(() => {
     if (!toast) return
-    const timer = window.setTimeout(() => setToast(''), 3200)
+    const timer = window.setTimeout(() => setToast(null), 3200)
     return () => window.clearTimeout(timer)
   }, [toast])
 
@@ -164,6 +177,17 @@ export default function App() {
     [board],
   )
 
+  const notify = (message: string, tone: Toast['tone'] = 'success') =>
+    setToast({ message, tone })
+
+  // Returns false (and explains why) when `columnId` is at its WIP limit.
+  function ensureRoom(columnId: ColumnId, cardId?: string) {
+    if (canAcceptCard(board, columnId, cardId)) return true
+    const column = board.columns.find((entry) => entry.id === columnId)
+    if (column) notify(`${wipLimitMessage(column)}.`, 'warning')
+    return false
+  }
+
   function handleDragStart({ active }: DragStartEvent) {
     dragSnapshot.current = board
     setActiveCardId(String(active.id))
@@ -176,7 +200,11 @@ export default function App() {
     const toColumn = resolveColumn(over.id)
     if (!fromColumn || !toColumn) return
     setOverColumnId(toColumn)
-    if (fromColumn === toColumn) return
+    const blocked =
+      fromColumn !== toColumn &&
+      !canAcceptCard(board, toColumn, String(active.id))
+    setBlockedColumnId(blocked ? toColumn : null)
+    if (fromColumn === toColumn || blocked) return
 
     const target = board.columns.find((column) => column.id === toColumn)
     if (!target) return
@@ -211,11 +239,19 @@ export default function App() {
         )
         ?.focus({ preventScroll: true })
     }
+    const fromColumn = resolveColumn(active.id)
+    const toColumn = resolveColumn(over.id)
+    if (fromColumn && toColumn && fromColumn !== toColumn) {
+      // Dropped on a full column: put the card back where the drag started.
+      if (!ensureRoom(toColumn, String(active.id))) {
+        handleDragCancel()
+        return
+      }
+    }
     dragSnapshot.current = null
     setActiveCardId(null)
     setOverColumnId(null)
-    const fromColumn = resolveColumn(active.id)
-    const toColumn = resolveColumn(over.id)
+    setBlockedColumnId(null)
     if (!fromColumn || !toColumn || fromColumn !== toColumn) return
 
     const column = board.columns.find((entry) => entry.id === fromColumn)
@@ -241,6 +277,7 @@ export default function App() {
     dragSnapshot.current = null
     setActiveCardId(null)
     setOverColumnId(null)
+    setBlockedColumnId(null)
   }
 
   const closeModal = useCallback(() => setOpenCardId(null), [])
@@ -765,18 +802,31 @@ export default function App() {
                       activeCardId={activeCardId}
                       showDescriptions={descriptions}
                       isDropTarget={
-                        activeCardId !== null && overColumnId === column.id
+                        activeCardId !== null &&
+                        overColumnId === column.id &&
+                        blockedColumnId !== column.id
+                      }
+                      isBlockedDropTarget={
+                        activeCardId !== null && blockedColumnId === column.id
                       }
                       onAddCard={(title) => {
+                        if (!ensureRoom(column.id)) return
                         dispatch({
                           type: 'add-card',
                           columnId: column.id,
                           title,
                         })
-                        setToast('Issue created')
+                        notify('Issue created')
                       }}
                       onOpenCard={setOpenCardId}
                       onClearColumn={() => setClearDoneOpen(true)}
+                      onSetWipLimit={(limit) =>
+                        dispatch({
+                          type: 'set-wip-limit',
+                          columnId: column.id,
+                          limit,
+                        })
+                      }
                     />
                   ))}
                 </div>
@@ -825,6 +875,8 @@ export default function App() {
           columns={board.columns}
           creating={creating}
           onSave={(patch, columnId) => {
+            const moving = creating || columnId !== openCardColumn?.id
+            if (moving && !ensureRoom(columnId)) return false
             if (creating) {
               dispatch({
                 type: 'add-card',
@@ -845,12 +897,13 @@ export default function App() {
                       ?.cardIds.length ?? 0,
                 })
             }
-            setToast(creating ? 'Issue created' : 'Issue updated')
+            notify(creating ? 'Issue created' : 'Issue updated')
+            return true
           }}
           onDelete={() => {
             dispatch({ type: 'delete-card', cardId: openCard.id })
             closeModal()
-            setToast('Issue deleted')
+            notify('Issue deleted')
           }}
           onClose={closeModal}
         />
@@ -892,7 +945,7 @@ export default function App() {
                 dispatch({ type: 'reset' })
                 navigate('project')
                 setResetOpen(false)
-                setToast('Board reset to the original issues')
+                notify('Board reset to the original issues')
               }}
             >
               Reset board
@@ -935,7 +988,7 @@ export default function App() {
                     '[data-column-id="done"] .column__add',
                   )
                   ?.focus()
-                setToast('Done column cleared')
+                notify('Done column cleared')
               }}
             >
               Clear done
@@ -985,13 +1038,16 @@ export default function App() {
         </Dialog>
       )}
       {toast && (
-        <div className="toast" role="status">
-          <Icon name="circleCheck" size={17} />
-          <span>{toast}</span>
+        <div className={`toast toast--${toast.tone}`} role="status">
+          <Icon
+            name={toast.tone === 'warning' ? 'flag' : 'circleCheck'}
+            size={17}
+          />
+          <span>{toast.message}</span>
           <button
             className="icon-button"
             aria-label="Dismiss notification"
-            onClick={() => setToast('')}
+            onClick={() => setToast(null)}
           >
             <Icon name="close" size={13} />
           </button>

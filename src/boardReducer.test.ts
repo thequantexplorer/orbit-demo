@@ -1,10 +1,28 @@
 import { describe, expect, it } from 'vitest'
-import { boardReducer, findColumnOfCard } from './boardReducer'
+import {
+  boardReducer,
+  canAcceptCard,
+  findColumnOfCard,
+  isColumnAtLimit,
+  normalizeWipLimit,
+} from './boardReducer'
 import { createSeedBoard } from './data'
 import type { BoardState, ColumnId } from './types'
 
+function column(board: BoardState, columnId: ColumnId) {
+  return board.columns.find((entry) => entry.id === columnId)!
+}
+
 function cardIds(board: BoardState, columnId: ColumnId) {
-  return board.columns.find((column) => column.id === columnId)!.cardIds
+  return column(board, columnId).cardIds
+}
+
+function withLimit(columnId: ColumnId, limit: number | null) {
+  return boardReducer(createSeedBoard(), {
+    type: 'set-wip-limit',
+    columnId,
+    limit,
+  })
 }
 
 describe('findColumnOfCard', () => {
@@ -176,6 +194,148 @@ describe('boardReducer', () => {
         boardReducer(cleared, { type: 'clear-column', columnId: 'done' }),
       ).toBe(cleared)
     })
+  })
+
+  describe('set-wip-limit', () => {
+    it('sets a limit on one column only', () => {
+      const board = withLimit('in-progress', 3)
+      expect(column(board, 'in-progress').wipLimit).toBe(3)
+      expect(column(board, 'backlog').wipLimit).toBeNull()
+      expect(cardIds(board, 'in-progress')).toEqual(['KB-5', 'KB-6'])
+    })
+
+    it('clears a limit with null', () => {
+      const limited = withLimit('review', 2)
+      const board = boardReducer(limited, {
+        type: 'set-wip-limit',
+        columnId: 'review',
+        limit: null,
+      })
+      expect(column(board, 'review').wipLimit).toBeNull()
+    })
+
+    it('treats zero, negative and fractional limits as no limit', () => {
+      for (const limit of [0, -2, 1.5, Number.NaN])
+        expect(column(withLimit('review', limit), 'review').wipLimit).toBeNull()
+    })
+
+    it('allows a limit below the current card count without moving cards', () => {
+      const board = withLimit('backlog', 2)
+      expect(column(board, 'backlog').wipLimit).toBe(2)
+      expect(cardIds(board, 'backlog')).toHaveLength(4)
+      expect(isColumnAtLimit(column(board, 'backlog'))).toBe(true)
+    })
+
+    it('returns the same board when the limit is unchanged', () => {
+      const board = withLimit('done', 5)
+      expect(
+        boardReducer(board, {
+          type: 'set-wip-limit',
+          columnId: 'done',
+          limit: 5,
+        }),
+      ).toBe(board)
+    })
+  })
+
+  describe('WIP limits', () => {
+    it('rejects a move into a column at its limit', () => {
+      const full = withLimit('in-progress', 2)
+      const board = boardReducer(full, {
+        type: 'move-card',
+        cardId: 'KB-1',
+        toColumn: 'in-progress',
+        toIndex: 0,
+      })
+      expect(board).toBe(full)
+      expect(cardIds(board, 'in-progress')).toEqual(['KB-5', 'KB-6'])
+      expect(cardIds(board, 'backlog')).toContain('KB-1')
+    })
+
+    it('rejects a move into a column over its limit', () => {
+      const over = withLimit('backlog', 1)
+      expect(
+        boardReducer(over, {
+          type: 'move-card',
+          cardId: 'KB-7',
+          toColumn: 'backlog',
+          toIndex: 0,
+        }),
+      ).toBe(over)
+    })
+
+    it('allows a move into a column below its limit', () => {
+      const board = boardReducer(withLimit('in-progress', 3), {
+        type: 'move-card',
+        cardId: 'KB-1',
+        toColumn: 'in-progress',
+        toIndex: 2,
+      })
+      expect(cardIds(board, 'in-progress')).toEqual(['KB-5', 'KB-6', 'KB-1'])
+    })
+
+    it('still reorders within a full column', () => {
+      const full = withLimit('in-progress', 2)
+      const moved = boardReducer(full, {
+        type: 'move-card',
+        cardId: 'KB-6',
+        toColumn: 'in-progress',
+        toIndex: 0,
+      })
+      expect(cardIds(moved, 'in-progress')).toEqual(['KB-6', 'KB-5'])
+      const reordered = boardReducer(full, {
+        type: 'reorder-card',
+        columnId: 'in-progress',
+        fromIndex: 0,
+        toIndex: 1,
+      })
+      expect(cardIds(reordered, 'in-progress')).toEqual(['KB-6', 'KB-5'])
+    })
+
+    it('rejects adding a card to a full column', () => {
+      const full = withLimit('review', 1)
+      const board = boardReducer(full, {
+        type: 'add-card',
+        columnId: 'review',
+        title: 'One more',
+      })
+      expect(board).toBe(full)
+      expect(board.nextCardNumber).toBe(10)
+    })
+
+    it('accepts cards again once the column drops below its limit', () => {
+      const full = withLimit('in-progress', 2)
+      const freed = boardReducer(full, {
+        type: 'move-card',
+        cardId: 'KB-5',
+        toColumn: 'review',
+        toIndex: 0,
+      })
+      expect(canAcceptCard(freed, 'in-progress')).toBe(true)
+      const board = boardReducer(freed, {
+        type: 'add-card',
+        columnId: 'in-progress',
+        title: 'Room now',
+      })
+      expect(cardIds(board, 'in-progress')).toEqual(['KB-6', 'KB-10'])
+    })
+  })
+
+  it('canAcceptCard allows a card already in a full column', () => {
+    const full = withLimit('in-progress', 2)
+    expect(canAcceptCard(full, 'in-progress')).toBe(false)
+    expect(canAcceptCard(full, 'in-progress', 'KB-1')).toBe(false)
+    expect(canAcceptCard(full, 'in-progress', 'KB-5')).toBe(true)
+    expect(canAcceptCard(full, 'backlog')).toBe(true)
+  })
+
+  it('normalizeWipLimit keeps only positive integers', () => {
+    expect(normalizeWipLimit(4)).toBe(4)
+    expect(normalizeWipLimit(0)).toBeNull()
+    expect(normalizeWipLimit(-1)).toBeNull()
+    expect(normalizeWipLimit(2.5)).toBeNull()
+    expect(normalizeWipLimit('3')).toBeNull()
+    expect(normalizeWipLimit(undefined)).toBeNull()
   })
 
   it('reset restores the seed board', () => {

@@ -1,4 +1,5 @@
 import { useRef, useState, type FormEvent } from 'react'
+import { isColumnAtLimit, wipLimitMessage } from '../boardReducer'
 import { ASSIGNEES, LABELS, LABEL_ORDER } from '../data'
 import type { Card, Column, ColumnId, LabelId } from '../types'
 import { Avatar } from './Avatar'
@@ -10,7 +11,8 @@ interface CardModalProps {
   columnId: ColumnId
   columns: Column[]
   creating?: boolean
-  onSave: (patch: Omit<Card, 'id'>, columnId: ColumnId) => void
+  /** Returns false when the save was rejected and the dialog should stay open. */
+  onSave: (patch: Omit<Card, 'id'>, columnId: ColumnId) => boolean
   onDelete: () => void
   onClose: () => void
 }
@@ -32,6 +34,10 @@ export function CardModal({
   const dueDateInput = useRef<HTMLInputElement>(null)
   const [status, setStatus] = useState(columnId)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const isFull = (column: Column) =>
+    (creating || column.id !== columnId) && isColumnAtLimit(column)
+  const statusColumn = columns.find((column) => column.id === status)
+  const statusFull = statusColumn ? isFull(statusColumn) : false
 
   function toggleLabel(labelId: LabelId) {
     setLabels((current) =>
@@ -43,8 +49,8 @@ export function CardModal({
 
   function handleSave(event: FormEvent) {
     event.preventDefault()
-    if (!title.trim()) return
-    onSave(
+    if (!title.trim() || statusFull) return
+    const saved = onSave(
       {
         title: title.trim(),
         description: description.trim(),
@@ -54,7 +60,7 @@ export function CardModal({
       },
       status,
     )
-    onClose()
+    if (saved) onClose()
   }
 
   return (
@@ -130,13 +136,23 @@ export function CardModal({
                   }}
                 >
                   {columns.map((column) => (
-                    <option key={column.id} value={column.id}>
+                    <option
+                      key={column.id}
+                      value={column.id}
+                      disabled={isFull(column) && column.id !== status}
+                    >
                       {column.title}
+                      {isFull(column) ? ` (at limit ${column.wipLimit})` : ''}
                     </option>
                   ))}
                 </select>
                 <Icon name="down" size={12} />
               </div>
+              {statusFull && statusColumn && (
+                <p className="property-field__hint" role="status">
+                  {wipLimitMessage(statusColumn)}. Pick another status.
+                </p>
+              )}
             </div>
             <div className="property-field">
               <label htmlFor="issue-assignee">Assignee</label>
@@ -249,7 +265,7 @@ export function CardModal({
             <button
               className="button button--primary"
               type="submit"
-              disabled={!title.trim()}
+              disabled={!title.trim() || statusFull}
             >
               {creating ? 'Create issue' : 'Save changes'} <kbd>↵</kbd>
             </button>

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { defaultRangeExtractor, useVirtualizer } from '@tanstack/react-virtual'
+import { isColumnAtLimit, wipLimitMessage } from '../boardReducer'
 import type { Card, Column } from '../types'
 import { AddCardForm } from './AddCardForm'
 import { SortableCard } from './SortableCard'
@@ -13,12 +14,92 @@ interface ColumnViewProps {
   column: Column
   cards: Card[]
   isDropTarget: boolean
+  /** A card is being dragged over this column but it's at its WIP limit. */
+  isBlockedDropTarget?: boolean
   activeCardId: string | null
   showDescriptions: boolean
   onAddCard: (title: string) => void
   onOpenCard: (cardId: string) => void
   onClearColumn: () => void
+  onSetWipLimit: (limit: number | null) => void
   filtered?: boolean
+}
+
+interface WipLimitControlProps {
+  column: Column
+  count: number
+  onSetWipLimit: (limit: number | null) => void
+}
+
+function WipLimitControl({ column, count, onSetWipLimit }: WipLimitControlProps) {
+  const [draft, setDraft] = useState<string | null>(null)
+  const { wipLimit } = column
+  const label = `${column.title} work-in-progress limit`
+
+  if (draft !== null) {
+    const commit = () => {
+      const value = draft.trim() === '' ? null : Number(draft)
+      onSetWipLimit(value)
+      setDraft(null)
+    }
+    return (
+      <span className="column__wip">
+        <span className="column__count" data-testid={`count-${column.id}`}>
+          {count}
+        </span>
+        <span className="column__limit">/</span>
+        <input
+          className="column__limit-input"
+          type="number"
+          inputMode="numeric"
+          min={1}
+          max={999}
+          step={1}
+          autoFocus
+          placeholder="∞"
+          aria-label={label}
+          title="Leave empty for no limit"
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          onFocus={(event) => event.target.select()}
+          onBlur={commit}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault()
+              commit()
+            } else if (event.key === 'Escape') {
+              event.preventDefault()
+              event.stopPropagation()
+              setDraft(null)
+            }
+          }}
+        />
+      </span>
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      className="column__wip column__wip-button"
+      aria-label={
+        wipLimit === null
+          ? `Set ${label}`
+          : `Edit ${label}: ${count} of ${wipLimit}`
+      }
+      title={wipLimit === null ? 'Set a WIP limit' : 'Edit WIP limit'}
+      onClick={() => setDraft(wipLimit === null ? '' : String(wipLimit))}
+    >
+      <span className="column__count" data-testid={`count-${column.id}`}>
+        {count}
+      </span>
+      {wipLimit === null ? (
+        <span className="column__limit column__limit--unset">Set limit</span>
+      ) : (
+        <span className="column__limit">/ {wipLimit}</span>
+      )}
+    </button>
+  )
 }
 
 // First guess before a card is measured; measured heights replace it.
@@ -33,13 +114,20 @@ export function ColumnView({
   column,
   cards,
   isDropTarget,
+  isBlockedDropTarget = false,
   activeCardId,
   showDescriptions,
   onAddCard,
   onOpenCard,
   onClearColumn,
+  onSetWipLimit,
   filtered = false,
 }: ColumnViewProps) {
+  const atLimit = isColumnAtLimit(column)
+  const limitMessage = atLimit ? wipLimitMessage(column) : undefined
+  // A limit counts every card in the column, including ones hidden by filters.
+  const limitCount =
+    column.wipLimit === null ? cards.length : column.cardIds.length
   const { setNodeRef } = useDroppable({
     id: column.id,
     data: { type: 'column' },
@@ -83,16 +171,20 @@ export function ColumnView({
 
   return (
     <section
-      className={`column${isDropTarget ? ' column--drop-target' : ''}`}
+      className={`column${isDropTarget ? ' column--drop-target' : ''}${
+        isBlockedDropTarget ? ' column--drop-blocked' : ''
+      }${atLimit ? ' column--at-limit' : ''}`}
       data-column-id={column.id}
       aria-label={`${column.title} column`}
     >
-      <header className="column__header">
+      <header className="column__header" title={limitMessage}>
         <StatusIcon status={column.id} />
         <h2 className="column__title">{column.title}</h2>
-        <span className="column__count" data-testid={`count-${column.id}`}>
-          {cards.length}
-        </span>
+        <WipLimitControl
+          column={column}
+          count={limitCount}
+          onSetWipLimit={onSetWipLimit}
+        />
         {column.id === 'done' && column.cardIds.length > 0 && (
           <button
             className="column__clear"
@@ -106,7 +198,8 @@ export function ColumnView({
         <button
           className="icon-button column__add"
           aria-label={`New issue in ${column.title}`}
-          title={`Add to ${column.title}`}
+          title={limitMessage ?? `Add to ${column.title}`}
+          disabled={atLimit}
           onClick={() =>
             document
               .getElementById(
@@ -118,6 +211,11 @@ export function ColumnView({
           <Icon name="plus" size={15} />
         </button>
       </header>
+      {isBlockedDropTarget && (
+        <p className="column__limit-message" role="status">
+          WIP limit reached. Drop the issue in another column.
+        </p>
+      )}
 
       <SortableContext
         id={column.id}
@@ -174,7 +272,11 @@ export function ColumnView({
         </div>
       </SortableContext>
 
-      <AddCardForm columnTitle={column.title} onAdd={onAddCard} />
+      <AddCardForm
+        columnTitle={column.title}
+        onAdd={onAddCard}
+        blockedReason={limitMessage}
+      />
     </section>
   )
 }

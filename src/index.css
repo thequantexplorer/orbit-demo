@@ -992,6 +992,75 @@ details[open] > .toolbar-button {
 .column__clear + .column__add {
   margin-left: 0;
 }
+.column__add:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.column__wip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  height: 21px;
+  padding: 0 5px;
+  margin-left: -4px;
+  border-radius: 5px;
+  font-size: 10px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  line-height: 21px;
+}
+.column__wip-button:hover,
+.column__wip-button:focus-visible {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+.column__wip .column__count {
+  margin-left: 0;
+  color: inherit;
+}
+.column__limit--unset {
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.column__header:hover .column__limit--unset,
+.column__wip-button:focus-visible .column__limit--unset {
+  opacity: 1;
+}
+.column__limit-input {
+  width: 38px;
+  height: 19px;
+  padding: 0 4px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 10px;
+  align-self: center;
+}
+.column--at-limit .column__header {
+  background: color-mix(in srgb, var(--danger) 9%, transparent);
+  border-radius: 6px;
+}
+.column--at-limit .column__wip {
+  color: var(--danger);
+  font-weight: 600;
+}
+.column--drop-blocked {
+  border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
+  background: color-mix(in srgb, var(--danger) 6%, transparent);
+}
+.column__limit-message {
+  margin: -5px 5px 9px;
+  font-size: 10px;
+  color: var(--danger);
+}
+.add-card--blocked {
+  opacity: 0.6;
+}
+.add-card--blocked .add-card__input {
+  cursor: not-allowed;
+}
 .status-icon {
   width: 13px;
   height: 13px;
@@ -1662,6 +1731,11 @@ details[open] > .toolbar-button {
   border-top: 1px solid var(--border);
   padding-top: 21px;
 }
+.property-field__hint {
+  margin: 0;
+  font-size: 11px;
+  color: var(--danger);
+}
 .property-field {
   display: flex;
   flex-direction: column;
@@ -1965,6 +2039,9 @@ details[open] > .toolbar-button {
 }
 .toast > .icon {
   color: var(--green);
+}
+.toast--warning > .icon {
+  color: var(--danger);
 }
 .toast .icon-button {
   width: 22px;

@@ -1,5 +1,5 @@
 import { arrayMove } from '@dnd-kit/sortable'
-import type { BoardState, Card, ColumnId } from './types'
+import type { BoardState, Card, Column, ColumnId } from './types'
 import { createSeedBoard } from './data'
 
 export type BoardAction =
@@ -19,6 +19,7 @@ export type BoardAction =
   | { type: 'update-card'; cardId: string; patch: Partial<Omit<Card, 'id'>> }
   | { type: 'delete-card'; cardId: string }
   | { type: 'clear-column'; columnId: ColumnId }
+  | { type: 'set-wip-limit'; columnId: ColumnId; limit: number | null }
   | { type: 'reset' }
   | { type: 'restore'; board: BoardState }
 
@@ -29,6 +30,33 @@ export function findColumnOfCard(
   return board.columns.find((column) => column.cardIds.includes(cardId))?.id
 }
 
+/** A positive whole-number limit, or `null` for anything else. */
+export function normalizeWipLimit(value: unknown): number | null {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0
+    ? value
+    : null
+}
+
+export function isColumnAtLimit(column: Column): boolean {
+  return column.wipLimit !== null && column.cardIds.length >= column.wipLimit
+}
+
+export function wipLimitMessage(column: Column) {
+  return `${column.title} is at its WIP limit of ${column.wipLimit}`
+}
+
+/** Whether `columnId` has room for a new card, or for `cardId` moving in. */
+export function canAcceptCard(
+  board: BoardState,
+  columnId: ColumnId,
+  cardId?: string,
+): boolean {
+  const column = board.columns.find((entry) => entry.id === columnId)
+  if (!column) return false
+  if (cardId !== undefined && column.cardIds.includes(cardId)) return true
+  return !isColumnAtLimit(column)
+}
+
 export function boardReducer(
   board: BoardState,
   action: BoardAction,
@@ -37,6 +65,7 @@ export function boardReducer(
     case 'move-card': {
       const fromColumn = findColumnOfCard(board, action.cardId)
       if (!fromColumn) return board
+      if (!canAcceptCard(board, action.toColumn, action.cardId)) return board
       return {
         ...board,
         columns: board.columns.map((column) => {
@@ -80,7 +109,7 @@ export function boardReducer(
       }
     case 'add-card': {
       const title = action.title.trim()
-      if (!title) return board
+      if (!title || !canAcceptCard(board, action.columnId)) return board
       const id = `KB-${board.nextCardNumber}`
       const card: Card = {
         id,
@@ -137,6 +166,19 @@ export function boardReducer(
         ),
         columns: board.columns.map((column) =>
           column.id === action.columnId ? { ...column, cardIds: [] } : column,
+        ),
+      }
+    }
+    case 'set-wip-limit': {
+      const wipLimit = normalizeWipLimit(action.limit)
+      const target = board.columns.find(
+        (column) => column.id === action.columnId,
+      )
+      if (!target || target.wipLimit === wipLimit) return board
+      return {
+        ...board,
+        columns: board.columns.map((column) =>
+          column.id === action.columnId ? { ...column, wipLimit } : column,
         ),
       }
     }
