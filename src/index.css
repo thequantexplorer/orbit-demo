@@ -21,15 +21,15 @@
   --surface-active: #eaeaf0;
   --text: #26272e;
   --secondary: #686a76;
-  --muted: #93959f;
+  --muted: #6c6e7a;
   --border: #e8e8ed;
   --border-strong: #dcdce3;
   --primary: #6563d9;
   --primary-hover: #5553c6;
   --primary-subtle: #eeedfc;
-  --green: #4b9474;
-  --danger: #ca4f54;
-  --warning: #b7791f;
+  --green: #3e7a60;
+  --danger: #c53e43;
+  --warning: #8d5d18;
   --shadow: 0 1px 3px #16172c05, 0 1px 2px #16172c04;
   color-scheme: light;
 }
@@ -43,7 +43,7 @@
   --surface-active: #2e2f39;
   --text: #eeeef2;
   --secondary: #a0a1ae;
-  --muted: #777987;
+  --muted: #8f919d;
   --border: #2b2c34;
   --border-strong: #3a3c48;
   --primary: #8b88ed;
