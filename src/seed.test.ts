@@ -1,5 +1,29 @@
 import { describe, expect, it } from 'vitest'
 import { createGeneratedBoard, parseSeedCount } from './seed'
+import { createSeedBoard } from './data'
+import { fromDateKey, toDateKey } from './dueDate'
+import { getWeekStart } from './weeklyStats'
+
+describe('createSeedBoard', () => {
+  it('marks its two Done cards complete this week', () => {
+    const todayKey = toDateKey(new Date())
+    const weekStart = getWeekStart(todayKey)
+    const tuesday = fromDateKey(weekStart)
+    tuesday.setDate(tuesday.getDate() + 1)
+    const tuesdayKey = toDateKey(tuesday)
+    const board = createSeedBoard()
+
+    expect(board.cards['KB-8'].completedAt).toBe(weekStart)
+    expect(board.cards['KB-9'].completedAt).toBe(
+      tuesdayKey < todayKey ? tuesdayKey : todayKey,
+    )
+    expect(
+      Object.values(board.cards)
+        .filter((card) => card.id !== 'KB-8' && card.id !== 'KB-9')
+        .every((card) => card.completedAt === null),
+    ).toBe(true)
+  })
+})
 
 describe('parseSeedCount', () => {
   it('reads a positive integer from ?seed', () => {
@@ -40,6 +64,9 @@ describe('createGeneratedBoard', () => {
     ])
     for (const column of board.columns)
       expect(column.cardIds.length).toBeGreaterThan(0)
+    expect(Object.values(board.cards).every((card) => card.completedAt === null)).toBe(
+      true,
+    )
     expect(board.nextCardNumber).toBe(1001)
   })
 

@@ -1,6 +1,7 @@
 import { arrayMove } from '@dnd-kit/sortable'
 import type { BoardState, Card, ColumnId } from './types'
 import { createSeedBoard } from './data'
+import { toDateKey } from './dueDate'
 import { isValidWipLimit } from './wipLimit'
 
 export type BoardAction =
@@ -40,8 +41,23 @@ export function boardReducer(
     case 'move-card': {
       const fromColumn = findColumnOfCard(board, action.cardId)
       if (!fromColumn) return board
+      const card = board.cards[action.cardId]
+      const cards =
+        card &&
+        fromColumn !== action.toColumn &&
+        (fromColumn === 'done' || action.toColumn === 'done')
+          ? {
+              ...board.cards,
+              [action.cardId]: {
+                ...card,
+                completedAt:
+                  action.toColumn === 'done' ? toDateKey(new Date()) : null,
+              },
+            }
+          : board.cards
       return {
         ...board,
+        cards,
         columns: board.columns.map((column) => {
           if (column.id === fromColumn && column.id === action.toColumn) {
             const fromIndex = column.cardIds.indexOf(action.cardId)
@@ -93,6 +109,8 @@ export function boardReducer(
         assigneeId: null,
         dueDate: null,
         ...action.details,
+        completedAt:
+          action.columnId === 'done' ? toDateKey(new Date()) : null,
       }
       return {
         ...board,

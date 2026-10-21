@@ -1546,6 +1546,107 @@ details[open] > .toolbar-button {
   padding: 20px 24px;
   border-radius: 8px;
 }
+.weekly-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 16px 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.weekly-summary > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 14px;
+}
+.weekly-summary > div + div {
+  border-left: 1px solid var(--border);
+}
+.weekly-summary span {
+  color: var(--muted);
+  font-size: 9px;
+}
+.weekly-summary strong {
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.4px;
+}
+.burndown {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  margin-top: 2px;
+}
+.burndown__grid {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+.burndown__axis-label,
+.burndown__day {
+  fill: var(--muted);
+  font-family: inherit;
+  font-size: 10px;
+}
+.burndown__day--today {
+  fill: var(--text);
+  font-weight: 600;
+}
+.burndown__ideal {
+  fill: none;
+  stroke: var(--muted);
+  stroke-dasharray: 5 5;
+  stroke-width: 1.5;
+  opacity: 0.75;
+}
+.burndown__actual {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.burndown__point {
+  fill: var(--primary);
+  stroke: var(--board);
+  stroke-width: 2;
+}
+.burndown__bar {
+  fill: var(--green);
+  opacity: 0.72;
+}
+.burndown-legend {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: -2px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.burndown-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.burndown-legend i {
+  display: inline-block;
+  width: 16px;
+  height: 2px;
+}
+.burndown-legend__ideal {
+  border-top: 1.5px dashed var(--muted);
+}
+.burndown-legend__remaining {
+  background: var(--primary);
+}
+.burndown-legend__completed {
+  width: 9px !important;
+  height: 8px !important;
+  border-radius: 2px;
+  background: var(--green);
+}
 .section-heading {
   display: flex;
   align-items: center;
