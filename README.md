@@ -30,7 +30,10 @@ Then open http://localhost:5173. Other scripts: `npm run build`, `npm run lint`.
   "Due Oct 12", then "Due today" on the day and "Overdue" once it has passed.
 - **Display** controls descriptions and dark appearance. The sidebar also has an
   appearance toggle.
-- **Overview** shows live progress and team assignments. **My issues** uses Ava
+- **Overview** shows live progress and team assignments, plus a **This week**
+  panel: issues completed and added over the last 7 days and a burndown chart of
+  open issues per day. Completion times are recorded when an issue enters Done
+  and survive **Clear done**. **My issues** uses Ava
   Chen, the demo workspace member.
 - Click an issue to edit it. Delete and reset actions ask for confirmation.
   **Reset board** restores the nine original issues.

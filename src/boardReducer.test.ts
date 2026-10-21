@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { boardReducer, findColumnOfCard } from './boardReducer'
 import { createSeedBoard } from './data'
 import type { BoardState, ColumnId } from './types'
@@ -17,6 +17,15 @@ describe('findColumnOfCard', () => {
 })
 
 describe('boardReducer', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 9, 21, 12))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   describe('move-card', () => {
     it('moves a card to another column at the given index', () => {
       const board = boardReducer(createSeedBoard(), {
@@ -37,6 +46,37 @@ describe('boardReducer', () => {
         toIndex: 2,
       })
       expect(cardIds(board, 'backlog')).toEqual(['KB-2', 'KB-3', 'KB-1', 'KB-4'])
+    })
+
+    it('sets and clears completion time when crossing the done boundary', () => {
+      const now = Date.now()
+      const completed = boardReducer(createSeedBoard(), {
+        type: 'move-card',
+        cardId: 'KB-1',
+        toColumn: 'done',
+        toIndex: 2,
+      })
+      expect(completed.cards['KB-1'].completedAt).toBe(now)
+
+      const reopened = boardReducer(completed, {
+        type: 'move-card',
+        cardId: 'KB-1',
+        toColumn: 'review',
+        toIndex: 0,
+      })
+      expect(reopened.cards['KB-1'].completedAt).toBeNull()
+    })
+
+    it('keeps completion time when reordering within done', () => {
+      const seed = createSeedBoard()
+      const completedAt = seed.cards['KB-8'].completedAt
+      const board = boardReducer(seed, {
+        type: 'move-card',
+        cardId: 'KB-8',
+        toColumn: 'done',
+        toIndex: 1,
+      })
+      expect(board.cards['KB-8'].completedAt).toBe(completedAt)
     })
 
     it('returns the same board for an unknown card', () => {
@@ -90,8 +130,23 @@ describe('boardReducer', () => {
         labels: ['bug'],
         assigneeId: null,
         dueDate: null,
+        createdAt: Date.now(),
+        completedAt: null,
       })
       expect(cardIds(board, 'in-progress')).toEqual(['KB-5', 'KB-6', 'KB-10'])
+    })
+
+    it('timestamps cards created in done', () => {
+      const now = Date.now()
+      const board = boardReducer(createSeedBoard(), {
+        type: 'add-card',
+        columnId: 'done',
+        title: 'Already complete',
+      })
+      expect(board.cards['KB-10']).toMatchObject({
+        createdAt: now,
+        completedAt: now,
+      })
     })
 
     it('keeps a due date passed in details', () => {
@@ -165,6 +220,32 @@ describe('boardReducer', () => {
       expect(board.cards['KB-9']).toBeUndefined()
       expect(Object.keys(board.cards)).toHaveLength(7)
       expect(board.nextCardNumber).toBe(10)
+    })
+
+    it('archives completed cards and prunes records older than 14 days', () => {
+      const now = Date.now()
+      const seed = createSeedBoard()
+      seed.archivedCompletions = [
+        { id: 'old', createdAt: null, completedAt: now - 15 * 86400000 },
+        { id: 'recent', createdAt: null, completedAt: now - 13 * 86400000 },
+      ]
+      const board = boardReducer(seed, {
+        type: 'clear-column',
+        columnId: 'done',
+      })
+      expect(board.archivedCompletions).toEqual([
+        { id: 'recent', createdAt: null, completedAt: now - 13 * 86400000 },
+        {
+          id: 'KB-8',
+          createdAt: seed.cards['KB-8'].createdAt,
+          completedAt: seed.cards['KB-8'].completedAt,
+        },
+        {
+          id: 'KB-9',
+          createdAt: seed.cards['KB-9'].createdAt,
+          completedAt: seed.cards['KB-9'].completedAt,
+        },
+      ])
     })
 
     it('returns the same board when the column is already empty', () => {

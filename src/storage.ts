@@ -45,7 +45,34 @@ function normalizeBoard(board: BoardState): BoardState {
     cards[id] = {
       ...card,
       dueDate: isValidDueDate(card.dueDate) ? card.dueDate : null,
+      createdAt: finiteOrNull(card.createdAt),
+      completedAt: finiteOrNull(card.completedAt),
     }
   }
-  return { ...board, cards }
+  const archivedCompletions = Array.isArray(board.archivedCompletions)
+    ? board.archivedCompletions.flatMap((entry: unknown) => {
+        if (typeof entry !== 'object' || entry === null) return []
+        const candidate = entry as {
+          id?: unknown
+          createdAt?: unknown
+          completedAt?: unknown
+        }
+        if (
+          typeof candidate.id !== 'string' ||
+          typeof candidate.completedAt !== 'number' ||
+          !Number.isFinite(candidate.completedAt)
+        )
+          return []
+        return [{
+          id: candidate.id,
+          createdAt: finiteOrNull(candidate.createdAt),
+          completedAt: candidate.completedAt,
+        }]
+      })
+    : []
+  return { ...board, cards, archivedCompletions }
+}
+
+function finiteOrNull(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
 }

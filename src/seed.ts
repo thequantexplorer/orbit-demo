@@ -87,6 +87,8 @@ export function createGeneratedBoard(count: number): BoardState {
         dueRoll < 0.25
           ? `2026-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
           : null,
+      createdAt: null,
+      completedAt: null,
     }
 
     let roll = random()
@@ -98,5 +100,5 @@ export function createGeneratedBoard(count: number): BoardState {
     column.cardIds.push(id)
   }
 
-  return { columns, cards, nextCardNumber: count + 1 }
+  return { columns, cards, nextCardNumber: count + 1, archivedCompletions: [] }
 }
