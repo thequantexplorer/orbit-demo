@@ -1488,6 +1488,100 @@ details[open] > .toolbar-button {
   padding: 20px 24px;
   border-radius: 8px;
 }
+.weekly-stats-figures {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 18px 0 8px;
+}
+.weekly-stats-figures > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.weekly-stats-figures span {
+  color: var(--secondary);
+  font-size: 10px;
+}
+.weekly-stats-figures strong {
+  font-size: 22px;
+  letter-spacing: -0.5px;
+  font-weight: 500;
+}
+.weekly-stats-figures small {
+  color: var(--muted);
+  font-size: 10px;
+}
+.weekly-delta--up {
+  color: var(--green) !important;
+}
+.burndown-wrap {
+  margin: 6px 0 12px;
+}
+.burndown {
+  display: block;
+  overflow: visible;
+}
+.burndown-grid {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+.burndown-axis {
+  fill: var(--muted);
+  font-size: 10px;
+}
+.burndown-axis--today {
+  fill: var(--primary);
+  font-weight: 500;
+}
+.burndown-today {
+  fill: var(--primary-subtle);
+  opacity: 0.6;
+}
+.burndown-bar {
+  fill: #73a28d;
+  opacity: 0.45;
+}
+.burndown-bar-label {
+  fill: var(--green);
+  font-size: 9px;
+  font-weight: 500;
+}
+.burndown-ideal {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+}
+.burndown-actual {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 2.25;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.burndown-point {
+  fill: var(--surface);
+  stroke: var(--primary);
+  stroke-width: 2;
+}
+.legend-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 0;
+  border-top: 2px solid var(--primary);
+}
+.legend-swatch--ideal {
+  border-top: 2px dashed var(--muted);
+}
+.legend-swatch--bar {
+  width: 8px;
+  height: 8px;
+  border: 0;
+  border-radius: 2px;
+  background: #73a28d;
+  opacity: 0.6;
+}
 .section-heading {
   display: flex;
   align-items: center;
@@ -2241,6 +2335,9 @@ details[open] > .toolbar-button {
   }
   .progress-legend {
     gap: 12px;
+  }
+  .weekly-stats-figures strong {
+    font-size: 18px;
   }
   .issue-row {
     padding-inline: 18px;

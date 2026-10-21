@@ -63,13 +63,19 @@ describe('loadBoard', () => {
       ...board,
       cards: Object.fromEntries(
         Object.entries(board.cards).map(([id, card]) => {
-          const { dueDate: _dueDate, ...rest } = card
+          const {
+            dueDate: _dueDate,
+            completedOn: _completedOn,
+            ...rest
+          } = card
           return [id, rest]
         }),
       ),
     }
     storage.setItem(STORAGE_KEY, JSON.stringify(legacy))
-    expect(loadBoard()).toEqual(board)
+    expect(loadBoard()?.cards['KB-1'].dueDate).toBeNull()
+    expect(loadBoard()?.cards['KB-1'].completedOn).toBeNull()
+    expect(loadBoard()?.cards['KB-8'].completedOn).toBeNull()
   })
 
   it('drops malformed due dates', () => {
@@ -83,6 +89,17 @@ describe('loadBoard', () => {
     expect(loaded.cards['KB-1'].dueDate).toBeNull()
     expect(loaded.cards['KB-2'].dueDate).toBeNull()
     expect(loaded.cards['KB-3'].dueDate).toBeNull()
+  })
+
+  it('drops malformed completion dates', () => {
+    const board = createSeedBoard()
+    const saved = JSON.parse(JSON.stringify(board))
+    saved.cards['KB-1'].completedOn = 'not a day'
+    saved.cards['KB-2'].completedOn = '2026-02-30'
+    storage.setItem(STORAGE_KEY, JSON.stringify(saved))
+    const loaded = loadBoard()!
+    expect(loaded.cards['KB-1'].completedOn).toBeNull()
+    expect(loaded.cards['KB-2'].completedOn).toBeNull()
   })
 
   it('returns null for invalid JSON', () => {

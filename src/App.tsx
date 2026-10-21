@@ -19,6 +19,9 @@ import {
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { boardReducer, findColumnOfCard } from './boardReducer'
 import { ASSIGNEES, LABELS, LABEL_ORDER, createSeedBoard } from './data'
+import { toDateKey } from './dueDate'
+import { useTodayKey } from './useToday'
+import { computeWeeklyStats } from './weeklyStats'
 import { createGeneratedBoard, parseSeedCount } from './seed'
 import { loadBoard, saveBoard } from './storage'
 import type {
@@ -38,6 +41,7 @@ import { Icon, ProgressRing, StatusIcon } from './components/Icon'
 import { IssueList } from './components/IssueList'
 import { LabelPill } from './components/LabelPill'
 import { Sidebar } from './components/Sidebar'
+import { WeeklyStats } from './components/WeeklyStats'
 
 const collisionDetection: CollisionDetection = (args) => {
   const within = pointerWithin(args)
@@ -90,6 +94,7 @@ export default function App() {
     }
   })
   const dragSnapshot = useRef<BoardState | null>(null)
+  const todayKey = useTodayKey()
 
   useEffect(() => {
     if (!activeCardId && !seedCount) setSaved(saveBoard(board))
@@ -196,6 +201,7 @@ export default function App() {
       cardId: String(active.id),
       toColumn,
       toIndex,
+      today: toDateKey(new Date()),
     })
   }
 
@@ -262,6 +268,7 @@ export default function App() {
         labels: [],
         assigneeId: null,
         dueDate: null,
+        completedOn: null,
       }
     : openCardId
       ? board.cards[openCardId]
@@ -505,6 +512,10 @@ export default function App() {
                 <small>{percentDone}% of the way there</small>
               </div>
             </div>
+            <WeeklyStats
+              stats={computeWeeklyStats(board, todayKey)}
+              todayKey={todayKey}
+            />
             <div className="overview-panel">
               <div className="section-heading">
                 <h3>Project progress</h3>
@@ -772,6 +783,7 @@ export default function App() {
                           type: 'add-card',
                           columnId: column.id,
                           title,
+                          today: toDateKey(new Date()),
                         })
                         setToast('Issue created')
                       }}
@@ -830,6 +842,7 @@ export default function App() {
                 type: 'add-card',
                 columnId,
                 title: patch.title,
+                today: toDateKey(new Date()),
                 details: patch,
               })
               navigate('project')
@@ -840,6 +853,7 @@ export default function App() {
                   type: 'move-card',
                   cardId: openCard.id,
                   toColumn: columnId,
+                  today: toDateKey(new Date()),
                   toIndex:
                     board.columns.find((column) => column.id === columnId)
                       ?.cardIds.length ?? 0,
