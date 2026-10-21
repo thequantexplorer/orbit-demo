@@ -42,6 +42,8 @@ export interface Column {
   title: string
   accent: string
   cardIds: string[]
+  /** Positive integer limit; null disables the limit. */
+  wipLimit: number | null
 }
 
 export interface DayActivity {

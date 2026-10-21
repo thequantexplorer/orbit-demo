@@ -18,10 +18,10 @@ function activity(changes: Partial<DayActivity>): DayActivity {
 function createBoard(): BoardState {
   return {
     columns: [
-      { id: 'backlog', title: 'Backlog', accent: '', cardIds: ['a', 'b'] },
-      { id: 'in-progress', title: 'In Progress', accent: '', cardIds: ['c'] },
-      { id: 'review', title: 'Review', accent: '', cardIds: [] },
-      { id: 'done', title: 'Done', accent: '', cardIds: ['d'] },
+      { id: 'backlog', title: 'Backlog', accent: '', cardIds: ['a', 'b'], wipLimit: null },
+      { id: 'in-progress', title: 'In Progress', accent: '', cardIds: ['c'], wipLimit: null },
+      { id: 'review', title: 'Review', accent: '', cardIds: [], wipLimit: null },
+      { id: 'done', title: 'Done', accent: '', cardIds: ['d'], wipLimit: null },
     ],
     cards: {},
     nextCardNumber: 1,
