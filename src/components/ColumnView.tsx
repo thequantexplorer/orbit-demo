@@ -3,6 +3,7 @@ import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { defaultRangeExtractor, useVirtualizer } from '@tanstack/react-virtual'
 import type { Card, Column } from '../types'
+import { isOverWipLimit } from '../boardReducer'
 import { AddCardForm } from './AddCardForm'
 import { SortableCard } from './SortableCard'
 import { Icon, StatusIcon } from './Icon'
@@ -18,6 +19,7 @@ interface ColumnViewProps {
   onAddCard: (title: string) => void
   onOpenCard: (cardId: string) => void
   onClearColumn: () => void
+  onSetWipLimit: (limit: number | null) => void
   filtered?: boolean
 }
 
@@ -38,6 +40,7 @@ export function ColumnView({
   onAddCard,
   onOpenCard,
   onClearColumn,
+  onSetWipLimit,
   filtered = false,
 }: ColumnViewProps) {
   const { setNodeRef } = useDroppable({
@@ -52,6 +55,25 @@ export function ColumnView({
   const focusedIndex = focusedCardId
     ? cards.findIndex((card) => card.id === focusedCardId)
     : -1
+  const [editingWip, setEditingWip] = useState(false)
+  const [wipDraft, setWipDraft] = useState('')
+  const editingWipRef = useRef(false)
+  const overWipLimit = isOverWipLimit(column)
+
+  function finishWipEdit(value: string, commit: boolean) {
+    if (!editingWipRef.current) return
+    editingWipRef.current = false
+    setEditingWip(false)
+    if (!commit) return
+
+    const trimmed = value.trim()
+    if (!trimmed) {
+      onSetWipLimit(null)
+      return
+    }
+    const limit = Number(trimmed)
+    if (Number.isInteger(limit) && limit > 0) onSetWipLimit(limit)
+  }
 
   // The app doesn't use React Compiler, so its auto-memoization caveat for
   // useVirtualizer's returned functions doesn't apply here.
@@ -87,12 +109,62 @@ export function ColumnView({
       data-column-id={column.id}
       aria-label={`${column.title} column`}
     >
-      <header className="column__header">
+      <header
+        className={`column__header${overWipLimit ? ' column__header--over-limit' : ''}`}
+        data-over-limit={overWipLimit ? 'true' : undefined}
+        title={
+          overWipLimit
+            ? `Over WIP limit: ${column.cardIds.length} of ${column.wipLimit}`
+            : undefined
+        }
+      >
         <StatusIcon status={column.id} />
         <h2 className="column__title">{column.title}</h2>
         <span className="column__count" data-testid={`count-${column.id}`}>
           {cards.length}
         </span>
+        {editingWip ? (
+          <input
+            autoFocus
+            className="column__wip-input"
+            type="number"
+            min={1}
+            aria-label={`WIP limit for ${column.title}`}
+            value={wipDraft}
+            onChange={(event) => setWipDraft(event.target.value)}
+            onKeyDown={(event) => {
+              event.stopPropagation()
+              if (event.key === 'Enter') {
+                event.preventDefault()
+                finishWipEdit(event.currentTarget.value, true)
+              } else if (event.key === 'Escape') {
+                event.preventDefault()
+                finishWipEdit(event.currentTarget.value, false)
+              }
+            }}
+            onPointerDown={(event) => event.stopPropagation()}
+            onBlur={(event) =>
+              finishWipEdit(event.currentTarget.value, true)
+            }
+          />
+        ) : (
+          <button
+            className={`column__wip${column.wipLimit === null ? ' column__wip--unset' : ''}`}
+            type="button"
+            data-testid={`wip-${column.id}`}
+            aria-label={`WIP limit for ${column.title}`}
+            title="Set WIP limit"
+            onClick={() => {
+              editingWipRef.current = true
+              setWipDraft(
+                column.wipLimit === null ? '' : String(column.wipLimit),
+              )
+              setEditingWip(true)
+            }}
+          >
+            {column.wipLimit === null ? 'WIP' : `/ ${column.wipLimit}`}
+          </button>
+        )}
         {column.id === 'done' && column.cardIds.length > 0 && (
           <button
             className="column__clear"

@@ -117,7 +117,11 @@ export default function App() {
       const editing =
         target instanceof HTMLElement &&
         (target.matches('input, textarea, select') || target.isContentEditable)
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+      if (
+        !editing &&
+        (event.metaKey || event.ctrlKey) &&
+        event.key.toLowerCase() === 'k'
+      ) {
         event.preventDefault()
         setCommandOpen(true)
       } else if (
@@ -777,6 +781,13 @@ export default function App() {
                       }}
                       onOpenCard={setOpenCardId}
                       onClearColumn={() => setClearDoneOpen(true)}
+                      onSetWipLimit={(limit) =>
+                        dispatch({
+                          type: 'set-wip-limit',
+                          columnId: column.id,
+                          limit,
+                        })
+                      }
                     />
                   ))}
                 </div>

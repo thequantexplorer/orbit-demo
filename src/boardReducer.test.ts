@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { boardReducer, findColumnOfCard } from './boardReducer'
+import { boardReducer, findColumnOfCard, isOverWipLimit } from './boardReducer'
 import { createSeedBoard } from './data'
 import type { BoardState, ColumnId } from './types'
 
@@ -16,7 +16,62 @@ describe('findColumnOfCard', () => {
   })
 })
 
+describe('isOverWipLimit', () => {
+  const column = createSeedBoard().columns.find(
+    (candidate) => candidate.id === 'in-progress',
+  )!
+
+  it('returns false when no limit is set or the count equals the limit', () => {
+    expect(isOverWipLimit({ ...column, wipLimit: null })).toBe(false)
+    expect(
+      isOverWipLimit({ ...column, cardIds: ['1', '2', '3'], wipLimit: 3 }),
+    ).toBe(false)
+  })
+
+  it('returns true only when the total card count exceeds the limit', () => {
+    expect(
+      isOverWipLimit({ ...column, cardIds: ['1', '2', '3', '4'], wipLimit: 3 }),
+    ).toBe(true)
+  })
+})
+
 describe('boardReducer', () => {
+  describe('set-wip-limit', () => {
+    it('sets and clears a column limit without changing other columns', () => {
+      const seed = createSeedBoard()
+      const limited = boardReducer(seed, {
+        type: 'set-wip-limit',
+        columnId: 'backlog',
+        limit: 5,
+      })
+      expect(limited.columns.find((column) => column.id === 'backlog')?.wipLimit).toBe(5)
+      expect(limited.columns[1]).toBe(seed.columns[1])
+      expect(limited.columns[2]).toBe(seed.columns[2])
+      expect(limited.columns[3]).toBe(seed.columns[3])
+
+      const cleared = boardReducer(limited, {
+        type: 'set-wip-limit',
+        columnId: 'backlog',
+        limit: null,
+      })
+      expect(cleared.columns.find((column) => column.id === 'backlog')?.wipLimit).toBeNull()
+    })
+
+    it.each([0, -1, 2.5, Number.NaN])(
+      'returns the same board for invalid limit %s',
+      (limit) => {
+        const seed = createSeedBoard()
+        expect(
+          boardReducer(seed, {
+            type: 'set-wip-limit',
+            columnId: 'backlog',
+            limit,
+          }),
+        ).toBe(seed)
+      },
+    )
+  })
+
   describe('move-card', () => {
     it('moves a card to another column at the given index', () => {
       const board = boardReducer(createSeedBoard(), {

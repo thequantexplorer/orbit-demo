@@ -47,5 +47,17 @@ function normalizeBoard(board: BoardState): BoardState {
       dueDate: isValidDueDate(card.dueDate) ? card.dueDate : null,
     }
   }
-  return { ...board, cards }
+  return {
+    ...board,
+    columns: board.columns.map((column) => ({
+      ...column,
+      wipLimit:
+        typeof column.wipLimit === 'number' &&
+        Number.isInteger(column.wipLimit) &&
+        column.wipLimit > 0
+          ? column.wipLimit
+          : null,
+    })),
+    cards,
+  }
 }
