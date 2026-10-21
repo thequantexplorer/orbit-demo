@@ -28,6 +28,9 @@ Then open http://localhost:5173. Other scripts: `npm run build`, `npm run lint`.
   label and assignee filters.
 - Set an optional **Due date** in the issue editor. Cards show it as a chip:
   "Due Oct 12", then "Due today" on the day and "Overdue" once it has passed.
+- Click **Limit** in a column header (shown on hover) to set a WIP limit; the
+  header shows "count / limit" and turns amber once the column holds more issues
+  than its limit. Clear the field to remove the limit.
 - **Display** controls descriptions and dark appearance. The sidebar also has an
   appearance toggle.
 - **Overview** shows live progress and team assignments. **My issues** uses Ava

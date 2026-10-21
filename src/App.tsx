@@ -777,6 +777,13 @@ export default function App() {
                       }}
                       onOpenCard={setOpenCardId}
                       onClearColumn={() => setClearDoneOpen(true)}
+                      onSetWipLimit={(limit) =>
+                        dispatch({
+                          type: 'set-wip-limit',
+                          columnId: column.id,
+                          limit,
+                        })
+                      }
                     />
                   ))}
                 </div>
