@@ -117,11 +117,7 @@ export default function App() {
       const editing =
         target instanceof HTMLElement &&
         (target.matches('input, textarea, select') || target.isContentEditable)
-      if (
-        !editing &&
-        (event.metaKey || event.ctrlKey) &&
-        event.key.toLowerCase() === 'k'
-      ) {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault()
         setCommandOpen(true)
       } else if (
