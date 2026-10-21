@@ -38,6 +38,7 @@ import { Icon, ProgressRing, StatusIcon } from './components/Icon'
 import { IssueList } from './components/IssueList'
 import { LabelPill } from './components/LabelPill'
 import { Sidebar } from './components/Sidebar'
+import { WeeklyStats } from './components/WeeklyStats'
 
 const collisionDetection: CollisionDetection = (args) => {
   const within = pointerWithin(args)
@@ -505,6 +506,7 @@ export default function App() {
                 <small>{percentDone}% of the way there</small>
               </div>
             </div>
+            <WeeklyStats board={board} />
             <div className="overview-panel">
               <div className="section-heading">
                 <h3>Project progress</h3>
