@@ -18,6 +18,7 @@ export type BoardAction =
       details?: Partial<Pick<Card, 'description' | 'labels' | 'assigneeId' | 'dueDate'>>
     }
   | { type: 'update-card'; cardId: string; patch: Partial<Omit<Card, 'id'>> }
+  | { type: 'duplicate-card'; cardId: string }
   | { type: 'delete-card'; cardId: string }
   | { type: 'clear-column'; columnId: ColumnId }
   | { type: 'set-wip-limit'; columnId: ColumnId; limit: number | null }
@@ -114,6 +115,29 @@ export function boardReducer(
           ...board.cards,
           [action.cardId]: { ...existing, ...action.patch },
         },
+      }
+    }
+    case 'duplicate-card': {
+      const original = board.cards[action.cardId]
+      const columnId = findColumnOfCard(board, action.cardId)
+      if (!original || !columnId) return board
+      const id = `KB-${board.nextCardNumber}`
+      const copy: Card = {
+        ...original,
+        id,
+        title: `${original.title} (copy)`,
+        labels: [...original.labels],
+      }
+      return {
+        ...board,
+        nextCardNumber: board.nextCardNumber + 1,
+        cards: { ...board.cards, [id]: copy },
+        columns: board.columns.map((column) => {
+          if (column.id !== columnId) return column
+          const cardIds = [...column.cardIds]
+          cardIds.splice(cardIds.indexOf(action.cardId) + 1, 0, id)
+          return { ...column, cardIds }
+        }),
       }
     }
     case 'delete-card': {

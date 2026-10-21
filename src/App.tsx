@@ -776,6 +776,10 @@ export default function App() {
                         setToast('Issue created')
                       }}
                       onOpenCard={setOpenCardId}
+                      onDuplicateCard={(cardId) => {
+                        dispatch({ type: 'duplicate-card', cardId })
+                        setToast('Issue duplicated')
+                      }}
                       onClearColumn={() => setClearDoneOpen(true)}
                       onSetWipLimit={(limit) =>
                         dispatch({
