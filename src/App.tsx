@@ -19,8 +19,11 @@ import {
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { boardReducer, findColumnOfCard } from './boardReducer'
 import { ASSIGNEES, LABELS, LABEL_ORDER, createSeedBoard } from './data'
+import { toDateKey } from './dueDate'
 import { createGeneratedBoard, parseSeedCount } from './seed'
 import { loadBoard, saveBoard } from './storage'
+import { getWeeklyStats } from './weeklyStats'
+import { useTodayKey } from './useToday'
 import type {
   BoardState,
   Card,
@@ -38,6 +41,7 @@ import { Icon, ProgressRing, StatusIcon } from './components/Icon'
 import { IssueList } from './components/IssueList'
 import { LabelPill } from './components/LabelPill'
 import { Sidebar } from './components/Sidebar'
+import { WeeklyStatsPanel } from './components/WeeklyStats'
 
 const collisionDetection: CollisionDetection = (args) => {
   const within = pointerWithin(args)
@@ -65,6 +69,8 @@ export default function App() {
         ? createGeneratedBoard(seedCount)
         : (loadBoard() ?? createSeedBoard()),
   )
+  const todayKey = useTodayKey()
+  const weeklyStats = getWeeklyStats(board, todayKey)
   const [activeCardId, setActiveCardId] = useState<string | null>(null)
   const [overColumnId, setOverColumnId] = useState<ColumnId | null>(null)
   const [openCardId, setOpenCardId] = useState<string | null>(null)
@@ -196,6 +202,7 @@ export default function App() {
       cardId: String(active.id),
       toColumn,
       toIndex,
+      today: toDateKey(new Date()),
     })
   }
 
@@ -211,11 +218,28 @@ export default function App() {
         )
         ?.focus({ preventScroll: true })
     }
+    const snapshot = dragSnapshot.current
     dragSnapshot.current = null
     setActiveCardId(null)
     setOverColumnId(null)
     const fromColumn = resolveColumn(active.id)
     const toColumn = resolveColumn(over.id)
+    const cardId = String(active.id)
+    const snapshotCard = snapshot?.cards[cardId]
+    const currentCard = board.cards[cardId]
+    if (
+      snapshot &&
+      snapshotCard &&
+      findColumnOfCard(snapshot, cardId) === toColumn &&
+      currentCard &&
+      currentCard.completedAt !== snapshotCard.completedAt
+    ) {
+      dispatch({
+        type: 'update-card',
+        cardId,
+        patch: { completedAt: snapshotCard.completedAt },
+      })
+    }
     if (!fromColumn || !toColumn || fromColumn !== toColumn) return
 
     const column = board.columns.find((entry) => entry.id === fromColumn)
@@ -262,6 +286,7 @@ export default function App() {
         labels: [],
         assigneeId: null,
         dueDate: null,
+        completedAt: null,
       }
     : openCardId
       ? board.cards[openCardId]
@@ -505,6 +530,7 @@ export default function App() {
                 <small>{percentDone}% of the way there</small>
               </div>
             </div>
+            <WeeklyStatsPanel stats={weeklyStats} />
             <div className="overview-panel">
               <div className="section-heading">
                 <h3>Project progress</h3>
@@ -772,6 +798,7 @@ export default function App() {
                           type: 'add-card',
                           columnId: column.id,
                           title,
+                          today: toDateKey(new Date()),
                         })
                         setToast('Issue created')
                       }}
@@ -830,7 +857,13 @@ export default function App() {
                 type: 'add-card',
                 columnId,
                 title: patch.title,
-                details: patch,
+                today: toDateKey(new Date()),
+                details: {
+                  description: patch.description,
+                  labels: patch.labels,
+                  assigneeId: patch.assigneeId,
+                  dueDate: patch.dueDate,
+                },
               })
               navigate('project')
             } else {
@@ -840,6 +873,7 @@ export default function App() {
                   type: 'move-card',
                   cardId: openCard.id,
                   toColumn: columnId,
+                  today: toDateKey(new Date()),
                   toIndex:
                     board.columns.find((column) => column.id === columnId)
                       ?.cardIds.length ?? 0,
@@ -889,7 +923,7 @@ export default function App() {
             <button
               className="button button--primary"
               onClick={() => {
-                dispatch({ type: 'reset' })
+                dispatch({ type: 'reset', today: toDateKey(new Date()) })
                 navigate('project')
                 setResetOpen(false)
                 setToast('Board reset to the original issues')

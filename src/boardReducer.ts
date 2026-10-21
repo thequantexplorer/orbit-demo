@@ -3,7 +3,13 @@ import type { BoardState, Card, ColumnId } from './types'
 import { createSeedBoard } from './data'
 
 export type BoardAction =
-  | { type: 'move-card'; cardId: string; toColumn: ColumnId; toIndex: number }
+  | {
+      type: 'move-card'
+      cardId: string
+      toColumn: ColumnId
+      toIndex: number
+      today: string
+    }
   | {
       type: 'reorder-card'
       columnId: ColumnId
@@ -14,12 +20,13 @@ export type BoardAction =
       type: 'add-card'
       columnId: ColumnId
       title: string
+      today: string
       details?: Partial<Pick<Card, 'description' | 'labels' | 'assigneeId' | 'dueDate'>>
     }
   | { type: 'update-card'; cardId: string; patch: Partial<Omit<Card, 'id'>> }
   | { type: 'delete-card'; cardId: string }
   | { type: 'clear-column'; columnId: ColumnId }
-  | { type: 'reset' }
+  | { type: 'reset'; today: string }
   | { type: 'restore'; board: BoardState }
 
 export function findColumnOfCard(
@@ -37,8 +44,25 @@ export function boardReducer(
     case 'move-card': {
       const fromColumn = findColumnOfCard(board, action.cardId)
       if (!fromColumn) return board
+      const card = board.cards[action.cardId]
+      const completedAt =
+        fromColumn === action.toColumn || !card
+          ? undefined
+          : action.toColumn === 'done'
+            ? action.today
+            : fromColumn === 'done'
+              ? null
+              : undefined
       return {
         ...board,
+        ...(completedAt !== undefined
+          ? {
+              cards: {
+                ...board.cards,
+                [action.cardId]: { ...card, completedAt },
+              },
+            }
+          : {}),
         columns: board.columns.map((column) => {
           if (column.id === fromColumn && column.id === action.toColumn) {
             const fromIndex = column.cardIds.indexOf(action.cardId)
@@ -89,6 +113,7 @@ export function boardReducer(
         labels: [],
         assigneeId: null,
         dueDate: null,
+        completedAt: action.columnId === 'done' ? action.today : null,
         ...action.details,
       }
       return {
@@ -141,7 +166,7 @@ export function boardReducer(
       }
     }
     case 'reset':
-      return createSeedBoard()
+      return createSeedBoard(action.today)
     case 'restore':
       return action.board
   }

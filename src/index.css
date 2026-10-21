@@ -1488,6 +1488,105 @@ details[open] > .toolbar-button {
   padding: 20px 24px;
   border-radius: 8px;
 }
+.weekly-stats__summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin: 20px 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.weekly-stats__summary > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 14px;
+}
+.weekly-stats__summary > div + div {
+  border-left: 1px solid var(--border);
+}
+.weekly-stats__summary span {
+  color: var(--secondary);
+  font-size: 10px;
+}
+.weekly-stats__summary strong {
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.4px;
+}
+.weekly-stats__summary em {
+  color: var(--muted);
+  font-size: 12px;
+  font-style: normal;
+}
+.weekly-stats__chart {
+  display: block;
+  overflow: visible;
+  margin-top: 8px;
+}
+.weekly-stats__grid {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+.weekly-stats__tick,
+.weekly-stats__day {
+  fill: var(--muted);
+  font-family: inherit;
+  font-size: 10px;
+}
+.weekly-stats__day--today {
+  fill: var(--primary);
+  font-weight: 600;
+}
+.weekly-stats__area {
+  fill: var(--primary);
+  opacity: 0.1;
+}
+.weekly-stats__ideal {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 5;
+}
+.weekly-stats__actual {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.weekly-stats__marker {
+  fill: var(--surface);
+  stroke: var(--primary);
+  stroke-width: 2;
+}
+.weekly-stats__marker--today {
+  fill: var(--primary);
+}
+.weekly-stats__legend {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  color: var(--secondary);
+  font-size: 10px;
+}
+.weekly-stats__legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.weekly-stats__legend-line {
+  width: 15px;
+  border-top: 2px solid var(--primary);
+}
+.weekly-stats__legend-line--ideal {
+  border-color: var(--muted);
+  border-top-style: dashed;
+}
+.weekly-stats__empty {
+  margin: 22px 0 4px;
+  color: var(--muted);
+  font-size: 11px;
+}
 .section-heading {
   display: flex;
   align-items: center;
@@ -2238,6 +2337,15 @@ details[open] > .toolbar-button {
   }
   .overview-panel {
     padding: 18px;
+  }
+  .weekly-stats__summary > div {
+    padding: 9px 8px;
+  }
+  .weekly-stats__summary span {
+    font-size: 9px;
+  }
+  .weekly-stats__summary strong {
+    font-size: 16px;
   }
   .progress-legend {
     gap: 12px;

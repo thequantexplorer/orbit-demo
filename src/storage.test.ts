@@ -59,17 +59,26 @@ describe('loadBoard', () => {
 
   it('loads boards saved before due dates existed', () => {
     const board = createSeedBoard()
+    const expected = {
+      ...board,
+      cards: Object.fromEntries(
+        Object.entries(board.cards).map(([id, card]) => [
+          id,
+          { ...card, completedAt: null },
+        ]),
+      ),
+    }
     const legacy = {
       ...board,
       cards: Object.fromEntries(
         Object.entries(board.cards).map(([id, card]) => {
-          const { dueDate: _dueDate, ...rest } = card
+          const { dueDate: _dueDate, completedAt: _completedAt, ...rest } = card
           return [id, rest]
         }),
       ),
     }
     storage.setItem(STORAGE_KEY, JSON.stringify(legacy))
-    expect(loadBoard()).toEqual(board)
+    expect(loadBoard()).toEqual(expected)
   })
 
   it('drops malformed due dates', () => {
@@ -83,6 +92,23 @@ describe('loadBoard', () => {
     expect(loaded.cards['KB-1'].dueDate).toBeNull()
     expect(loaded.cards['KB-2'].dueDate).toBeNull()
     expect(loaded.cards['KB-3'].dueDate).toBeNull()
+  })
+
+  it('normalizes missing and invalid completion days and preserves valid ones', () => {
+    const board = createSeedBoard()
+    const saved = JSON.parse(JSON.stringify(board))
+    delete saved.cards['KB-1'].completedAt
+    saved.cards['KB-2'].completedAt = 'yesterday'
+    saved.cards['KB-3'].completedAt = '2026-02-30'
+    saved.cards['KB-4'].completedAt = 20261012
+    saved.cards['KB-5'].completedAt = '2026-10-12'
+    storage.setItem(STORAGE_KEY, JSON.stringify(saved))
+    const loaded = loadBoard()!
+    expect(loaded.cards['KB-1'].completedAt).toBeNull()
+    expect(loaded.cards['KB-2'].completedAt).toBeNull()
+    expect(loaded.cards['KB-3'].completedAt).toBeNull()
+    expect(loaded.cards['KB-4'].completedAt).toBeNull()
+    expect(loaded.cards['KB-5'].completedAt).toBe('2026-10-12')
   })
 
   it('returns null for invalid JSON', () => {
