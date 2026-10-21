@@ -21,7 +21,7 @@ export function Toast({ toast, onDismiss }: ToastProps) {
       toast.action ? ACTION_TOAST_DURATION_MS : TOAST_DURATION_MS,
     )
     return () => window.clearTimeout(timer)
-  }, [toast])
+  }, [toast, onDismiss])
 
   return (
     <div className="toast" role="status">

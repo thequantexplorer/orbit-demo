@@ -83,6 +83,7 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [saved, setSaved] = useState(true)
   const [toast, setToast] = useState<ToastState | null>(null)
+  const dismissToast = useCallback(() => setToast(null), [])
   const [dark, setDark] = useState(() => {
     try {
       return localStorage.getItem('kanban-theme') === 'dark'
@@ -1003,7 +1004,7 @@ export default function App() {
           </dl>
         </Dialog>
       )}
-      {toast && <Toast toast={toast} onDismiss={() => setToast(null)} />}
+      {toast && <Toast toast={toast} onDismiss={dismissToast} />}
     </div>
   )
 }
