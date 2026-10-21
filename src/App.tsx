@@ -20,6 +20,7 @@ import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { boardReducer, findColumnOfCard } from './boardReducer'
 import { ASSIGNEES, LABELS, LABEL_ORDER, createSeedBoard } from './data'
 import { createGeneratedBoard, parseSeedCount } from './seed'
+import { matchesSearch } from './search'
 import { loadBoard, saveBoard } from './storage'
 import type {
   BoardState,
@@ -303,9 +304,7 @@ export default function App() {
       .filter(
         (card) =>
           card &&
-          `${card.title} ${card.id} ${card.description}`
-            .toLowerCase()
-            .includes(query.toLowerCase()) &&
+          matchesSearch(card, query) &&
           (!labelFilter.length ||
             labelFilter.some((label) => card.labels.includes(label))) &&
           (!assigneeFilter || card.assigneeId === assigneeFilter) &&
