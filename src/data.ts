@@ -1,4 +1,6 @@
 import type { Assignee, BoardState, Card, Label, LabelId } from './types'
+import { toDateKey } from './dueDate'
+import { addDays } from './weeklyStats'
 
 export const LABELS: Record<LabelId, Label> = {
   bug: { id: 'bug', name: 'Bug', color: '#ef4444' },
@@ -94,7 +96,22 @@ const seedCards: Card[] = [
   },
 ]
 
-export function createSeedBoard(): BoardState {
+export function createSeedBoard(todayKey: string = toDateKey(new Date())): BoardState {
+  const history = {
+    [-1]: { completed: 2 },
+    [-2]: { added: 1, completed: 1 },
+    [-3]: { completed: 2 },
+    [-4]: { added: 2 },
+    [-5]: { completed: 1 },
+    [-6]: { added: 1, completed: 2 },
+    [-7]: { completed: 1 },
+    [-8]: { added: 2, completed: 1 },
+    [-9]: { completed: 2 },
+    [-10]: { completed: 1 },
+    [-11]: { added: 3 },
+    [-12]: { completed: 2 },
+    [-13]: { completed: 1 },
+  }
   return {
     columns: [
       { id: 'backlog', title: 'Backlog', accent: '#94a3b8', cardIds: ['KB-1', 'KB-2', 'KB-3', 'KB-4'] },
@@ -104,5 +121,11 @@ export function createSeedBoard(): BoardState {
     ],
     cards: Object.fromEntries(seedCards.map((card) => [card.id, card])),
     nextCardNumber: seedCards.length + 1,
+    history: Object.fromEntries(
+      Object.entries(history).map(([offset, activity]) => [
+        addDays(todayKey, Number(offset)),
+        { added: 0, completed: 0, reopened: 0, removed: 0, ...activity },
+      ]),
+    ),
   }
 }

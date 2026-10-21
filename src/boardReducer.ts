@@ -1,6 +1,8 @@
 import { arrayMove } from '@dnd-kit/sortable'
-import type { BoardState, Card, ColumnId } from './types'
+import type { BoardState, Card, ColumnId, DayActivity } from './types'
 import { createSeedBoard } from './data'
+import { toDateKey } from './dueDate'
+import { addDays } from './weeklyStats'
 
 export type BoardAction =
   | { type: 'move-card'; cardId: string; toColumn: ColumnId; toIndex: number }
@@ -29,6 +31,30 @@ export function findColumnOfCard(
   return board.columns.find((column) => column.cardIds.includes(cardId))?.id
 }
 
+function recordActivity(
+  history: BoardState['history'],
+  day: string,
+  changes: Partial<DayActivity>,
+): BoardState['history'] {
+  const oldestDay = addDays(day, -55)
+  const nextHistory = Object.fromEntries(
+    Object.entries(history).filter(([key]) => key >= oldestDay),
+  )
+  const current = history[day] ?? {
+    added: 0,
+    completed: 0,
+    reopened: 0,
+    removed: 0,
+  }
+  nextHistory[day] = {
+    added: current.added + (changes.added ?? 0),
+    completed: current.completed + (changes.completed ?? 0),
+    reopened: current.reopened + (changes.reopened ?? 0),
+    removed: current.removed + (changes.removed ?? 0),
+  }
+  return nextHistory
+}
+
 export function boardReducer(
   board: BoardState,
   action: BoardAction,
@@ -37,8 +63,21 @@ export function boardReducer(
     case 'move-card': {
       const fromColumn = findColumnOfCard(board, action.cardId)
       if (!fromColumn) return board
+      let history = board.history
+      if (fromColumn !== action.toColumn) {
+        if (fromColumn !== 'done' && action.toColumn === 'done') {
+          history = recordActivity(board.history, toDateKey(new Date()), {
+            completed: 1,
+          })
+        } else if (fromColumn === 'done' && action.toColumn !== 'done') {
+          history = recordActivity(board.history, toDateKey(new Date()), {
+            reopened: 1,
+          })
+        }
+      }
       return {
         ...board,
+        history,
         columns: board.columns.map((column) => {
           if (column.id === fromColumn && column.id === action.toColumn) {
             const fromIndex = column.cardIds.indexOf(action.cardId)
@@ -93,6 +132,10 @@ export function boardReducer(
       }
       return {
         ...board,
+        history: recordActivity(board.history, toDateKey(new Date()), {
+          added: 1,
+          ...(action.columnId === 'done' ? { completed: 1 } : {}),
+        }),
         nextCardNumber: board.nextCardNumber + 1,
         cards: { ...board.cards, [id]: card },
         columns: board.columns.map((column) =>
@@ -114,9 +157,16 @@ export function boardReducer(
       }
     }
     case 'delete-card': {
+      const columnId = findColumnOfCard(board, action.cardId)
       const { [action.cardId]: _removed, ...cards } = board.cards
       return {
         ...board,
+        history:
+          board.cards[action.cardId] && columnId && columnId !== 'done'
+            ? recordActivity(board.history, toDateKey(new Date()), {
+                removed: 1,
+              })
+            : board.history,
         cards,
         columns: board.columns.map((column) => ({
           ...column,
@@ -132,6 +182,12 @@ export function boardReducer(
       const removed = new Set(target.cardIds)
       return {
         ...board,
+        history:
+          action.columnId === 'done'
+            ? board.history
+            : recordActivity(board.history, toDateKey(new Date()), {
+                removed: target.cardIds.length,
+              }),
         cards: Object.fromEntries(
           Object.entries(board.cards).filter(([id]) => !removed.has(id)),
         ),

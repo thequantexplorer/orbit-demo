@@ -98,5 +98,5 @@ export function createGeneratedBoard(count: number): BoardState {
     column.cardIds.push(id)
   }
 
-  return { columns, cards, nextCardNumber: count + 1 }
+  return { columns, cards, nextCardNumber: count + 1, history: {} }
 }

@@ -35,6 +35,7 @@ describe('createGeneratedBoard', () => {
     for (const column of board.columns)
       expect(column.cardIds.length).toBeGreaterThan(0)
     expect(board.nextCardNumber).toBe(1001)
+    expect(board.history).toEqual({})
   })
 
   it('is deterministic', () => {

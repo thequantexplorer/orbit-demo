@@ -44,8 +44,17 @@ export interface Column {
   cardIds: string[]
 }
 
+export interface DayActivity {
+  added: number
+  completed: number
+  reopened: number
+  removed: number
+}
+
 export interface BoardState {
   columns: Column[]
   cards: Record<string, Card>
   nextCardNumber: number
+  /** Activity counts per local day (`YYYY-MM-DD`), used for weekly stats. */
+  history: Record<string, DayActivity>
 }
