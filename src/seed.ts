@@ -84,6 +84,7 @@ export function createGeneratedBoard(count: number): BoardState {
       description: pick(DESCRIPTIONS),
       labels: LABEL_ORDER.filter((label) => labels.has(label)),
       assigneeId: random() < 0.1 ? null : pick(assigneeIds),
+      completedAt: null,
       dueDate:
         dueRoll < 0.25
           ? `2026-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`

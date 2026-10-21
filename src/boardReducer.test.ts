@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { boardReducer, findColumnOfCard } from './boardReducer'
 import { createSeedBoard } from './data'
 import type { BoardState, ColumnId } from './types'
@@ -90,6 +90,7 @@ describe('boardReducer', () => {
         labels: ['bug'],
         assigneeId: null,
         dueDate: null,
+        completedAt: null,
       })
       expect(cardIds(board, 'in-progress')).toEqual(['KB-5', 'KB-6', 'KB-10'])
     })
@@ -112,6 +113,72 @@ describe('boardReducer', () => {
         title: '   ',
       })
       expect(board).toBe(seed)
+    })
+  })
+
+  describe('completion timestamps', () => {
+    beforeEach(() => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date(2026, 9, 21, 12))
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('sets on entering Done, clears on leaving, and preserves within Done', () => {
+      const seed = createSeedBoard()
+      const enteredDone = boardReducer(seed, {
+        type: 'move-card',
+        cardId: 'KB-1',
+        toColumn: 'done',
+        toIndex: 2,
+      })
+      expect(enteredDone.cards['KB-1'].completedAt).toBe('2026-10-21')
+
+      const leftDone = boardReducer(enteredDone, {
+        type: 'move-card',
+        cardId: 'KB-8',
+        toColumn: 'backlog',
+        toIndex: 0,
+      })
+      expect(leftDone.cards['KB-8'].completedAt).toBeNull()
+
+      const movedWithinDone = boardReducer(seed, {
+        type: 'move-card',
+        cardId: 'KB-8',
+        toColumn: 'done',
+        toIndex: 1,
+      })
+      expect(movedWithinDone.cards['KB-8'].completedAt).toBe(
+        seed.cards['KB-8'].completedAt,
+      )
+
+      const reorderedDone = boardReducer(seed, {
+        type: 'reorder-card',
+        columnId: 'done',
+        fromIndex: 0,
+        toIndex: 1,
+      })
+      expect(reorderedDone.cards['KB-8'].completedAt).toBe(
+        seed.cards['KB-8'].completedAt,
+      )
+    })
+
+    it('sets completion on cards added to Done only', () => {
+      const seed = createSeedBoard()
+      const doneBoard = boardReducer(seed, {
+        type: 'add-card',
+        columnId: 'done',
+        title: 'Ship it',
+      })
+      const backlogBoard = boardReducer(seed, {
+        type: 'add-card',
+        columnId: 'backlog',
+        title: 'Start it',
+      })
+      expect(doneBoard.cards['KB-10'].completedAt).toBe('2026-10-21')
+      expect(backlogBoard.cards['KB-10'].completedAt).toBeNull()
     })
   })
 

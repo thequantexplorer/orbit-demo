@@ -1,4 +1,6 @@
 import type { Assignee, BoardState, Card, Label, LabelId } from './types'
+import { fromDateKey, toDateKey } from './dueDate'
+import { getWeekStart } from './weeklyStats'
 
 export const LABELS: Record<LabelId, Label> = {
   bug: { id: 'bug', name: 'Bug', color: '#ef4444' },
@@ -19,7 +21,7 @@ export const ASSIGNEES: Record<string, Assignee> = {
   sofia: { id: 'sofia', name: 'Sofia Novak', initials: 'SN', color: '#f97316' },
 }
 
-const seedCards: Card[] = [
+const seedCards: Omit<Card, 'completedAt'>[] = [
   {
     id: 'KB-1',
     title: 'Set up CI pipeline',
@@ -95,6 +97,13 @@ const seedCards: Card[] = [
 ]
 
 export function createSeedBoard(): BoardState {
+  const todayKey = toDateKey(new Date())
+  const weekStart = getWeekStart(todayKey)
+  const tuesday = fromDateKey(weekStart)
+  tuesday.setDate(tuesday.getDate() + 1)
+  const secondCompletion = toDateKey(tuesday)
+  const kb9Completion = secondCompletion < todayKey ? secondCompletion : todayKey
+
   return {
     columns: [
       {
@@ -126,7 +135,20 @@ export function createSeedBoard(): BoardState {
         wipLimit: null,
       },
     ],
-    cards: Object.fromEntries(seedCards.map((card) => [card.id, card])),
+    cards: Object.fromEntries(
+      seedCards.map((card) => [
+        card.id,
+        {
+          ...card,
+          completedAt:
+            card.id === 'KB-8'
+              ? weekStart
+              : card.id === 'KB-9'
+                ? kb9Completion
+                : null,
+        },
+      ]),
+    ),
     nextCardNumber: seedCards.length + 1,
   }
 }
