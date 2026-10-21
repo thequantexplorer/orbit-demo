@@ -1,9 +1,10 @@
 import { useRef, useState, type FormEvent } from 'react'
 import { ASSIGNEES, LABELS, LABEL_ORDER } from '../data'
-import type { Card, Column, ColumnId, LabelId } from '../types'
+import type { Card, Column, ColumnId, LabelId, Priority } from '../types'
 import { Avatar } from './Avatar'
 import { Dialog } from './Dialog'
 import { Icon, StatusIcon } from './Icon'
+import { PriorityField } from './PriorityField'
 
 interface CardModalProps {
   card: Card
@@ -29,6 +30,7 @@ export function CardModal({
   const [labels, setLabels] = useState<LabelId[]>(card.labels)
   const [assigneeId, setAssigneeId] = useState<string | null>(card.assigneeId)
   const [dueDate, setDueDate] = useState<string | null>(card.dueDate)
+  const [priority, setPriority] = useState<Priority | null>(card.priority)
   const dueDateInput = useRef<HTMLInputElement>(null)
   const [status, setStatus] = useState(columnId)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -51,6 +53,7 @@ export function CardModal({
         labels,
         assigneeId,
         dueDate,
+        priority,
       },
       status,
     )
@@ -159,6 +162,7 @@ export function CardModal({
                 <Icon name="down" size={12} />
               </div>
             </div>
+            <PriorityField value={priority} onChange={setPriority} />
             <div className="property-field">
               <label htmlFor="issue-due-date">Due date</label>
               <div className="select-wrap">

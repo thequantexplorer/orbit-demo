@@ -1,4 +1,5 @@
 import { isValidDueDate } from './dueDate'
+import { isValidPriority } from './priority'
 import type { BoardState, Card } from './types'
 import { isValidWipLimit } from './wipLimit'
 
@@ -50,6 +51,7 @@ function normalizeBoard(board: BoardState): BoardState {
     cards[id] = {
       ...card,
       dueDate: isValidDueDate(card.dueDate) ? card.dueDate : null,
+      priority: isValidPriority(card.priority) ? card.priority : null,
     }
   }
   return { ...board, columns, cards }

@@ -5,6 +5,7 @@ import type { Card } from '../types'
 import { Avatar } from './Avatar'
 import { LabelPill } from './LabelPill'
 import { Icon } from './Icon'
+import { PriorityFlag } from './PriorityFlag'
 
 interface CardViewProps extends HTMLAttributes<HTMLElement> {
   card: Card
@@ -36,13 +37,18 @@ export function CardView({
     <article ref={ref} className={classes} data-card-id={card.id} {...rest}>
       <div className="card__topline">
         <span className="card__id">{card.id}</span>
-        {card.labels.includes('urgent') ? (
-          <span className="priority priority--urgent" title="Urgent">
-            !
-          </span>
-        ) : (
-          <Icon name="signal" size={13} className="card__priority" />
-        )}
+        <span className="card__markers">
+          {card.priority && <PriorityFlag priority={card.priority} />}
+          {card.labels.includes('urgent') ? (
+            <span className="priority priority--urgent" title="Urgent">
+              !
+            </span>
+          ) : (
+            !card.priority && (
+              <Icon name="signal" size={13} className="card__priority" />
+            )
+          )}
+        </span>
       </div>
       <h3 className="card__title">{card.title}</h3>
       {card.description && (
