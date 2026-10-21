@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { defaultRangeExtractor, useVirtualizer } from '@tanstack/react-virtual'
+import { isOverWipLimit } from '../boardReducer'
 import type { Card, Column } from '../types'
 import { AddCardForm } from './AddCardForm'
 import { SortableCard } from './SortableCard'
@@ -18,6 +19,7 @@ interface ColumnViewProps {
   onAddCard: (title: string) => void
   onOpenCard: (cardId: string) => void
   onClearColumn: () => void
+  onSetWipLimit: (limit: number | null) => void
   filtered?: boolean
 }
 
@@ -38,6 +40,7 @@ export function ColumnView({
   onAddCard,
   onOpenCard,
   onClearColumn,
+  onSetWipLimit,
   filtered = false,
 }: ColumnViewProps) {
   const { setNodeRef } = useDroppable({
@@ -46,6 +49,10 @@ export function ColumnView({
   })
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const [focusedCardId, setFocusedCardId] = useState<string | null>(null)
+  const [editingLimit, setEditingLimit] = useState(false)
+  const cancelLimitEdit = useRef(false)
+  const overLimit = isOverWipLimit(column)
+  const total = column.cardIds.length
   const activeIndex = activeCardId
     ? cards.findIndex((card) => card.id === activeCardId)
     : -1
@@ -87,12 +94,65 @@ export function ColumnView({
       data-column-id={column.id}
       aria-label={`${column.title} column`}
     >
-      <header className="column__header">
+      <header
+        className={`column__header${overLimit ? ' column__header--over-limit' : ''}`}
+        data-testid={`header-${column.id}`}
+        title={
+          overLimit
+            ? `Over WIP limit: ${total} of ${column.wipLimit} issues`
+            : undefined
+        }
+      >
         <StatusIcon status={column.id} />
         <h2 className="column__title">{column.title}</h2>
         <span className="column__count" data-testid={`count-${column.id}`}>
           {cards.length}
         </span>
+        {editingLimit ? (
+          <input
+            className="column__wip-input"
+            type="number"
+            min={1}
+            step={1}
+            autoFocus
+            defaultValue={column.wipLimit ?? ''}
+            placeholder="—"
+            aria-label={`WIP limit for ${column.title}`}
+            onFocus={(event) => event.currentTarget.select()}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') event.currentTarget.blur()
+              if (event.key === 'Escape') {
+                event.stopPropagation()
+                cancelLimitEdit.current = true
+                event.currentTarget.blur()
+              }
+            }}
+            onBlur={(event) => {
+              if (cancelLimitEdit.current) {
+                cancelLimitEdit.current = false
+                setEditingLimit(false)
+                return
+              }
+              const value = Number.parseInt(event.currentTarget.value, 10)
+              onSetWipLimit(Number.isNaN(value) || value < 1 ? null : value)
+              setEditingLimit(false)
+            }}
+          />
+        ) : (
+          <button
+            className={`column__wip${column.wipLimit === null ? ' column__wip--unset' : ''}`}
+            aria-label={
+              column.wipLimit === null
+                ? `Set WIP limit for ${column.title}`
+                : `WIP limit ${column.wipLimit} for ${column.title}${overLimit ? ', over limit' : ''}. Change limit`
+            }
+            title={column.wipLimit === null ? 'Set WIP limit' : 'Change WIP limit'}
+            data-testid={`wip-${column.id}`}
+            onClick={() => setEditingLimit(true)}
+          >
+            {column.wipLimit === null ? 'Limit' : `/ ${column.wipLimit}`}
+          </button>
+        )}
         {column.id === 'done' && column.cardIds.length > 0 && (
           <button
             className="column__clear"

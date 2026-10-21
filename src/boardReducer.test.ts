@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { boardReducer, findColumnOfCard } from './boardReducer'
+import { boardReducer, findColumnOfCard, isOverWipLimit } from './boardReducer'
 import { createSeedBoard } from './data'
 import type { BoardState, ColumnId } from './types'
 
@@ -175,6 +175,44 @@ describe('boardReducer', () => {
       expect(
         boardReducer(cleared, { type: 'clear-column', columnId: 'done' }),
       ).toBe(cleared)
+    })
+  })
+
+  describe('set-wip-limit', () => {
+    it('sets and clears a column limit', () => {
+      const limited = boardReducer(createSeedBoard(), {
+        type: 'set-wip-limit',
+        columnId: 'in-progress',
+        limit: 3,
+      })
+      expect(limited.columns[1].wipLimit).toBe(3)
+      expect(limited.columns[0].wipLimit).toBeNull()
+      const cleared = boardReducer(limited, {
+        type: 'set-wip-limit',
+        columnId: 'in-progress',
+        limit: null,
+      })
+      expect(cleared.columns[1].wipLimit).toBeNull()
+    })
+
+    it('treats non-positive or fractional limits as no limit', () => {
+      for (const limit of [0, -2, 1.5, Number.NaN]) {
+        const board = boardReducer(createSeedBoard(), {
+          type: 'set-wip-limit',
+          columnId: 'review',
+          limit,
+        })
+        expect(board.columns[2].wipLimit).toBeNull()
+      }
+    })
+  })
+
+  describe('isOverWipLimit', () => {
+    it('is true only when the column has more cards than its limit', () => {
+      const column = createSeedBoard().columns[0]
+      expect(isOverWipLimit(column)).toBe(false)
+      expect(isOverWipLimit({ ...column, wipLimit: 4 })).toBe(false)
+      expect(isOverWipLimit({ ...column, wipLimit: 3 })).toBe(true)
     })
   })
 

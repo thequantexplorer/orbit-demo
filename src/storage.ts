@@ -1,3 +1,4 @@
+import { normalizeWipLimit } from './boardReducer'
 import { isValidDueDate } from './dueDate'
 import type { BoardState, Card } from './types'
 
@@ -47,5 +48,9 @@ function normalizeBoard(board: BoardState): BoardState {
       dueDate: isValidDueDate(card.dueDate) ? card.dueDate : null,
     }
   }
-  return { ...board, cards }
+  const columns = board.columns.map((column) => ({
+    ...column,
+    wipLimit: normalizeWipLimit(column.wipLimit),
+  }))
+  return { ...board, columns, cards }
 }

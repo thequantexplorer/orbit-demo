@@ -971,6 +971,49 @@ details[open] > .toolbar-button {
   margin-left: 1px;
   font-variant-numeric: tabular-nums;
 }
+.column__header--over-limit {
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--warning) 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warning) 45%, transparent);
+}
+.column__header--over-limit .column__title,
+.column__header--over-limit .column__count,
+.column__header--over-limit .column__wip {
+  color: var(--warning);
+  font-weight: 600;
+}
+.column__wip {
+  height: 19px;
+  padding: 0 4px;
+  margin-left: -5px;
+  border-radius: 4px;
+  font-size: 10px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.column__wip:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+.column__wip--unset {
+  margin-left: 0;
+  opacity: 0;
+}
+.column__header:hover .column__wip--unset,
+.column__wip--unset:focus-visible {
+  opacity: 1;
+}
+.column__wip-input {
+  width: 42px;
+  height: 21px;
+  padding: 0 4px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 10px;
+}
 .column__add {
   margin-left: auto;
   color: var(--muted);
