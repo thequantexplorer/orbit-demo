@@ -1639,6 +1639,146 @@ details[open] > .toolbar-button {
 .team-member > .icon {
   color: var(--muted);
 }
+.weekly-stats__numbers {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 18px 0 8px;
+}
+.weekly-stats__numbers > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.weekly-stats__numbers span {
+  color: var(--secondary);
+  font-size: 10px;
+}
+.weekly-stats__numbers strong {
+  font-size: 22px;
+  letter-spacing: -0.5px;
+  font-weight: 500;
+}
+.weekly-stats__numbers em {
+  font-size: 14px;
+  color: var(--muted);
+  font-style: normal;
+}
+.weekly-stats__numbers small {
+  color: var(--muted);
+  font-size: 10px;
+}
+.weekly-stats__numbers .weekly-stats__delta--up {
+  color: var(--green);
+}
+.weekly-stats__numbers .weekly-stats__delta--down {
+  color: var(--warning);
+}
+.weekly-stats__empty {
+  margin: 16px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+.burndown {
+  margin: 0;
+}
+.burndown__chart {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  grid-template-rows: 170px auto;
+  column-gap: 10px;
+  margin-top: 14px;
+}
+.burndown__axis {
+  position: relative;
+}
+.burndown__axis > span {
+  position: absolute;
+  right: 0;
+  transform: translateY(-50%);
+  font-size: 10px;
+  color: var(--muted);
+}
+.burndown__plot {
+  position: relative;
+}
+.burndown__plot svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.burndown__plot line,
+.burndown__plot path,
+.burndown__plot polyline {
+  vector-effect: non-scaling-stroke;
+}
+.burndown__grid {
+  stroke: var(--border);
+}
+.burndown__ideal {
+  stroke: var(--border-strong);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+}
+.burndown__area {
+  fill: var(--primary-subtle);
+  opacity: 0.7;
+}
+.burndown__actual {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.burndown__point {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 2px solid var(--primary);
+  background: var(--surface);
+  transform: translate(-50%, -50%);
+}
+.burndown__point--today {
+  width: 10px;
+  height: 10px;
+  background: var(--primary);
+}
+.burndown__days {
+  grid-column: 2;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  padding-top: 8px;
+  text-align: center;
+  font-size: 10px;
+  color: var(--muted);
+}
+.burndown__day--today {
+  color: var(--primary);
+  font-weight: 600;
+}
+.burndown__legend {
+  display: flex;
+  gap: 20px;
+  margin-top: 8px;
+  font-size: 10px;
+  color: var(--secondary);
+}
+.burndown__legend > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.burndown__swatch {
+  width: 14px;
+  height: 0;
+  border-top: 2px solid var(--primary);
+}
+.burndown__swatch--ideal {
+  border-top: 2px dashed var(--border-strong);
+}
 
 .dialog {
   padding: 0;
@@ -2299,6 +2439,12 @@ details[open] > .toolbar-button {
   }
   .progress-legend {
     gap: 12px;
+  }
+  .weekly-stats__numbers {
+    gap: 10px;
+  }
+  .weekly-stats__numbers strong {
+    font-size: 18px;
   }
   .issue-row {
     padding-inline: 18px;

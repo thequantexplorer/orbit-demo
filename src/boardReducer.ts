@@ -1,10 +1,17 @@
 import { arrayMove } from '@dnd-kit/sortable'
 import type { BoardState, Card, ColumnId } from './types'
 import { createSeedBoard } from './data'
+import { toDateKey } from './dueDate'
 import { isValidWipLimit } from './wipLimit'
 
 export type BoardAction =
-  | { type: 'move-card'; cardId: string; toColumn: ColumnId; toIndex: number }
+  | {
+      type: 'move-card'
+      cardId: string
+      toColumn: ColumnId
+      toIndex: number
+      today?: string
+    }
   | {
       type: 'reorder-card'
       columnId: ColumnId
@@ -15,7 +22,10 @@ export type BoardAction =
       type: 'add-card'
       columnId: ColumnId
       title: string
-      details?: Partial<Pick<Card, 'description' | 'labels' | 'assigneeId' | 'dueDate'>>
+      details?: Partial<
+        Pick<Card, 'description' | 'labels' | 'assigneeId' | 'dueDate' | 'completedAt'>
+      >
+      today?: string
     }
   | { type: 'update-card'; cardId: string; patch: Partial<Omit<Card, 'id'>> }
   | { type: 'delete-card'; cardId: string }
@@ -40,8 +50,20 @@ export function boardReducer(
     case 'move-card': {
       const fromColumn = findColumnOfCard(board, action.cardId)
       if (!fromColumn) return board
+      const card = board.cards[action.cardId]
+      const completedAt =
+        fromColumn !== action.toColumn && action.toColumn === 'done'
+          ? action.today ?? toDateKey(new Date())
+          : fromColumn === 'done' && action.toColumn !== 'done'
+            ? null
+            : card?.completedAt
+      const cards =
+        card && completedAt !== card.completedAt
+          ? { ...board.cards, [action.cardId]: { ...card, completedAt } }
+          : board.cards
       return {
         ...board,
+        cards,
         columns: board.columns.map((column) => {
           if (column.id === fromColumn && column.id === action.toColumn) {
             const fromIndex = column.cardIds.indexOf(action.cardId)
@@ -93,6 +115,10 @@ export function boardReducer(
         assigneeId: null,
         dueDate: null,
         ...action.details,
+        completedAt:
+          action.columnId === 'done'
+            ? action.today ?? toDateKey(new Date())
+            : null,
       }
       return {
         ...board,

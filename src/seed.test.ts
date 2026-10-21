@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest'
+import { createSeedBoard } from './data'
 import { createGeneratedBoard, parseSeedCount } from './seed'
+
+describe('createSeedBoard', () => {
+  it('assigns local completion days to the completed seed cards', () => {
+    const board = createSeedBoard(new Date(2026, 9, 21))
+    expect(board.cards['KB-8'].completedAt).toBe('2026-10-20')
+    expect(board.cards['KB-9'].completedAt).toBe('2026-10-19')
+    expect(board.cards['KB-1'].completedAt).toBeNull()
+  })
+})
 
 describe('parseSeedCount', () => {
   it('reads a positive integer from ?seed', () => {

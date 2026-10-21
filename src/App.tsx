@@ -38,6 +38,7 @@ import { Icon, ProgressRing, StatusIcon } from './components/Icon'
 import { IssueList } from './components/IssueList'
 import { LabelPill } from './components/LabelPill'
 import { Sidebar } from './components/Sidebar'
+import { WeeklyStats } from './components/WeeklyStats'
 
 const collisionDetection: CollisionDetection = (args) => {
   const within = pointerWithin(args)
@@ -211,11 +212,26 @@ export default function App() {
         )
         ?.focus({ preventScroll: true })
     }
+    const snapshot = dragSnapshot.current
     dragSnapshot.current = null
     setActiveCardId(null)
     setOverColumnId(null)
+    const cardId = String(active.id)
     const fromColumn = resolveColumn(active.id)
     const toColumn = resolveColumn(over.id)
+    if (
+      snapshot?.columns.some(
+        (column) => column.id === 'done' && column.cardIds.includes(cardId),
+      ) &&
+      fromColumn === 'done' &&
+      board.cards[cardId]?.completedAt !== snapshot.cards[cardId].completedAt
+    ) {
+      dispatch({
+        type: 'update-card',
+        cardId,
+        patch: { completedAt: snapshot.cards[cardId].completedAt },
+      })
+    }
     if (!fromColumn || !toColumn || fromColumn !== toColumn) return
 
     const column = board.columns.find((entry) => entry.id === fromColumn)
@@ -262,6 +278,7 @@ export default function App() {
         labels: [],
         assigneeId: null,
         dueDate: null,
+        completedAt: null,
       }
     : openCardId
       ? board.cards[openCardId]
@@ -531,6 +548,7 @@ export default function App() {
                 ))}
               </div>
             </div>
+            <WeeklyStats board={board} />
             <div className="overview-panel">
               <div className="section-heading">
                 <h3>The team</h3>

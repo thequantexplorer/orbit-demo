@@ -29,6 +29,28 @@ describe('boardReducer', () => {
       expect(cardIds(board, 'review')).toEqual(['KB-1', 'KB-7'])
     })
 
+    it('sets completedAt when a card enters Done', () => {
+      const board = boardReducer(createSeedBoard(), {
+        type: 'move-card',
+        cardId: 'KB-1',
+        toColumn: 'done',
+        toIndex: 2,
+        today: '2026-10-21',
+      })
+      expect(board.cards['KB-1'].completedAt).toBe('2026-10-21')
+    })
+
+    it('clears completedAt when a card leaves Done', () => {
+      const board = boardReducer(createSeedBoard(), {
+        type: 'move-card',
+        cardId: 'KB-8',
+        toColumn: 'review',
+        toIndex: 1,
+        today: '2026-10-21',
+      })
+      expect(board.cards['KB-8'].completedAt).toBeNull()
+    })
+
     it('reorders within the same column', () => {
       const board = boardReducer(createSeedBoard(), {
         type: 'move-card',
@@ -37,6 +59,18 @@ describe('boardReducer', () => {
         toIndex: 2,
       })
       expect(cardIds(board, 'backlog')).toEqual(['KB-2', 'KB-3', 'KB-1', 'KB-4'])
+    })
+
+    it('keeps completedAt and the cards object unchanged when reordering Done', () => {
+      const seed = createSeedBoard(new Date(2026, 9, 21))
+      const board = boardReducer(seed, {
+        type: 'move-card',
+        cardId: 'KB-8',
+        toColumn: 'done',
+        toIndex: 1,
+      })
+      expect(board.cards['KB-8'].completedAt).toBe('2026-10-20')
+      expect(board.cards).toBe(seed.cards)
     })
 
     it('returns the same board for an unknown card', () => {
@@ -90,8 +124,31 @@ describe('boardReducer', () => {
         labels: ['bug'],
         assigneeId: null,
         dueDate: null,
+        completedAt: null,
       })
       expect(cardIds(board, 'in-progress')).toEqual(['KB-5', 'KB-6', 'KB-10'])
+    })
+
+    it('sets completedAt for cards added to Done after spreading details', () => {
+      const board = boardReducer(createSeedBoard(), {
+        type: 'add-card',
+        columnId: 'done',
+        title: 'Ship it',
+        today: '2026-10-21',
+        details: { completedAt: '2026-10-01' },
+      })
+      expect(board.cards['KB-10'].completedAt).toBe('2026-10-21')
+    })
+
+    it('clears completedAt for cards added outside Done even when details include it', () => {
+      const board = boardReducer(createSeedBoard(), {
+        type: 'add-card',
+        columnId: 'backlog',
+        title: 'Ship it',
+        today: '2026-10-21',
+        details: { completedAt: '2026-10-01' },
+      })
+      expect(board.cards['KB-10'].completedAt).toBeNull()
     })
 
     it('keeps a due date passed in details', () => {

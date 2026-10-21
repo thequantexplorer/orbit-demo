@@ -88,6 +88,7 @@ export function createGeneratedBoard(count: number): BoardState {
         dueRoll < 0.25
           ? `2026-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
           : null,
+      completedAt: null,
     }
 
     let roll = random()
