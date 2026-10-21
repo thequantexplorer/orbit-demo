@@ -1518,6 +1518,9 @@ details[open] > .toolbar-button {
   font-size: 12px;
   font-style: normal;
 }
+.weekly-stats__chart-container {
+  width: 100%;
+}
 .weekly-stats__chart {
   display: block;
   overflow: visible;

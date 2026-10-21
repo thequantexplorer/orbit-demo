@@ -70,7 +70,6 @@ export default function App() {
         : (loadBoard() ?? createSeedBoard()),
   )
   const todayKey = useTodayKey()
-  const weeklyStats = getWeeklyStats(board, todayKey)
   const [activeCardId, setActiveCardId] = useState<string | null>(null)
   const [overColumnId, setOverColumnId] = useState<ColumnId | null>(null)
   const [openCardId, setOpenCardId] = useState<string | null>(null)
@@ -530,7 +529,7 @@ export default function App() {
                 <small>{percentDone}% of the way there</small>
               </div>
             </div>
-            <WeeklyStatsPanel stats={weeklyStats} />
+            <WeeklyStatsPanel stats={getWeeklyStats(board, todayKey)} />
             <div className="overview-panel">
               <div className="section-heading">
                 <h3>Project progress</h3>
