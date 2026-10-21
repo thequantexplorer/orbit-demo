@@ -14,7 +14,7 @@ Board state and appearance persist locally without accounts, APIs, or a backend.
 
 ## Running locally
 
-Requires Node.js 22 or newer (CI uses Node 22) and npm.
+Requires Node.js 22.12 or newer (CI uses Node 22) and npm.
 
 ```bash
 git clone https://github.com/thequantexplorer/orbit-demo.git
