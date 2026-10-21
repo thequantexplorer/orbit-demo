@@ -1,6 +1,7 @@
 import { arrayMove } from '@dnd-kit/sortable'
 import type { BoardState, Card, ColumnId } from './types'
 import { createSeedBoard } from './data'
+import { isValidWipLimit } from './wipLimit'
 
 export type BoardAction =
   | { type: 'move-card'; cardId: string; toColumn: ColumnId; toIndex: number }
@@ -19,7 +20,9 @@ export type BoardAction =
   | { type: 'update-card'; cardId: string; patch: Partial<Omit<Card, 'id'>> }
   | { type: 'delete-card'; cardId: string }
   | { type: 'clear-column'; columnId: ColumnId }
+  | { type: 'set-wip-limit'; columnId: ColumnId; limit: number | null }
   | { type: 'reset' }
+  | { type: 'cancel-drag'; snapshot: BoardState }
   | { type: 'restore'; board: BoardState }
 
 export function findColumnOfCard(
@@ -140,8 +143,33 @@ export function boardReducer(
         ),
       }
     }
+    case 'set-wip-limit': {
+      if (action.limit !== null && !isValidWipLimit(action.limit)) return board
+      if (!board.columns.some((column) => column.id === action.columnId))
+        return board
+      return {
+        ...board,
+        columns: board.columns.map((column) =>
+          column.id === action.columnId
+            ? { ...column, wipLimit: action.limit }
+            : column,
+        ),
+      }
+    }
     case 'reset':
       return createSeedBoard()
+    case 'cancel-drag':
+      return {
+        ...action.snapshot,
+        columns: action.snapshot.columns.map((column) => {
+          const currentColumn = board.columns.find(
+            (current) => current.id === column.id,
+          )
+          return currentColumn
+            ? { ...column, wipLimit: currentColumn.wipLimit }
+            : column
+        }),
+      }
     case 'restore':
       return action.board
   }

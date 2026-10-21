@@ -68,6 +68,7 @@ export function createGeneratedBoard(count: number): BoardState {
     title,
     accent,
     cardIds: [],
+    wipLimit: null,
   }))
 
   for (let index = 0; index < count; index++) {

@@ -237,7 +237,7 @@ export default function App() {
 
   function handleDragCancel() {
     if (dragSnapshot.current)
-      dispatch({ type: 'restore', board: dragSnapshot.current })
+      dispatch({ type: 'cancel-drag', snapshot: dragSnapshot.current })
     dragSnapshot.current = null
     setActiveCardId(null)
     setOverColumnId(null)
@@ -777,6 +777,13 @@ export default function App() {
                       }}
                       onOpenCard={setOpenCardId}
                       onClearColumn={() => setClearDoneOpen(true)}
+                      onSetWipLimit={(limit) =>
+                        dispatch({
+                          type: 'set-wip-limit',
+                          columnId: column.id,
+                          limit,
+                        })
+                      }
                     />
                   ))}
                 </div>
