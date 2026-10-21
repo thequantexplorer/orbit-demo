@@ -32,6 +32,11 @@ Then open http://localhost:5173. Other scripts: `npm run build`, `npm run lint`.
   appearance toggle.
 - **Overview** shows live progress and team assignments. **My issues** uses Ava
   Chen, the demo workspace member.
+- **Overview** also has a **Weekly stats** panel: issues completed, added, and
+  still open this week, plus a Monday–Sunday burndown chart of open issues
+  against an ideal line. Switch to **Last week** to compare. Completions are
+  logged per day as cards enter Done, so clearing Done keeps the history; the
+  seed board ships with two weeks of sample activity.
 - Click an issue to edit it. Delete and reset actions ask for confirmation.
   **Reset board** restores the nine original issues.
 - Drag a card with the mouse, or focus it and use Space, arrow keys, and Space

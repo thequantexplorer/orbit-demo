@@ -52,5 +52,34 @@ function normalizeBoard(board: BoardState): BoardState {
       dueDate: isValidDueDate(card.dueDate) ? card.dueDate : null,
     }
   }
-  return { ...board, columns, cards }
+  return { ...board, columns, cards, history: normalizeHistory(board.history) }
+}
+
+function normalizeHistory(value: unknown): BoardState['history'] {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return {}
+  }
+  const history: BoardState['history'] = {}
+  for (const [day, activity] of Object.entries(value)) {
+    if (
+      !isValidDueDate(day) ||
+      typeof activity !== 'object' ||
+      activity === null ||
+      Array.isArray(activity)
+    ) {
+      continue
+    }
+    const counts = activity as Record<string, unknown>
+    history[day] = {
+      added: isNonNegativeInteger(counts.added) ? counts.added : 0,
+      completed: isNonNegativeInteger(counts.completed) ? counts.completed : 0,
+      reopened: isNonNegativeInteger(counts.reopened) ? counts.reopened : 0,
+      removed: isNonNegativeInteger(counts.removed) ? counts.removed : 0,
+    }
+  }
+  return history
+}
+
+function isNonNegativeInteger(value: unknown): value is number {
+  return Number.isInteger(value) && (value as number) >= 0
 }

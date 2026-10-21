@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { boardReducer, findColumnOfCard } from './boardReducer'
 import { createSeedBoard } from './data'
 import type { BoardState, ColumnId } from './types'
+import { addDays } from './weeklyStats'
 
 function cardIds(board: BoardState, columnId: ColumnId) {
   return board.columns.find((column) => column.id === columnId)!.cardIds
@@ -246,5 +247,161 @@ describe('boardReducer', () => {
       columnId: 'backlog',
     })
     expect(boardReducer(changed, { type: 'reset' })).toEqual(createSeedBoard())
+  })
+
+  describe('activity history', () => {
+    const today = '2026-10-21'
+
+    beforeEach(() => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date(2026, 9, 21, 12))
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('records added cards and cards added directly to Done', () => {
+      const seed = createSeedBoard(today)
+      const added = boardReducer(seed, {
+        type: 'add-card',
+        columnId: 'backlog',
+        title: 'New issue',
+      })
+      expect(added.history[today]).toEqual({
+        added: 1,
+        completed: 0,
+        reopened: 0,
+        removed: 0,
+      })
+      expect(seed.history[today]).toBeUndefined()
+
+      const completed = boardReducer(seed, {
+        type: 'add-card',
+        columnId: 'done',
+        title: 'Already done',
+      })
+      expect(completed.history[today]).toEqual({
+        added: 1,
+        completed: 1,
+        reopened: 0,
+        removed: 0,
+      })
+    })
+
+    it('does not record blank card titles', () => {
+      const seed = createSeedBoard(today)
+      expect(
+        boardReducer(seed, {
+          type: 'add-card',
+          columnId: 'backlog',
+          title: '   ',
+        }),
+      ).toBe(seed)
+    })
+
+    it('records moves into and out of Done, but not same-column moves', () => {
+      const seed = createSeedBoard(today)
+      const completed = boardReducer(seed, {
+        type: 'move-card',
+        cardId: 'KB-1',
+        toColumn: 'done',
+        toIndex: 0,
+      })
+      expect(completed.history[today].completed).toBe(1)
+      const reopened = boardReducer(seed, {
+        type: 'move-card',
+        cardId: 'KB-8',
+        toColumn: 'backlog',
+        toIndex: 0,
+      })
+      expect(reopened.history[today].reopened).toBe(1)
+
+      const reordered = boardReducer(seed, {
+        type: 'move-card',
+        cardId: 'KB-1',
+        toColumn: 'backlog',
+        toIndex: 1,
+      })
+      expect(reordered.history).toBe(seed.history)
+    })
+
+    it('records deletion only for existing non-Done cards', () => {
+      const seed = createSeedBoard(today)
+      const removed = boardReducer(seed, {
+        type: 'delete-card',
+        cardId: 'KB-1',
+      })
+      expect(removed.history[today].removed).toBe(1)
+
+      const doneRemoved = boardReducer(seed, {
+        type: 'delete-card',
+        cardId: 'KB-8',
+      })
+      expect(doneRemoved.history).toBe(seed.history)
+
+      const missing = boardReducer(seed, {
+        type: 'delete-card',
+        cardId: 'KB-404',
+      })
+      expect(missing.history).toBe(seed.history)
+    })
+
+    it('records cleared non-Done cards and preserves Done history', () => {
+      const seed = createSeedBoard(today)
+      const clearedBacklog = boardReducer(seed, {
+        type: 'clear-column',
+        columnId: 'backlog',
+      })
+      expect(clearedBacklog.history[today].removed).toBe(4)
+
+      const clearedDone = boardReducer(seed, {
+        type: 'clear-column',
+        columnId: 'done',
+      })
+      expect(clearedDone.history).toBe(seed.history)
+    })
+
+    it('does not record reorder or update actions and restores history as-is', () => {
+      const seed = createSeedBoard(today)
+      const reordered = boardReducer(seed, {
+        type: 'reorder-card',
+        columnId: 'backlog',
+        fromIndex: 0,
+        toIndex: 1,
+      })
+      const updated = boardReducer(reordered, {
+        type: 'update-card',
+        cardId: 'KB-1',
+        patch: { title: 'Updated' },
+      })
+      expect(updated.history).toBe(seed.history)
+      expect(boardReducer(updated, { type: 'restore', board: seed })).toBe(seed)
+      expect(boardReducer(updated, { type: 'reset' })).toEqual(seed)
+    })
+
+    it('prunes history older than 55 days without mutating the previous board', () => {
+      const seed = createSeedBoard(today)
+      const tooOld = addDays(today, -56)
+      const oldestKept = addDays(today, -55)
+      const activity = { added: 0, completed: 0, reopened: 0, removed: 0 }
+      const board: BoardState = {
+        ...seed,
+        history: {
+          ...seed.history,
+          [tooOld]: activity,
+          [oldestKept]: activity,
+        },
+      }
+
+      const updated = boardReducer(board, {
+        type: 'add-card',
+        columnId: 'backlog',
+        title: 'New issue',
+      })
+      expect(updated.history[tooOld]).toBeUndefined()
+      expect(updated.history[oldestKept]).toEqual(activity)
+      expect(board.history[tooOld]).toEqual(activity)
+    })
   })
 })

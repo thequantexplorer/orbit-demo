@@ -72,6 +72,34 @@ describe('loadBoard', () => {
     expect(loadBoard()).toEqual(board)
   })
 
+  it('loads legacy boards without activity history as empty history', () => {
+    const { history: _history, ...legacy } = createSeedBoard()
+    storage.setItem(STORAGE_KEY, JSON.stringify(legacy))
+    expect(loadBoard()?.history).toEqual({})
+  })
+
+  it('drops invalid activity keys and normalizes invalid counts to zero', () => {
+    const board = createSeedBoard()
+    const saved = JSON.parse(JSON.stringify(board))
+    saved.history = {
+      invalid: { added: 1, completed: 1, reopened: 1, removed: 1 },
+      '2026-02-30': { added: 1, completed: 1, reopened: 1, removed: 1 },
+      '2026-10-20': {
+        added: -1,
+        completed: 1.5,
+        reopened: '2',
+        removed: 3,
+        ignored: 99,
+      },
+      '2026-10-19': null,
+    }
+    storage.setItem(STORAGE_KEY, JSON.stringify(saved))
+
+    expect(loadBoard()?.history).toEqual({
+      '2026-10-20': { added: 0, completed: 0, reopened: 0, removed: 3 },
+    })
+  })
+
   it('loads boards saved before WIP limits existed', () => {
     const board = createSeedBoard()
     const legacy = {
