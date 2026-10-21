@@ -36,6 +36,13 @@ Open `/?seed=5000` to load a large generated board (it is never saved).
 | `npm run preview` | Serve the production build locally |
 | `npm run bench` | Run the performance benchmark (see [BENCHMARK.md](BENCHMARK.md)) |
 
+Before opening a PR, run the tests and linter:
+
+```bash
+npm test
+npm run lint
+```
+
 ## Working in Orbit
 
 - Use **Board** or **List**, search by title, description, or issue ID, and combine
