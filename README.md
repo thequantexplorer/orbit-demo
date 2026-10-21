@@ -12,15 +12,32 @@ Board state and appearance persist locally without accounts, APIs, or a backend.
 
 ![Seed board](docs/01-seed-board.jpg)
 
-## Run it
+## Running locally
+
+Requires Node.js 22 or newer (CI uses Node 22) and npm. There is no backend or
+environment configuration; all data lives in the browser's `localStorage`.
 
 ```bash
-cd kanban-board
+git clone https://github.com/thequantexplorer/orbit-demo.git
+cd orbit-demo
 npm install
 npm run dev
 ```
 
-Then open http://localhost:5173. Other scripts: `npm run build`, `npm run lint`.
+Then open http://localhost:5173 (Vite picks the next free port if 5173 is taken).
+
+| Script | What it does |
+|---|---|
+| `npm run dev` | Start the Vite dev server with hot reload |
+| `npm test` | Run the Vitest unit tests |
+| `npm run lint` | Lint with oxlint |
+| `npm run build` | Type-check and build to `dist/` |
+| `npm run preview` | Serve the production build locally |
+| `npm run bench` | Run the board performance benchmark (see [BENCHMARK.md](BENCHMARK.md)) |
+
+Open `/?seed=5000` to load 5,000 generated cards for performance testing; they
+are never saved. To start over with the nine seeded issues, use **Reset board**
+or clear the `kanban-board:v1` key in `localStorage`.
 
 ## Working in Orbit
 
