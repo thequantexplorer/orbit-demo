@@ -32,6 +32,12 @@ describe('createGeneratedBoard', () => {
       'review',
       'done',
     ])
+    expect(board.columns.map((column) => column.wipLimit)).toEqual([
+      null,
+      null,
+      null,
+      null,
+    ])
     for (const column of board.columns)
       expect(column.cardIds.length).toBeGreaterThan(0)
     expect(board.nextCardNumber).toBe(1001)

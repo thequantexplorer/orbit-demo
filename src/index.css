@@ -959,6 +959,16 @@ details[open] > .toolbar-button {
   padding: 0 5px;
   margin-bottom: 11px;
   flex-shrink: 0;
+  transition: background 0.16s;
+}
+.column__header--over-limit {
+  background: color-mix(in srgb, var(--warning) 16%, var(--surface));
+  border-radius: 6px;
+}
+.column__header--over-limit .column__title,
+.column__header--over-limit .column__count,
+.column__header--over-limit .column__wip {
+  color: var(--warning);
 }
 .column__title {
   margin: 0;
@@ -970,6 +980,49 @@ details[open] > .toolbar-button {
   color: var(--muted);
   margin-left: 1px;
   font-variant-numeric: tabular-nums;
+}
+.column__wip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 23px;
+  height: 23px;
+  padding: 0 6px;
+  border-radius: 5px;
+  color: var(--muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.column__wip:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+.column__wip--unset {
+  opacity: 0;
+}
+.column__header:hover .column__wip--unset,
+.column__header:focus-within .column__wip--unset {
+  opacity: 1;
+}
+.column__header--over-limit .column__wip:hover {
+  color: var(--warning);
+}
+.column__wip-input {
+  width: 44px;
+  height: 23px;
+  padding: 2px 4px;
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.column__wip-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-subtle);
 }
 .column__add {
   margin-left: auto;

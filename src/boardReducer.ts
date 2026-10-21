@@ -1,6 +1,7 @@
 import { arrayMove } from '@dnd-kit/sortable'
 import type { BoardState, Card, ColumnId } from './types'
 import { createSeedBoard } from './data'
+import { isValidWipLimit } from './wipLimit'
 
 export type BoardAction =
   | { type: 'move-card'; cardId: string; toColumn: ColumnId; toIndex: number }
@@ -19,6 +20,7 @@ export type BoardAction =
   | { type: 'update-card'; cardId: string; patch: Partial<Omit<Card, 'id'>> }
   | { type: 'delete-card'; cardId: string }
   | { type: 'clear-column'; columnId: ColumnId }
+  | { type: 'set-wip-limit'; columnId: ColumnId; limit: number | null }
   | { type: 'reset' }
   | { type: 'restore'; board: BoardState }
 
@@ -137,6 +139,19 @@ export function boardReducer(
         ),
         columns: board.columns.map((column) =>
           column.id === action.columnId ? { ...column, cardIds: [] } : column,
+        ),
+      }
+    }
+    case 'set-wip-limit': {
+      if (action.limit !== null && !isValidWipLimit(action.limit)) return board
+      if (!board.columns.some((column) => column.id === action.columnId))
+        return board
+      return {
+        ...board,
+        columns: board.columns.map((column) =>
+          column.id === action.columnId
+            ? { ...column, wipLimit: action.limit }
+            : column,
         ),
       }
     }
