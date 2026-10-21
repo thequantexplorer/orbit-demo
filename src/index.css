@@ -30,6 +30,9 @@
   --green: #4b9474;
   --danger: #ca4f54;
   --warning: #b7791f;
+  --priority-low: #4f7fd1;
+  --priority-medium: var(--warning);
+  --priority-high: var(--danger);
   --shadow: 0 1px 3px #16172c05, 0 1px 2px #16172c04;
   color-scheme: light;
 }
@@ -52,6 +55,9 @@
   --green: #6cae8d;
   --danger: #ed8084;
   --warning: #e0b260;
+  --priority-low: #7fa4e8;
+  --priority-medium: var(--warning);
+  --priority-high: var(--danger);
   --shadow: 0 1px 3px #00000014;
   color-scheme: dark;
 }
@@ -1157,6 +1163,31 @@ details[open] > .toolbar-button {
 .card__priority {
   color: var(--muted);
   opacity: 0.7;
+}
+.card__markers {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.priority-flag {
+  display: inline-flex;
+  align-items: center;
+}
+.priority-flag .icon {
+  fill: currentColor;
+  fill-opacity: 0.25;
+}
+.priority-flag--low {
+  color: var(--priority-low);
+}
+.priority-flag--medium {
+  color: var(--priority-medium);
+}
+.priority-flag--high {
+  color: var(--priority-high);
+}
+.select-wrap > .priority-flag {
+  pointer-events: none;
 }
 .priority {
   font-size: 9px;

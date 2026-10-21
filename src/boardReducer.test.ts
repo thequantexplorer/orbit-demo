@@ -90,6 +90,7 @@ describe('boardReducer', () => {
         labels: ['bug'],
         assigneeId: null,
         dueDate: null,
+        priority: null,
       })
       expect(cardIds(board, 'in-progress')).toEqual(['KB-5', 'KB-6', 'KB-10'])
     })
@@ -142,6 +143,31 @@ describe('boardReducer', () => {
       patch: { dueDate: null },
     })
     expect(cleared.cards['KB-2'].dueDate).toBeNull()
+  })
+
+  it('add-card keeps a priority passed in details', () => {
+    const board = boardReducer(createSeedBoard(), {
+      type: 'add-card',
+      columnId: 'backlog',
+      title: 'Launch',
+      details: { priority: 'high' },
+    })
+    expect(board.cards['KB-10'].priority).toBe('high')
+  })
+
+  it('update-card sets and clears the priority', () => {
+    const withPriority = boardReducer(createSeedBoard(), {
+      type: 'update-card',
+      cardId: 'KB-2',
+      patch: { priority: 'medium' },
+    })
+    expect(withPriority.cards['KB-2'].priority).toBe('medium')
+    const cleared = boardReducer(withPriority, {
+      type: 'update-card',
+      cardId: 'KB-2',
+      patch: { priority: null },
+    })
+    expect(cleared.cards['KB-2'].priority).toBeNull()
   })
 
   describe('set-wip-limit', () => {

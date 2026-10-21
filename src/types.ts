@@ -19,6 +19,8 @@ export interface Assignee {
   color: string
 }
 
+export type Priority = 'low' | 'medium' | 'high'
+
 export interface Card {
   id: string
   title: string
@@ -27,6 +29,7 @@ export interface Card {
   assigneeId: string | null
   /** Optional due day as `YYYY-MM-DD` (local calendar date). */
   dueDate: string | null
+  priority: Priority | null
 }
 
 export type ColumnId = 'backlog' | 'in-progress' | 'review' | 'done'

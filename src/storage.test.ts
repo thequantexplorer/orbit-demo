@@ -111,6 +111,26 @@ describe('loadBoard', () => {
     expect(loaded.cards['KB-3'].dueDate).toBeNull()
   })
 
+  it('keeps saved priorities and drops malformed ones', () => {
+    const saved = JSON.parse(JSON.stringify(createSeedBoard()))
+    saved.cards['KB-1'].priority = 'high'
+    saved.cards['KB-2'].priority = 'High'
+    saved.cards['KB-3'].priority = 3
+    storage.setItem(STORAGE_KEY, JSON.stringify(saved))
+    const loaded = loadBoard()!
+    expect(loaded.cards['KB-1'].priority).toBe('high')
+    expect(loaded.cards['KB-2'].priority).toBeNull()
+    expect(loaded.cards['KB-3'].priority).toBeNull()
+  })
+
+  it('loads boards saved before priorities existed', () => {
+    const board = createSeedBoard()
+    const legacy = JSON.parse(JSON.stringify(board))
+    for (const card of Object.values(legacy.cards)) delete (card as { priority?: unknown }).priority
+    storage.setItem(STORAGE_KEY, JSON.stringify(legacy))
+    expect(loadBoard()).toEqual(board)
+  })
+
   it('returns null for invalid JSON', () => {
     storage.setItem(STORAGE_KEY, '{not json')
     expect(loadBoard()).toBeNull()
