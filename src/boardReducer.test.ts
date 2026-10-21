@@ -115,6 +115,37 @@ describe('boardReducer', () => {
     })
   })
 
+  describe('duplicate-card', () => {
+    it('inserts a copy after the original with " (copy)" appended', () => {
+      const seed = createSeedBoard()
+      const board = boardReducer(seed, {
+        type: 'duplicate-card',
+        cardId: 'KB-2',
+      })
+      expect(board.nextCardNumber).toBe(11)
+      expect(board.cards['KB-10']).toEqual({
+        ...seed.cards['KB-2'],
+        id: 'KB-10',
+        title: `${seed.cards['KB-2'].title} (copy)`,
+      })
+      expect(board.cards['KB-2']).toEqual(seed.cards['KB-2'])
+      expect(cardIds(board, 'backlog')).toEqual([
+        'KB-1',
+        'KB-2',
+        'KB-10',
+        'KB-3',
+        'KB-4',
+      ])
+    })
+
+    it('ignores an unknown card', () => {
+      const seed = createSeedBoard()
+      expect(
+        boardReducer(seed, { type: 'duplicate-card', cardId: 'KB-404' }),
+      ).toBe(seed)
+    })
+  })
+
   it('update-card merges the patch into the card', () => {
     const board = boardReducer(createSeedBoard(), {
       type: 'update-card',

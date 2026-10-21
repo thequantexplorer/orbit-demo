@@ -18,6 +18,7 @@ interface ColumnViewProps {
   showDescriptions: boolean
   onAddCard: (title: string) => void
   onOpenCard: (cardId: string) => void
+  onDuplicateCard: (cardId: string) => void
   onClearColumn: () => void
   onSetWipLimit: (limit: number | null) => void
   filtered?: boolean
@@ -39,6 +40,7 @@ export function ColumnView({
   showDescriptions,
   onAddCard,
   onOpenCard,
+  onDuplicateCard,
   onClearColumn,
   onSetWipLimit,
   filtered = false,
@@ -220,7 +222,11 @@ export function ColumnView({
                     data-index={item.index}
                     style={{ transform: `translateY(${item.start}px)` }}
                   >
-                    <SortableCard card={card} onOpen={onOpenCard} />
+                    <SortableCard
+                      card={card}
+                      onOpen={onOpenCard}
+                      onDuplicate={onDuplicateCard}
+                    />
                   </div>
                 )
               })}

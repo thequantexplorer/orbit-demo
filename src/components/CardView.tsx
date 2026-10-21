@@ -1,4 +1,4 @@
-import type { HTMLAttributes, Ref } from 'react'
+import type { HTMLAttributes, ReactNode, Ref } from 'react'
 import { fromDateKey, getDueChip } from '../dueDate'
 import { useTodayKey } from '../useToday'
 import type { Card } from '../types'
@@ -9,6 +9,7 @@ import { Icon } from './Icon'
 interface CardViewProps extends HTMLAttributes<HTMLElement> {
   card: Card
   ref?: Ref<HTMLElement>
+  menu?: ReactNode
   dragging?: boolean
   overlay?: boolean
 }
@@ -16,6 +17,7 @@ interface CardViewProps extends HTMLAttributes<HTMLElement> {
 export function CardView({
   card,
   ref,
+  menu,
   dragging = false,
   overlay = false,
   className = '',
@@ -36,13 +38,16 @@ export function CardView({
     <article ref={ref} className={classes} data-card-id={card.id} {...rest}>
       <div className="card__topline">
         <span className="card__id">{card.id}</span>
-        {card.labels.includes('urgent') ? (
-          <span className="priority priority--urgent" title="Urgent">
-            !
-          </span>
-        ) : (
-          <Icon name="signal" size={13} className="card__priority" />
-        )}
+        <span className="card__topline-end">
+          {menu}
+          {card.labels.includes('urgent') ? (
+            <span className="priority priority--urgent" title="Urgent">
+              !
+            </span>
+          ) : (
+            <Icon name="signal" size={13} className="card__priority" />
+          )}
+        </span>
       </div>
       <h3 className="card__title">{card.title}</h3>
       {card.description && (

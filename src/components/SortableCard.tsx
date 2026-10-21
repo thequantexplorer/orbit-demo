@@ -1,14 +1,16 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { Card } from '../types'
+import { CardMenu } from './CardMenu'
 import { CardView } from './CardView'
 
 interface SortableCardProps {
   card: Card
   onOpen: (cardId: string) => void
+  onDuplicate: (cardId: string) => void
 }
 
-export function SortableCard({ card, onOpen }: SortableCardProps) {
+export function SortableCard({ card, onOpen, onDuplicate }: SortableCardProps) {
   const {
     attributes,
     listeners,
@@ -25,6 +27,12 @@ export function SortableCard({ card, onOpen }: SortableCardProps) {
     <CardView
       ref={setNodeRef}
       card={card}
+      menu={
+        <CardMenu
+          cardTitle={card.title}
+          onDuplicate={() => onDuplicate(card.id)}
+        />
+      }
       dragging={isDragging}
       style={{ transform: CSS.Translate.toString(transform), transition }}
       {...attributes}
