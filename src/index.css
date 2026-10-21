@@ -1006,6 +1006,11 @@ details[open] > .toolbar-button {
 .column__header:focus-within .column__wip--unset {
   opacity: 1;
 }
+@media (hover: none) {
+  .column__wip--unset {
+    opacity: 1;
+  }
+}
 .column__header--over-limit .column__wip:hover {
   color: var(--warning);
 }

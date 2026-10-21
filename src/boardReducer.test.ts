@@ -180,6 +180,32 @@ describe('boardReducer', () => {
     })
   })
 
+  it('restores a drag snapshot while keeping the current WIP limits', () => {
+    const snapshot = createSeedBoard()
+    const moved = boardReducer(snapshot, {
+      type: 'move-card',
+      cardId: 'KB-5',
+      toColumn: 'review',
+      toIndex: 1,
+    })
+    const current = boardReducer(moved, {
+      type: 'set-wip-limit',
+      columnId: 'review',
+      limit: 2,
+    })
+    const cancelled = boardReducer(current, {
+      type: 'cancel-drag',
+      snapshot,
+    })
+
+    expect(cancelled.columns.map((column) => column.cardIds)).toEqual(
+      snapshot.columns.map((column) => column.cardIds),
+    )
+    expect(
+      cancelled.columns.find((column) => column.id === 'review')?.wipLimit,
+    ).toBe(2)
+  })
+
   it('delete-card removes the card and its column reference', () => {
     const board = boardReducer(createSeedBoard(), {
       type: 'delete-card',

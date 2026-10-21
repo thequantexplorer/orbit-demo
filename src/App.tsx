@@ -237,7 +237,7 @@ export default function App() {
 
   function handleDragCancel() {
     if (dragSnapshot.current)
-      dispatch({ type: 'restore', board: dragSnapshot.current })
+      dispatch({ type: 'cancel-drag', snapshot: dragSnapshot.current })
     dragSnapshot.current = null
     setActiveCardId(null)
     setOverColumnId(null)

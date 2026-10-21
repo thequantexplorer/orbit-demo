@@ -9,7 +9,7 @@ export function parseWipLimit(input: string): number | null | undefined {
 
 /** True for positive integer WIP limits. */
 export function isValidWipLimit(value: unknown): value is number {
-  return typeof value === 'number' && Number.isInteger(value) && value >= 1
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 1
 }
 
 export function isOverWipLimit(count: number, limit: number | null): boolean {

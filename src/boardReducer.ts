@@ -22,6 +22,7 @@ export type BoardAction =
   | { type: 'clear-column'; columnId: ColumnId }
   | { type: 'set-wip-limit'; columnId: ColumnId; limit: number | null }
   | { type: 'reset' }
+  | { type: 'cancel-drag'; snapshot: BoardState }
   | { type: 'restore'; board: BoardState }
 
 export function findColumnOfCard(
@@ -157,6 +158,18 @@ export function boardReducer(
     }
     case 'reset':
       return createSeedBoard()
+    case 'cancel-drag':
+      return {
+        ...action.snapshot,
+        columns: action.snapshot.columns.map((column) => {
+          const currentColumn = board.columns.find(
+            (current) => current.id === column.id,
+          )
+          return currentColumn
+            ? { ...column, wipLimit: currentColumn.wipLimit }
+            : column
+        }),
+      }
     case 'restore':
       return action.board
   }

@@ -10,7 +10,7 @@ describe('parseWipLimit', () => {
   })
 
   it('rejects invalid limits', () => {
-    for (const input of ['0', '-1', '2.5', 'abc']) {
+    for (const input of ['0', '-1', '2.5', 'abc', '9007199254740993']) {
       expect(parseWipLimit(input)).toBeUndefined()
     }
   })
@@ -20,10 +20,11 @@ describe('isValidWipLimit', () => {
   it('accepts positive integers', () => {
     expect(isValidWipLimit(1)).toBe(true)
     expect(isValidWipLimit(4)).toBe(true)
+    expect(isValidWipLimit(Number.MAX_SAFE_INTEGER)).toBe(true)
   })
 
   it('rejects other values', () => {
-    for (const value of [0, -1, 2.5, '3', null, undefined]) {
+    for (const value of [0, -1, 2.5, 2 ** 53, '3', null, undefined]) {
       expect(isValidWipLimit(value)).toBe(false)
     }
   })
