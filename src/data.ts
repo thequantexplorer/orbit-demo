@@ -1,4 +1,5 @@
 import type { Assignee, BoardState, Card, Label, LabelId } from './types'
+import { toDateKey } from './dueDate'
 
 export const LABELS: Record<LabelId, Label> = {
   bug: { id: 'bug', name: 'Bug', color: '#ef4444' },
@@ -27,6 +28,7 @@ const seedCards: Card[] = [
     labels: ['devops'],
     assigneeId: 'marcus',
     dueDate: null,
+    completedOn: null,
   },
   {
     id: 'KB-2',
@@ -35,6 +37,7 @@ const seedCards: Card[] = [
     labels: ['design'],
     assigneeId: 'priya',
     dueDate: null,
+    completedOn: null,
   },
   {
     id: 'KB-3',
@@ -43,6 +46,7 @@ const seedCards: Card[] = [
     labels: ['docs'],
     assigneeId: 'ava',
     dueDate: null,
+    completedOn: null,
   },
   {
     id: 'KB-4',
@@ -51,6 +55,7 @@ const seedCards: Card[] = [
     labels: ['bug', 'urgent'],
     assigneeId: 'leo',
     dueDate: null,
+    completedOn: null,
   },
   {
     id: 'KB-5',
@@ -59,6 +64,7 @@ const seedCards: Card[] = [
     labels: ['feature'],
     assigneeId: 'sofia',
     dueDate: null,
+    completedOn: null,
   },
   {
     id: 'KB-6',
@@ -67,6 +73,7 @@ const seedCards: Card[] = [
     labels: ['devops', 'feature'],
     assigneeId: 'marcus',
     dueDate: null,
+    completedOn: null,
   },
   {
     id: 'KB-7',
@@ -75,6 +82,7 @@ const seedCards: Card[] = [
     labels: ['feature'],
     assigneeId: 'ava',
     dueDate: null,
+    completedOn: null,
   },
   {
     id: 'KB-8',
@@ -83,6 +91,7 @@ const seedCards: Card[] = [
     labels: ['docs', 'design'],
     assigneeId: 'priya',
     dueDate: null,
+    completedOn: null,
   },
   {
     id: 'KB-9',
@@ -91,10 +100,13 @@ const seedCards: Card[] = [
     labels: ['feature'],
     assigneeId: 'leo',
     dueDate: null,
+    completedOn: null,
   },
 ]
 
-export function createSeedBoard(): BoardState {
+export function createSeedBoard(today: Date = new Date()): BoardState {
+  const twoDaysAgo = new Date(today)
+  twoDaysAgo.setDate(twoDaysAgo.getDate() - 2)
   return {
     columns: [
       { id: 'backlog', title: 'Backlog', accent: '#94a3b8', cardIds: ['KB-1', 'KB-2', 'KB-3', 'KB-4'] },
@@ -102,7 +114,20 @@ export function createSeedBoard(): BoardState {
       { id: 'review', title: 'Review', accent: '#a855f7', cardIds: ['KB-7'] },
       { id: 'done', title: 'Done', accent: '#22c55e', cardIds: ['KB-8', 'KB-9'] },
     ],
-    cards: Object.fromEntries(seedCards.map((card) => [card.id, card])),
+    cards: Object.fromEntries(
+      seedCards.map((card) => [
+        card.id,
+        {
+          ...card,
+          completedOn:
+            card.id === 'KB-8'
+              ? toDateKey(twoDaysAgo)
+              : card.id === 'KB-9'
+                ? toDateKey(today)
+                : null,
+        },
+      ]),
+    ),
     nextCardNumber: seedCards.length + 1,
   }
 }

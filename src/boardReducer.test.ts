@@ -24,6 +24,7 @@ describe('boardReducer', () => {
         cardId: 'KB-1',
         toColumn: 'review',
         toIndex: 0,
+        today: '2026-01-15',
       })
       expect(cardIds(board, 'backlog')).toEqual(['KB-2', 'KB-3', 'KB-4'])
       expect(cardIds(board, 'review')).toEqual(['KB-1', 'KB-7'])
@@ -35,6 +36,7 @@ describe('boardReducer', () => {
         cardId: 'KB-1',
         toColumn: 'backlog',
         toIndex: 2,
+        today: '2026-01-15',
       })
       expect(cardIds(board, 'backlog')).toEqual(['KB-2', 'KB-3', 'KB-1', 'KB-4'])
     })
@@ -46,6 +48,7 @@ describe('boardReducer', () => {
         cardId: 'KB-404',
         toColumn: 'done',
         toIndex: 0,
+        today: '2026-01-15',
       })
       expect(board).toBe(seed)
     })
@@ -58,9 +61,42 @@ describe('boardReducer', () => {
         cardId: 'KB-5',
         toColumn: 'done',
         toIndex: 1,
+        today: '2026-01-15',
       })
       expect(seed).toEqual(before)
     })
+  })
+
+  it('sets and clears completedOn when entering and leaving Done', () => {
+    const movedIntoDone = boardReducer(createSeedBoard(), {
+      type: 'move-card',
+      cardId: 'KB-1',
+      toColumn: 'done',
+      toIndex: 0,
+      today: '2026-01-15',
+    })
+    expect(movedIntoDone.cards['KB-1'].completedOn).toBe('2026-01-15')
+
+    const movedOutOfDone = boardReducer(movedIntoDone, {
+      type: 'move-card',
+      cardId: 'KB-1',
+      toColumn: 'backlog',
+      toIndex: 0,
+      today: '2026-01-16',
+    })
+    expect(movedOutOfDone.cards['KB-1'].completedOn).toBeNull()
+  })
+
+  it('keeps completedOn when reordering within Done', () => {
+    const seed = createSeedBoard()
+    const board = boardReducer(seed, {
+      type: 'move-card',
+      cardId: 'KB-8',
+      toColumn: 'done',
+      toIndex: 1,
+      today: '2026-01-15',
+    })
+    expect(board.cards['KB-8'].completedOn).toBe(seed.cards['KB-8'].completedOn)
   })
 
   it('reorder-card moves a card between indexes in one column', () => {
@@ -80,6 +116,7 @@ describe('boardReducer', () => {
         type: 'add-card',
         columnId: 'in-progress',
         title: '  Ship it  ',
+        today: '2026-01-15',
         details: { labels: ['bug'] },
       })
       expect(board.nextCardNumber).toBe(11)
@@ -90,6 +127,7 @@ describe('boardReducer', () => {
         labels: ['bug'],
         assigneeId: null,
         dueDate: null,
+        completedOn: null,
       })
       expect(cardIds(board, 'in-progress')).toEqual(['KB-5', 'KB-6', 'KB-10'])
     })
@@ -99,6 +137,7 @@ describe('boardReducer', () => {
         type: 'add-card',
         columnId: 'backlog',
         title: 'Launch',
+        today: '2026-01-15',
         details: { dueDate: '2026-10-12' },
       })
       expect(board.cards['KB-10'].dueDate).toBe('2026-10-12')
@@ -110,8 +149,29 @@ describe('boardReducer', () => {
         type: 'add-card',
         columnId: 'backlog',
         title: '   ',
+        today: '2026-01-15',
       })
       expect(board).toBe(seed)
+    })
+
+    it('sets completedOn for Done and always initializes Backlog cards to null', () => {
+      const today = '2026-01-15'
+      const backlog = boardReducer(createSeedBoard(), {
+        type: 'add-card',
+        columnId: 'backlog',
+        title: 'Plan launch',
+        today,
+        details: { completedOn: '2025-12-30' },
+      })
+      const done = boardReducer(createSeedBoard(), {
+        type: 'add-card',
+        columnId: 'done',
+        title: 'Ship launch',
+        today,
+        details: { completedOn: '2025-12-30' },
+      })
+      expect(backlog.cards['KB-10'].completedOn).toBeNull()
+      expect(done.cards['KB-10'].completedOn).toBe(today)
     })
   })
 

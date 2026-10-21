@@ -3,7 +3,13 @@ import type { BoardState, Card, ColumnId } from './types'
 import { createSeedBoard } from './data'
 
 export type BoardAction =
-  | { type: 'move-card'; cardId: string; toColumn: ColumnId; toIndex: number }
+  | {
+      type: 'move-card'
+      cardId: string
+      toColumn: ColumnId
+      toIndex: number
+      today: string
+    }
   | {
       type: 'reorder-card'
       columnId: ColumnId
@@ -14,7 +20,13 @@ export type BoardAction =
       type: 'add-card'
       columnId: ColumnId
       title: string
-      details?: Partial<Pick<Card, 'description' | 'labels' | 'assigneeId' | 'dueDate'>>
+      today: string
+      details?: Partial<
+        Pick<
+          Card,
+          'description' | 'labels' | 'assigneeId' | 'dueDate' | 'completedOn'
+        >
+      >
     }
   | { type: 'update-card'; cardId: string; patch: Partial<Omit<Card, 'id'>> }
   | { type: 'delete-card'; cardId: string }
@@ -37,8 +49,21 @@ export function boardReducer(
     case 'move-card': {
       const fromColumn = findColumnOfCard(board, action.cardId)
       if (!fromColumn) return board
+      const entersDone = fromColumn !== 'done' && action.toColumn === 'done'
+      const leavesDone = fromColumn === 'done' && action.toColumn !== 'done'
+      const card = board.cards[action.cardId]
       return {
         ...board,
+        cards:
+          (entersDone || leavesDone) && card
+            ? {
+                ...board.cards,
+                [action.cardId]: {
+                  ...card,
+                  completedOn: entersDone ? action.today : null,
+                },
+              }
+            : board.cards,
         columns: board.columns.map((column) => {
           if (column.id === fromColumn && column.id === action.toColumn) {
             const fromIndex = column.cardIds.indexOf(action.cardId)
@@ -90,6 +115,7 @@ export function boardReducer(
         assigneeId: null,
         dueDate: null,
         ...action.details,
+        completedOn: action.columnId === 'done' ? action.today : null,
       }
       return {
         ...board,

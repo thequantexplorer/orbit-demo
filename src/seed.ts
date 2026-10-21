@@ -1,4 +1,5 @@
 import { ASSIGNEES, LABEL_ORDER } from './data'
+import { fromDateKey, toDateKey } from './dueDate'
 import type { BoardState, Card, Column, ColumnId, LabelId } from './types'
 
 export const MAX_SEED_CARDS = 100_000
@@ -59,6 +60,7 @@ function createRandom(seed: number) {
 /** A board with `count` generated cards spread over the four columns. */
 export function createGeneratedBoard(count: number): BoardState {
   const random = createRandom(RANDOM_SEED)
+  const today = fromDateKey(toDateKey(new Date()))
   const pick = <T,>(items: readonly T[]) =>
     items[Math.floor(random() * items.length)]
   const assigneeIds = Object.keys(ASSIGNEES)
@@ -83,6 +85,7 @@ export function createGeneratedBoard(count: number): BoardState {
       description: pick(DESCRIPTIONS),
       labels: LABEL_ORDER.filter((label) => labels.has(label)),
       assigneeId: random() < 0.1 ? null : pick(assigneeIds),
+      completedOn: null,
       dueDate:
         dueRoll < 0.25
           ? `2026-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
@@ -96,6 +99,11 @@ export function createGeneratedBoard(count: number): BoardState {
         return roll < 0
       }) ?? columns[0]
     column.cardIds.push(id)
+    if (column.id === 'done') {
+      const completedOn = new Date(today)
+      completedOn.setDate(completedOn.getDate() - Math.floor(dueRoll * 14))
+      cards[id].completedOn = toDateKey(completedOn)
+    }
   }
 
   return { columns, cards, nextCardNumber: count + 1 }
