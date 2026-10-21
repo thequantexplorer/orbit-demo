@@ -216,6 +216,36 @@ describe('boardReducer', () => {
     expect(Object.keys(board.cards)).toHaveLength(8)
   })
 
+  describe('restore-card', () => {
+    it('puts a deleted card back at its original position', () => {
+      const seed = createSeedBoard()
+      const card = seed.cards['KB-6']
+      const index = cardIds(seed, 'in-progress').indexOf('KB-6')
+      const deleted = boardReducer(seed, { type: 'delete-card', cardId: 'KB-6' })
+      const restored = boardReducer(deleted, {
+        type: 'restore-card',
+        card,
+        columnId: 'in-progress',
+        index,
+      })
+      expect(restored.cards['KB-6']).toEqual(card)
+      expect(cardIds(restored, 'in-progress')).toEqual(
+        cardIds(seed, 'in-progress'),
+      )
+    })
+
+    it('ignores a card that already exists', () => {
+      const seed = createSeedBoard()
+      const board = boardReducer(seed, {
+        type: 'restore-card',
+        card: seed.cards['KB-6'],
+        columnId: 'backlog',
+        index: 0,
+      })
+      expect(board).toBe(seed)
+    })
+  })
+
   describe('clear-column', () => {
     it('removes every card in the column and leaves others intact', () => {
       const board = boardReducer(createSeedBoard(), {

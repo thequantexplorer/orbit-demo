@@ -38,6 +38,7 @@ import { Icon, ProgressRing, StatusIcon } from './components/Icon'
 import { IssueList } from './components/IssueList'
 import { LabelPill } from './components/LabelPill'
 import { Sidebar } from './components/Sidebar'
+import { Toast, type ToastState } from './components/Toast'
 
 const collisionDetection: CollisionDetection = (args) => {
   const within = pointerWithin(args)
@@ -81,7 +82,8 @@ export default function App() {
   const [starred, setStarred] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [saved, setSaved] = useState(true)
-  const [toast, setToast] = useState('')
+  const [toast, setToast] = useState<ToastState | null>(null)
+  const dismissToast = useCallback(() => setToast(null), [])
   const [dark, setDark] = useState(() => {
     try {
       return localStorage.getItem('kanban-theme') === 'dark'
@@ -103,12 +105,6 @@ export default function App() {
       /* The theme still works without storage. */
     }
   }, [dark])
-
-  useEffect(() => {
-    if (!toast) return
-    const timer = window.setTimeout(() => setToast(''), 3200)
-    return () => window.clearTimeout(timer)
-  }, [toast])
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -773,7 +769,7 @@ export default function App() {
                           columnId: column.id,
                           title,
                         })
-                        setToast('Issue created')
+                        setToast({ message: 'Issue created' })
                       }}
                       onOpenCard={setOpenCardId}
                       onClearColumn={() => setClearDoneOpen(true)}
@@ -852,12 +848,29 @@ export default function App() {
                       ?.cardIds.length ?? 0,
                 })
             }
-            setToast(creating ? 'Issue created' : 'Issue updated')
+            setToast({ message: creating ? 'Issue created' : 'Issue updated' })
           }}
           onDelete={() => {
-            dispatch({ type: 'delete-card', cardId: openCard.id })
+            const card = openCard
+            const columnId = findColumnOfCard(board, card.id)
+            const index = columnId
+              ? board.columns
+                  .find((column) => column.id === columnId)!
+                  .cardIds.indexOf(card.id)
+              : -1
+            dispatch({ type: 'delete-card', cardId: card.id })
             closeModal()
-            setToast('Issue deleted')
+            setToast({
+              message: 'Issue deleted',
+              action:
+                columnId && index >= 0
+                  ? {
+                      label: 'Undo',
+                      onClick: () =>
+                        dispatch({ type: 'restore-card', card, columnId, index }),
+                    }
+                  : undefined,
+            })
           }}
           onClose={closeModal}
         />
@@ -899,7 +912,7 @@ export default function App() {
                 dispatch({ type: 'reset' })
                 navigate('project')
                 setResetOpen(false)
-                setToast('Board reset to the original issues')
+                setToast({ message: 'Board reset to the original issues' })
               }}
             >
               Reset board
@@ -942,7 +955,7 @@ export default function App() {
                     '[data-column-id="done"] .column__add',
                   )
                   ?.focus()
-                setToast('Done column cleared')
+                setToast({ message: 'Done column cleared' })
               }}
             >
               Clear done
@@ -991,19 +1004,7 @@ export default function App() {
           </dl>
         </Dialog>
       )}
-      {toast && (
-        <div className="toast" role="status">
-          <Icon name="circleCheck" size={17} />
-          <span>{toast}</span>
-          <button
-            className="icon-button"
-            aria-label="Dismiss notification"
-            onClick={() => setToast('')}
-          >
-            <Icon name="close" size={13} />
-          </button>
-        </div>
-      )}
+      {toast && <Toast toast={toast} onDismiss={dismissToast} />}
     </div>
   )
 }
