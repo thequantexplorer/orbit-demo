@@ -118,6 +118,32 @@ describe('loadBoard', () => {
     ])
   })
 
+  it('loads boards saved before WIP limits existed', () => {
+    const board = createSeedBoard()
+    const legacy = {
+      ...board,
+      columns: board.columns.map(({ wipLimit: _wipLimit, ...column }) => column),
+    }
+    storage.setItem(STORAGE_KEY, JSON.stringify(legacy))
+    expect(loadBoard()).toEqual(board)
+  })
+
+  it('normalizes invalid WIP limits and keeps valid limits', () => {
+    const saved = JSON.parse(JSON.stringify(createSeedBoard()))
+    saved.columns[0].wipLimit = 0
+    saved.columns[1].wipLimit = '3'
+    saved.columns[2].wipLimit = 2.5
+    saved.columns[3].wipLimit = 4
+    storage.setItem(STORAGE_KEY, JSON.stringify(saved))
+    const loaded = loadBoard()!
+    expect(loaded.columns.map((column) => column.wipLimit)).toEqual([
+      null,
+      null,
+      null,
+      4,
+    ])
+  })
+
   it('drops malformed due dates', () => {
     const board = createSeedBoard()
     const saved = JSON.parse(JSON.stringify(board))

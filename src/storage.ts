@@ -1,5 +1,6 @@
 import { isValidDueDate } from './dueDate'
 import type { BoardState, Card } from './types'
+import { isValidWipLimit } from './wipLimit'
 
 const STORAGE_KEY = 'kanban-board:v1'
 
@@ -40,6 +41,10 @@ function isBoardState(value: unknown): value is BoardState {
 
 // Boards saved before a field existed are missing it; fill in defaults.
 function normalizeBoard(board: BoardState): BoardState {
+  const columns = board.columns.map((column) => ({
+    ...column,
+    wipLimit: isValidWipLimit(column.wipLimit) ? column.wipLimit : null,
+  }))
   const cards: Record<string, Card> = {}
   for (const [id, card] of Object.entries(board.cards)) {
     cards[id] = {
@@ -70,7 +75,7 @@ function normalizeBoard(board: BoardState): BoardState {
         }]
       })
     : []
-  return { ...board, cards, archivedCompletions }
+  return { ...board, columns, cards, archivedCompletions }
 }
 
 function finiteOrNull(value: unknown): number | null {

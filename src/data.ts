@@ -143,10 +143,34 @@ export function createSeedBoard(now: Date = new Date()): BoardState {
 
   return {
     columns: [
-      { id: 'backlog', title: 'Backlog', accent: '#94a3b8', cardIds: ['KB-1', 'KB-2', 'KB-3', 'KB-4'] },
-      { id: 'in-progress', title: 'In Progress', accent: '#3b82f6', cardIds: ['KB-5', 'KB-6'] },
-      { id: 'review', title: 'Review', accent: '#a855f7', cardIds: ['KB-7'] },
-      { id: 'done', title: 'Done', accent: '#22c55e', cardIds: ['KB-8', 'KB-9'] },
+      {
+        id: 'backlog',
+        title: 'Backlog',
+        accent: '#94a3b8',
+        cardIds: ['KB-1', 'KB-2', 'KB-3', 'KB-4'],
+        wipLimit: null,
+      },
+      {
+        id: 'in-progress',
+        title: 'In Progress',
+        accent: '#3b82f6',
+        cardIds: ['KB-5', 'KB-6'],
+        wipLimit: null,
+      },
+      {
+        id: 'review',
+        title: 'Review',
+        accent: '#a855f7',
+        cardIds: ['KB-7'],
+        wipLimit: null,
+      },
+      {
+        id: 'done',
+        title: 'Done',
+        accent: '#22c55e',
+        cardIds: ['KB-8', 'KB-9'],
+        wipLimit: null,
+      },
     ],
     cards: Object.fromEntries(cards),
     nextCardNumber: seedCards.length + 1,
