@@ -1,5 +1,17 @@
 import { describe, expect, it } from 'vitest'
+import { createSeedBoard } from './data'
 import { createGeneratedBoard, parseSeedCount } from './seed'
+
+describe('createSeedBoard', () => {
+  it('sets the default WIP limits', () => {
+    expect(createSeedBoard().columns.map((column) => column.wipLimit)).toEqual([
+      null,
+      3,
+      2,
+      null,
+    ])
+  })
+})
 
 describe('parseSeedCount', () => {
   it('reads a positive integer from ?seed', () => {
@@ -34,6 +46,12 @@ describe('createGeneratedBoard', () => {
     ])
     for (const column of board.columns)
       expect(column.cardIds.length).toBeGreaterThan(0)
+    expect(board.columns.map((column) => column.wipLimit)).toEqual([
+      null,
+      null,
+      null,
+      null,
+    ])
     expect(board.nextCardNumber).toBe(1001)
   })
 
