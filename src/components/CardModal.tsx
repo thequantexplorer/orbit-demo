@@ -51,6 +51,7 @@ export function CardModal({
         labels,
         assigneeId,
         dueDate,
+        completedAt: card.completedAt,
       },
       status,
     )

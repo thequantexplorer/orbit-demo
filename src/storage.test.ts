@@ -111,6 +111,20 @@ describe('loadBoard', () => {
     expect(loaded.cards['KB-3'].dueDate).toBeNull()
   })
 
+  it('normalizes invalid and missing completion dates and keeps valid ones', () => {
+    const saved = JSON.parse(JSON.stringify(createSeedBoard()))
+    saved.cards['KB-1'].completedAt = 'not a date'
+    saved.cards['KB-2'].completedAt = '2026-02-30'
+    delete saved.cards['KB-3'].completedAt
+    saved.cards['KB-4'].completedAt = '2026-10-12'
+    storage.setItem(STORAGE_KEY, JSON.stringify(saved))
+    const loaded = loadBoard()!
+    expect(loaded.cards['KB-1'].completedAt).toBeNull()
+    expect(loaded.cards['KB-2'].completedAt).toBeNull()
+    expect(loaded.cards['KB-3'].completedAt).toBeNull()
+    expect(loaded.cards['KB-4'].completedAt).toBe('2026-10-12')
+  })
+
   it('returns null for invalid JSON', () => {
     storage.setItem(STORAGE_KEY, '{not json')
     expect(loadBoard()).toBeNull()
