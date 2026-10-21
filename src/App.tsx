@@ -21,6 +21,8 @@ import { boardReducer, findColumnOfCard } from './boardReducer'
 import { ASSIGNEES, LABELS, LABEL_ORDER, createSeedBoard } from './data'
 import { createGeneratedBoard, parseSeedCount } from './seed'
 import { loadBoard, saveBoard } from './storage'
+import { useTodayKey } from './useToday'
+import { getWeeklyStats } from './weeklyStats'
 import type {
   BoardState,
   Card,
@@ -38,6 +40,7 @@ import { Icon, ProgressRing, StatusIcon } from './components/Icon'
 import { IssueList } from './components/IssueList'
 import { LabelPill } from './components/LabelPill'
 import { Sidebar } from './components/Sidebar'
+import { WeeklyStatsPanel } from './components/WeeklyStatsPanel'
 
 const collisionDetection: CollisionDetection = (args) => {
   const within = pointerWithin(args)
@@ -90,6 +93,8 @@ export default function App() {
     }
   })
   const dragSnapshot = useRef<BoardState | null>(null)
+  // Re-renders at midnight so the weekly window rolls over.
+  useTodayKey()
 
   useEffect(() => {
     if (!activeCardId && !seedCount) setSaved(saveBoard(board))
@@ -211,12 +216,27 @@ export default function App() {
         )
         ?.focus({ preventScroll: true })
     }
+    const fromColumn = resolveColumn(active.id)
+    const toColumn = resolveColumn(over.id)
+    const snapshot = dragSnapshot.current
     dragSnapshot.current = null
     setActiveCardId(null)
     setOverColumnId(null)
-    const fromColumn = resolveColumn(active.id)
-    const toColumn = resolveColumn(over.id)
-    if (!fromColumn || !toColumn || fromColumn !== toColumn) return
+    if (!fromColumn || !toColumn) return
+    if (
+      snapshot &&
+      findColumnOfCard(snapshot, String(active.id)) === 'done' &&
+      toColumn === 'done'
+    ) {
+      const originalCard = snapshot.cards[String(active.id)]
+      if (originalCard)
+        dispatch({
+          type: 'update-card',
+          cardId: String(active.id),
+          patch: { completedAt: originalCard.completedAt },
+        })
+    }
+    if (fromColumn !== toColumn) return
 
     const column = board.columns.find((entry) => entry.id === fromColumn)
     if (!column) return
@@ -262,6 +282,8 @@ export default function App() {
         labels: [],
         assigneeId: null,
         dueDate: null,
+        createdAt: null,
+        completedAt: null,
       }
     : openCardId
       ? board.cards[openCardId]
@@ -505,6 +527,7 @@ export default function App() {
                 <small>{percentDone}% of the way there</small>
               </div>
             </div>
+            <WeeklyStatsPanel stats={getWeeklyStats(board, new Date())} />
             <div className="overview-panel">
               <div className="section-heading">
                 <h3>Project progress</h3>

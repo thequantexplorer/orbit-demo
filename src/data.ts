@@ -27,6 +27,8 @@ const seedCards: Card[] = [
     labels: ['devops'],
     assigneeId: 'marcus',
     dueDate: null,
+    createdAt: null,
+    completedAt: null,
   },
   {
     id: 'KB-2',
@@ -35,6 +37,8 @@ const seedCards: Card[] = [
     labels: ['design'],
     assigneeId: 'priya',
     dueDate: null,
+    createdAt: null,
+    completedAt: null,
   },
   {
     id: 'KB-3',
@@ -43,6 +47,8 @@ const seedCards: Card[] = [
     labels: ['docs'],
     assigneeId: 'ava',
     dueDate: null,
+    createdAt: null,
+    completedAt: null,
   },
   {
     id: 'KB-4',
@@ -51,6 +57,8 @@ const seedCards: Card[] = [
     labels: ['bug', 'urgent'],
     assigneeId: 'leo',
     dueDate: null,
+    createdAt: null,
+    completedAt: null,
   },
   {
     id: 'KB-5',
@@ -59,6 +67,8 @@ const seedCards: Card[] = [
     labels: ['feature'],
     assigneeId: 'sofia',
     dueDate: null,
+    createdAt: null,
+    completedAt: null,
   },
   {
     id: 'KB-6',
@@ -67,6 +77,8 @@ const seedCards: Card[] = [
     labels: ['devops', 'feature'],
     assigneeId: 'marcus',
     dueDate: null,
+    createdAt: null,
+    completedAt: null,
   },
   {
     id: 'KB-7',
@@ -75,6 +87,8 @@ const seedCards: Card[] = [
     labels: ['feature'],
     assigneeId: 'ava',
     dueDate: null,
+    createdAt: null,
+    completedAt: null,
   },
   {
     id: 'KB-8',
@@ -83,6 +97,8 @@ const seedCards: Card[] = [
     labels: ['docs', 'design'],
     assigneeId: 'priya',
     dueDate: null,
+    createdAt: null,
+    completedAt: null,
   },
   {
     id: 'KB-9',
@@ -91,10 +107,40 @@ const seedCards: Card[] = [
     labels: ['feature'],
     assigneeId: 'leo',
     dueDate: null,
+    createdAt: null,
+    completedAt: null,
   },
 ]
 
-export function createSeedBoard(): BoardState {
+export function createSeedBoard(now: Date = new Date()): BoardState {
+  const startOfToday = new Date(now)
+  startOfToday.setHours(0, 0, 0, 0)
+  const timestamp = (daysAgo: number, hour: number) => {
+    const date = new Date(startOfToday)
+    date.setDate(date.getDate() - daysAgo)
+    date.setHours(hour, 0, 0, 0)
+    return date.getTime()
+  }
+  const cards = seedCards.map(
+    (card) =>
+      [
+        card.id,
+        {
+          ...card,
+          createdAt: timestamp(
+            card.id === 'KB-7' ? 3 : card.id === 'KB-9' ? 9 : 12,
+            card.id === 'KB-7' ? 11 : 10,
+          ),
+          completedAt:
+            card.id === 'KB-8'
+              ? timestamp(2, 15)
+              : card.id === 'KB-9'
+                ? timestamp(5, 16)
+                : null,
+        },
+      ] as const,
+  )
+
   return {
     columns: [
       {
@@ -126,7 +172,8 @@ export function createSeedBoard(): BoardState {
         wipLimit: null,
       },
     ],
-    cards: Object.fromEntries(seedCards.map((card) => [card.id, card])),
+    cards: Object.fromEntries(cards),
     nextCardNumber: seedCards.length + 1,
+    archivedCompletions: [],
   }
 }

@@ -10,7 +10,10 @@ interface CardModalProps {
   columnId: ColumnId
   columns: Column[]
   creating?: boolean
-  onSave: (patch: Omit<Card, 'id'>, columnId: ColumnId) => void
+  onSave: (
+    patch: Omit<Card, 'id' | 'createdAt' | 'completedAt'>,
+    columnId: ColumnId,
+  ) => void
   onDelete: () => void
   onClose: () => void
 }

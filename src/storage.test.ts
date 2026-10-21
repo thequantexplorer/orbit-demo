@@ -72,6 +72,52 @@ describe('loadBoard', () => {
     expect(loadBoard()).toEqual(board)
   })
 
+  it('defaults missing timestamps and archived completions for legacy boards', () => {
+    const board = createSeedBoard(new Date(2026, 9, 21, 9))
+    const legacy = {
+      ...board,
+      archivedCompletions: undefined,
+      cards: Object.fromEntries(
+        Object.entries(board.cards).map(([id, card]) => {
+          const {
+            createdAt: _createdAt,
+            completedAt: _completedAt,
+            ...rest
+          } = card
+          return [id, rest]
+        }),
+      ),
+    }
+    storage.setItem(STORAGE_KEY, JSON.stringify(legacy))
+    const loaded = loadBoard()!
+    expect(loaded.cards['KB-1'].createdAt).toBeNull()
+    expect(loaded.cards['KB-1'].completedAt).toBeNull()
+    expect(loaded.archivedCompletions).toEqual([])
+  })
+
+  it('normalizes invalid timestamps and drops malformed archive entries', () => {
+    const saved = JSON.parse(
+      JSON.stringify(createSeedBoard(new Date(2026, 9, 21, 9))),
+    )
+    saved.cards['KB-1'].createdAt = 'yesterday'
+    saved.cards['KB-1'].completedAt = { at: 123 }
+    saved.archivedCompletions = [
+      { id: 'valid', createdAt: 123, completedAt: 456 },
+      { id: 'bad-created', createdAt: 'invalid', completedAt: 789 },
+      { id: 'bad-completed', createdAt: null, completedAt: 'later' },
+      { id: 42, createdAt: null, completedAt: 999 },
+      null,
+    ]
+    storage.setItem(STORAGE_KEY, JSON.stringify(saved))
+    const loaded = loadBoard()!
+    expect(loaded.cards['KB-1'].createdAt).toBeNull()
+    expect(loaded.cards['KB-1'].completedAt).toBeNull()
+    expect(loaded.archivedCompletions).toEqual([
+      { id: 'valid', createdAt: 123, completedAt: 456 },
+      { id: 'bad-created', createdAt: null, completedAt: 789 },
+    ])
+  })
+
   it('loads boards saved before WIP limits existed', () => {
     const board = createSeedBoard()
     const legacy = {

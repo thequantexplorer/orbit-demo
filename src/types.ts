@@ -27,6 +27,16 @@ export interface Card {
   assigneeId: string | null
   /** Optional due day as `YYYY-MM-DD` (local calendar date). */
   dueDate: string | null
+  /** Creation time as epoch milliseconds, or null when unknown. */
+  createdAt: number | null
+  /** Completion time as epoch milliseconds, or null when unknown. */
+  completedAt: number | null
+}
+
+export interface CompletionRecord {
+  id: string
+  createdAt: number | null
+  completedAt: number
 }
 
 export type ColumnId = 'backlog' | 'in-progress' | 'review' | 'done'
@@ -50,4 +60,5 @@ export interface BoardState {
   columns: Column[]
   cards: Record<string, Card>
   nextCardNumber: number
+  archivedCompletions: CompletionRecord[]
 }

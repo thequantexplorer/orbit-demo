@@ -1,6 +1,7 @@
 import { arrayMove } from '@dnd-kit/sortable'
-import type { BoardState, Card, ColumnId } from './types'
+import type { BoardState, Card, ColumnId, CompletionRecord } from './types'
 import { createSeedBoard } from './data'
+import { ARCHIVE_RETENTION_DAYS } from './weeklyStats'
 import { isValidWipLimit } from './wipLimit'
 
 export type BoardAction =
@@ -40,8 +41,27 @@ export function boardReducer(
     case 'move-card': {
       const fromColumn = findColumnOfCard(board, action.cardId)
       if (!fromColumn) return board
+      const existingCard = board.cards[action.cardId]
+      let cards = board.cards
+      if (
+        existingCard &&
+        fromColumn !== action.toColumn &&
+        (fromColumn === 'done' || action.toColumn === 'done')
+      ) {
+        cards = {
+          ...board.cards,
+          [action.cardId]: {
+            ...existingCard,
+            completedAt:
+              action.toColumn === 'done'
+                ? Date.now()
+                : null,
+          },
+        }
+      }
       return {
         ...board,
+        cards,
         columns: board.columns.map((column) => {
           if (column.id === fromColumn && column.id === action.toColumn) {
             const fromIndex = column.cardIds.indexOf(action.cardId)
@@ -85,6 +105,7 @@ export function boardReducer(
       const title = action.title.trim()
       if (!title) return board
       const id = `KB-${board.nextCardNumber}`
+      const now = Date.now()
       const card: Card = {
         id,
         title,
@@ -93,6 +114,8 @@ export function boardReducer(
         assigneeId: null,
         dueDate: null,
         ...action.details,
+        createdAt: now,
+        completedAt: action.columnId === 'done' ? now : null,
       }
       return {
         ...board,
@@ -131,8 +154,23 @@ export function boardReducer(
       const target = board.columns.find(
         (column) => column.id === action.columnId,
       )
-      if (!target || target.cardIds.length === 0) return board
+      if (!target) return board
       const removed = new Set(target.cardIds)
+      const archived = target.cardIds.flatMap((id): CompletionRecord[] => {
+        const card = board.cards[id]
+        return card && card.completedAt !== null
+          ? [{ id, createdAt: card.createdAt, completedAt: card.completedAt }]
+          : []
+      })
+      const cutoff =
+        Date.now() - ARCHIVE_RETENTION_DAYS * 24 * 60 * 60 * 1000
+      const archivedCompletions = [...board.archivedCompletions, ...archived]
+        .filter((record) => record.completedAt >= cutoff)
+      if (
+        target.cardIds.length === 0 &&
+        archivedCompletions.length === board.archivedCompletions.length
+      )
+        return board
       return {
         ...board,
         cards: Object.fromEntries(
@@ -141,6 +179,7 @@ export function boardReducer(
         columns: board.columns.map((column) =>
           column.id === action.columnId ? { ...column, cardIds: [] } : column,
         ),
+        archivedCompletions,
       }
     }
     case 'set-wip-limit': {

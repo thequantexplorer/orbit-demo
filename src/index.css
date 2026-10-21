@@ -1561,6 +1561,108 @@ details[open] > .toolbar-button {
   font-size: 10px;
   color: var(--muted);
 }
+.weekly-stats__figures {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 18px 0 6px;
+}
+.weekly-stats__figures > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.weekly-stats__figures span {
+  color: var(--secondary);
+  font-size: 10px;
+}
+.weekly-stats__figures strong {
+  font-size: 22px;
+  letter-spacing: -0.6px;
+  font-weight: 500;
+}
+.weekly-stats__figures small {
+  color: var(--muted);
+  font-size: 10px;
+}
+.weekly-stats__figures .weekly-stats__delta--up {
+  color: var(--green);
+}
+.burndown {
+  margin: 14px 0 0;
+}
+.burndown__legend {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  font-size: 10px;
+  color: var(--secondary);
+}
+.burndown__legend > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.burndown__swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+.burndown__swatch--remaining {
+  height: 2px;
+  width: 14px;
+  border-radius: 1px;
+  background: var(--primary);
+}
+.burndown__swatch--completed {
+  background: #73a28d;
+}
+.burndown__chart {
+  display: block;
+  margin-top: 6px;
+  overflow: visible;
+}
+.burndown__grid line {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+.burndown__grid text,
+.burndown__day {
+  fill: var(--muted);
+  font-size: 10px;
+}
+.burndown__day--today {
+  fill: var(--text);
+  font-weight: 500;
+}
+.burndown__bar {
+  fill: #73a28d;
+  opacity: 0.85;
+}
+.burndown__area {
+  fill: var(--primary);
+  opacity: 0.07;
+}
+.burndown__line {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.burndown__point {
+  fill: var(--canvas);
+  stroke: var(--primary);
+  stroke-width: 2;
+}
+.burndown__hit {
+  fill: transparent;
+}
+.burndown__hit:hover {
+  fill: var(--text);
+  fill-opacity: 0.04;
+}
 .progress-track {
   display: flex;
   gap: 3px;
@@ -2299,6 +2401,9 @@ details[open] > .toolbar-button {
   }
   .progress-legend {
     gap: 12px;
+  }
+  .weekly-stats__figures strong {
+    font-size: 19px;
   }
   .issue-row {
     padding-inline: 18px;
