@@ -50,6 +50,7 @@ function normalizeBoard(board: BoardState): BoardState {
     cards[id] = {
       ...card,
       dueDate: isValidDueDate(card.dueDate) ? card.dueDate : null,
+      completedAt: isValidDueDate(card.completedAt) ? card.completedAt : null,
     }
   }
   return { ...board, columns, cards }

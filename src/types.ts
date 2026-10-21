@@ -27,6 +27,8 @@ export interface Card {
   assigneeId: string | null
   /** Optional due day as `YYYY-MM-DD` (local calendar date). */
   dueDate: string | null
+  /** Local day (`YYYY-MM-DD`) the card last entered Done; null when not done or unknown. */
+  completedAt: string | null
 }
 
 export type ColumnId = 'backlog' | 'in-progress' | 'review' | 'done'

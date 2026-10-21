@@ -1,4 +1,6 @@
 import type { Assignee, BoardState, Card, Label, LabelId } from './types'
+import { toDateKey } from './dueDate'
+import { startOfWeek } from './weeklyStats'
 
 export const LABELS: Record<LabelId, Label> = {
   bug: { id: 'bug', name: 'Bug', color: '#ef4444' },
@@ -27,6 +29,7 @@ const seedCards: Card[] = [
     labels: ['devops'],
     assigneeId: 'marcus',
     dueDate: null,
+    completedAt: null,
   },
   {
     id: 'KB-2',
@@ -35,6 +38,7 @@ const seedCards: Card[] = [
     labels: ['design'],
     assigneeId: 'priya',
     dueDate: null,
+    completedAt: null,
   },
   {
     id: 'KB-3',
@@ -43,6 +47,7 @@ const seedCards: Card[] = [
     labels: ['docs'],
     assigneeId: 'ava',
     dueDate: null,
+    completedAt: null,
   },
   {
     id: 'KB-4',
@@ -51,6 +56,7 @@ const seedCards: Card[] = [
     labels: ['bug', 'urgent'],
     assigneeId: 'leo',
     dueDate: null,
+    completedAt: null,
   },
   {
     id: 'KB-5',
@@ -59,6 +65,7 @@ const seedCards: Card[] = [
     labels: ['feature'],
     assigneeId: 'sofia',
     dueDate: null,
+    completedAt: null,
   },
   {
     id: 'KB-6',
@@ -67,6 +74,7 @@ const seedCards: Card[] = [
     labels: ['devops', 'feature'],
     assigneeId: 'marcus',
     dueDate: null,
+    completedAt: null,
   },
   {
     id: 'KB-7',
@@ -75,6 +83,7 @@ const seedCards: Card[] = [
     labels: ['feature'],
     assigneeId: 'ava',
     dueDate: null,
+    completedAt: null,
   },
   {
     id: 'KB-8',
@@ -83,6 +92,7 @@ const seedCards: Card[] = [
     labels: ['docs', 'design'],
     assigneeId: 'priya',
     dueDate: null,
+    completedAt: null,
   },
   {
     id: 'KB-9',
@@ -91,10 +101,11 @@ const seedCards: Card[] = [
     labels: ['feature'],
     assigneeId: 'leo',
     dueDate: null,
+    completedAt: null,
   },
 ]
 
-export function createSeedBoard(): BoardState {
+export function createSeedBoard(today: string = toDateKey(new Date())): BoardState {
   return {
     columns: [
       {
@@ -126,7 +137,16 @@ export function createSeedBoard(): BoardState {
         wipLimit: null,
       },
     ],
-    cards: Object.fromEntries(seedCards.map((card) => [card.id, card])),
+    cards: Object.fromEntries(
+      seedCards.map((card) => [
+        card.id,
+        card.id === 'KB-9'
+          ? { ...card, completedAt: today }
+          : card.id === 'KB-8'
+            ? { ...card, completedAt: startOfWeek(today) }
+            : card,
+      ]),
+    ),
     nextCardNumber: seedCards.length + 1,
   }
 }
