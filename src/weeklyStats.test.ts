@@ -18,10 +18,10 @@ function makeBoard(
   entries: { column: 'backlog' | 'review' | 'done'; card: Card }[],
 ): BoardState {
   const columns: BoardState['columns'] = [
-    { id: 'backlog', title: 'Backlog', accent: '', cardIds: [] },
-    { id: 'in-progress', title: 'In Progress', accent: '', cardIds: [] },
-    { id: 'review', title: 'Review', accent: '', cardIds: [] },
-    { id: 'done', title: 'Done', accent: '', cardIds: [] },
+    { id: 'backlog', title: 'Backlog', accent: '', cardIds: [], wipLimit: null },
+    { id: 'in-progress', title: 'In Progress', accent: '', cardIds: [], wipLimit: null },
+    { id: 'review', title: 'Review', accent: '', cardIds: [], wipLimit: null },
+    { id: 'done', title: 'Done', accent: '', cardIds: [], wipLimit: null },
   ]
   const cards: Record<string, Card> = {}
   for (const { column, card } of entries) {

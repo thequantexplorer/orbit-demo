@@ -208,6 +208,89 @@ describe('boardReducer', () => {
     expect(cleared.cards['KB-2'].dueDate).toBeNull()
   })
 
+  describe('set-wip-limit', () => {
+    it('sets a limit on only the target column and clears it with null', () => {
+      const seed = createSeedBoard()
+      const limited = boardReducer(seed, {
+        type: 'set-wip-limit',
+        columnId: 'review',
+        limit: 4,
+      })
+      expect(limited.columns.find((column) => column.id === 'review')?.wipLimit)
+        .toBe(4)
+      expect(limited.columns.filter((column) => column.id !== 'review'))
+        .toEqual(seed.columns.filter((column) => column.id !== 'review'))
+
+      const cleared = boardReducer(limited, {
+        type: 'set-wip-limit',
+        columnId: 'review',
+        limit: null,
+      })
+      expect(cleared.columns.find((column) => column.id === 'review')?.wipLimit)
+        .toBeNull()
+    })
+
+    it('returns the same board for invalid limits', () => {
+      const seed = createSeedBoard()
+      for (const limit of [0, -2, 2.5]) {
+        expect(
+          boardReducer(seed, {
+            type: 'set-wip-limit',
+            columnId: 'review',
+            limit,
+          }),
+        ).toBe(seed)
+      }
+    })
+  })
+
+  it('restores a drag snapshot while keeping the current WIP limits', () => {
+    const snapshot = createSeedBoard()
+    const moved = boardReducer(snapshot, {
+      type: 'move-card',
+      cardId: 'KB-5',
+      toColumn: 'review',
+      toIndex: 1,
+      today: TODAY,
+    })
+    const current = boardReducer(moved, {
+      type: 'set-wip-limit',
+      columnId: 'review',
+      limit: 2,
+    })
+    const cancelled = boardReducer(current, {
+      type: 'cancel-drag',
+      snapshot,
+    })
+
+    expect(cancelled.columns.map((column) => column.cardIds)).toEqual(
+      snapshot.columns.map((column) => column.cardIds),
+    )
+    expect(
+      cancelled.columns.find((column) => column.id === 'review')?.wipLimit,
+    ).toBe(2)
+  })
+
+  it('cancel-drag restores completion dates changed during drag-over', () => {
+    const snapshot = createSeedBoard(TODAY)
+    const moved = boardReducer(snapshot, {
+      type: 'move-card',
+      cardId: 'KB-1',
+      toColumn: 'done',
+      toIndex: 2,
+      today: TODAY,
+    })
+    expect(moved.cards['KB-1'].completedAt).toBe(TODAY)
+
+    const cancelled = boardReducer(moved, {
+      type: 'cancel-drag',
+      snapshot,
+    })
+
+    expect(cancelled.cards['KB-1'].completedAt).toBeNull()
+    expect(findColumnOfCard(cancelled, 'KB-1')).toBe('backlog')
+  })
+
   it('delete-card removes the card and its column reference', () => {
     const board = boardReducer(createSeedBoard(), {
       type: 'delete-card',
