@@ -19,6 +19,7 @@ export type BoardAction =
     }
   | { type: 'update-card'; cardId: string; patch: Partial<Omit<Card, 'id'>> }
   | { type: 'delete-card'; cardId: string }
+  | { type: 'restore-card'; card: Card; columnId: ColumnId; index: number }
   | { type: 'clear-column'; columnId: ColumnId }
   | { type: 'set-wip-limit'; columnId: ColumnId; limit: number | null }
   | { type: 'reset' }
@@ -125,6 +126,21 @@ export function boardReducer(
           ...column,
           cardIds: column.cardIds.filter((id) => id !== action.cardId),
         })),
+      }
+    }
+    case 'restore-card': {
+      if (board.cards[action.card.id]) return board
+      if (!board.columns.some((column) => column.id === action.columnId))
+        return board
+      return {
+        ...board,
+        cards: { ...board.cards, [action.card.id]: action.card },
+        columns: board.columns.map((column) => {
+          if (column.id !== action.columnId) return column
+          const cardIds = [...column.cardIds]
+          cardIds.splice(action.index, 0, action.card.id)
+          return { ...column, cardIds }
+        }),
       }
     }
     case 'clear-column': {
