@@ -2029,6 +2029,56 @@ details[open] > .toolbar-button {
   height: 22px;
   margin-left: 10px;
 }
+.toast--undo {
+  overflow: hidden;
+}
+.toast--undo > .icon {
+  color: var(--secondary);
+}
+.toast__message {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.toast__undo {
+  flex: none;
+  margin-left: 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--primary);
+  font: inherit;
+  font-weight: 600;
+  padding: 3px 10px;
+  cursor: pointer;
+}
+.toast__undo:hover {
+  background: var(--primary-subtle);
+  color: var(--primary-hover);
+}
+.toast__undo:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+.toast__countdown {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 100%;
+  background: var(--primary);
+  transform-origin: left;
+  animation: toast-countdown linear forwards;
+}
+@keyframes toast-countdown {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
 @keyframes pop-in {
   from {
     opacity: 0;

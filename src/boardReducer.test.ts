@@ -216,6 +216,104 @@ describe('boardReducer', () => {
     expect(Object.keys(board.cards)).toHaveLength(8)
   })
 
+  describe('restore-card', () => {
+    function deleteAt(cardId: string) {
+      const seed = createSeedBoard()
+      const columnId = findColumnOfCard(seed, cardId)!
+      const index = cardIds(seed, columnId).indexOf(cardId)
+      const card = seed.cards[cardId]
+      const board = boardReducer(seed, { type: 'delete-card', cardId })
+      return { seed, board, card, columnId, index }
+    }
+
+    it('puts the card back with every field at the same position', () => {
+      const { seed, board, card, columnId, index } = deleteAt('KB-2')
+      const restored = boardReducer(board, {
+        type: 'restore-card',
+        card,
+        columnId,
+        index,
+      })
+      expect(restored).toEqual(seed)
+      expect(restored.cards['KB-2']).toBe(card)
+    })
+
+    it('keeps other edits made after the deletion', () => {
+      const { board, card, columnId, index } = deleteAt('KB-2')
+      const edited = boardReducer(
+        boardReducer(board, {
+          type: 'update-card',
+          cardId: 'KB-1',
+          patch: { title: 'Edited meanwhile' },
+        }),
+        { type: 'add-card', columnId: 'done', title: 'New issue' },
+      )
+      const restored = boardReducer(edited, {
+        type: 'restore-card',
+        card,
+        columnId,
+        index,
+      })
+      expect(restored.cards['KB-1'].title).toBe('Edited meanwhile')
+      expect(restored.cards['KB-10'].title).toBe('New issue')
+      expect(restored.nextCardNumber).toBe(edited.nextCardNumber)
+      expect(cardIds(restored, 'backlog')).toEqual(['KB-1', 'KB-2', 'KB-3', 'KB-4'])
+    })
+
+    it('clamps the index when the column shrank meanwhile', () => {
+      const { board, card, columnId, index } = deleteAt('KB-4')
+      const shrunk = boardReducer(board, { type: 'delete-card', cardId: 'KB-1' })
+      const restored = boardReducer(shrunk, {
+        type: 'restore-card',
+        card,
+        columnId,
+        index,
+      })
+      expect(index).toBe(3)
+      expect(cardIds(restored, 'backlog')).toEqual(['KB-2', 'KB-3', 'KB-4'])
+    })
+
+    it('clamps negative and non-finite indexes', () => {
+      const { board, card, columnId } = deleteAt('KB-2')
+      const first = boardReducer(board, {
+        type: 'restore-card',
+        card,
+        columnId,
+        index: -4,
+      })
+      expect(cardIds(first, 'backlog')).toEqual(['KB-2', 'KB-1', 'KB-3', 'KB-4'])
+      const last = boardReducer(board, {
+        type: 'restore-card',
+        card,
+        columnId,
+        index: Number.NaN,
+      })
+      expect(cardIds(last, 'backlog')).toEqual(['KB-1', 'KB-3', 'KB-4', 'KB-2'])
+    })
+
+    it('is a no-op when the id already exists', () => {
+      const seed = createSeedBoard()
+      const restored = boardReducer(seed, {
+        type: 'restore-card',
+        card: { ...seed.cards['KB-2'], title: 'Duplicate' },
+        columnId: 'done',
+        index: 0,
+      })
+      expect(restored).toBe(seed)
+    })
+
+    it('is a no-op for an unknown column', () => {
+      const { board, card } = deleteAt('KB-2')
+      const restored = boardReducer(board, {
+        type: 'restore-card',
+        card,
+        columnId: 'archive' as ColumnId,
+        index: 0,
+      })
+      expect(restored).toBe(board)
+    })
+  })
+
   describe('clear-column', () => {
     it('removes every card in the column and leaves others intact', () => {
       const board = boardReducer(createSeedBoard(), {
