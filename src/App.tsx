@@ -30,6 +30,7 @@ import type {
 } from './types'
 import { CardModal } from './components/CardModal'
 import { CardView } from './components/CardView'
+import { ColumnRail } from './components/ColumnRail'
 import { ColumnView } from './components/ColumnView'
 import { Avatar } from './components/Avatar'
 import { CommandMenu } from './components/CommandMenu'
@@ -756,36 +757,57 @@ export default function App() {
             >
               {layout === 'board' ? (
                 <div className="board" aria-label="Issue board">
-                  {visibleColumns.map((column) => (
-                    <ColumnView
-                      key={column.id}
-                      column={column}
-                      cards={column.cards}
-                      filtered={hasFilters}
-                      activeCardId={activeCardId}
-                      showDescriptions={descriptions}
-                      isDropTarget={
-                        activeCardId !== null && overColumnId === column.id
-                      }
-                      onAddCard={(title) => {
-                        dispatch({
-                          type: 'add-card',
-                          columnId: column.id,
-                          title,
-                        })
-                        setToast('Issue created')
-                      }}
-                      onOpenCard={setOpenCardId}
-                      onClearColumn={() => setClearDoneOpen(true)}
-                      onSetWipLimit={(limit) =>
-                        dispatch({
-                          type: 'set-wip-limit',
-                          columnId: column.id,
-                          limit,
-                        })
-                      }
-                    />
-                  ))}
+                  {visibleColumns.map((column) =>
+                    column.collapsed ? (
+                      <ColumnRail
+                        key={column.id}
+                        column={column}
+                        count={column.cards.length}
+                        dragging={activeCardId !== null}
+                        onToggle={() =>
+                          dispatch({
+                            type: 'toggle-column-collapsed',
+                            columnId: column.id,
+                          })
+                        }
+                      />
+                    ) : (
+                      <ColumnView
+                        key={column.id}
+                        column={column}
+                        cards={column.cards}
+                        filtered={hasFilters}
+                        activeCardId={activeCardId}
+                        showDescriptions={descriptions}
+                        isDropTarget={
+                          activeCardId !== null && overColumnId === column.id
+                        }
+                        onAddCard={(title) => {
+                          dispatch({
+                            type: 'add-card',
+                            columnId: column.id,
+                            title,
+                          })
+                          setToast('Issue created')
+                        }}
+                        onOpenCard={setOpenCardId}
+                        onClearColumn={() => setClearDoneOpen(true)}
+                        onSetWipLimit={(limit) =>
+                          dispatch({
+                            type: 'set-wip-limit',
+                            columnId: column.id,
+                            limit,
+                          })
+                        }
+                        onToggleCollapsed={() =>
+                          dispatch({
+                            type: 'toggle-column-collapsed',
+                            columnId: column.id,
+                          })
+                        }
+                      />
+                    ),
+                  )}
                 </div>
               ) : (
                 <IssueList

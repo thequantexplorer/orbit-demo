@@ -44,6 +44,8 @@ export interface Column {
   cardIds: string[]
   /** Positive integer limit; null disables the limit. */
   wipLimit: number | null
+  /** Board view shows the column as a slim rail. */
+  collapsed: boolean
 }
 
 export interface BoardState {

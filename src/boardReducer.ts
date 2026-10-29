@@ -21,6 +21,7 @@ export type BoardAction =
   | { type: 'delete-card'; cardId: string }
   | { type: 'clear-column'; columnId: ColumnId }
   | { type: 'set-wip-limit'; columnId: ColumnId; limit: number | null }
+  | { type: 'toggle-column-collapsed'; columnId: ColumnId }
   | { type: 'reset' }
   | { type: 'cancel-drag'; snapshot: BoardState }
   | { type: 'restore'; board: BoardState }
@@ -156,6 +157,17 @@ export function boardReducer(
         ),
       }
     }
+    case 'toggle-column-collapsed':
+      if (!board.columns.some((column) => column.id === action.columnId))
+        return board
+      return {
+        ...board,
+        columns: board.columns.map((column) =>
+          column.id === action.columnId
+            ? { ...column, collapsed: !column.collapsed }
+            : column,
+        ),
+      }
     case 'reset':
       return createSeedBoard()
     case 'cancel-drag':
@@ -166,7 +178,11 @@ export function boardReducer(
             (current) => current.id === column.id,
           )
           return currentColumn
-            ? { ...column, wipLimit: currentColumn.wipLimit }
+            ? {
+                ...column,
+                wipLimit: currentColumn.wipLimit,
+                collapsed: currentColumn.collapsed,
+              }
             : column
         }),
       }

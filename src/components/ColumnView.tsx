@@ -5,6 +5,7 @@ import { defaultRangeExtractor, useVirtualizer } from '@tanstack/react-virtual'
 import type { Card, Column } from '../types'
 import { isOverWipLimit, parseWipLimit } from '../wipLimit'
 import { AddCardForm } from './AddCardForm'
+import { ColumnCollapseButton } from './ColumnCollapseButton'
 import { SortableCard } from './SortableCard'
 import { Icon, StatusIcon } from './Icon'
 
@@ -20,6 +21,7 @@ interface ColumnViewProps {
   onOpenCard: (cardId: string) => void
   onClearColumn: () => void
   onSetWipLimit: (limit: number | null) => void
+  onToggleCollapsed: () => void
   filtered?: boolean
 }
 
@@ -41,6 +43,7 @@ export function ColumnView({
   onOpenCard,
   onClearColumn,
   onSetWipLimit,
+  onToggleCollapsed,
   filtered = false,
 }: ColumnViewProps) {
   const { setNodeRef } = useDroppable({
@@ -183,6 +186,7 @@ export function ColumnView({
         >
           <Icon name="plus" size={15} />
         </button>
+        <ColumnCollapseButton column={column} onToggle={onToggleCollapsed} />
       </header>
 
       <SortableContext

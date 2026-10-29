@@ -36,6 +36,10 @@ Then open http://localhost:5173. Other scripts: `npm run build`, `npm run lint`.
   **Reset board** restores the nine original issues.
 - Drag a card with the mouse, or focus it and use Space, arrow keys, and Space
   to pick up, move, and drop. Escape cancels a drag and restores its starting state.
+- Use the chevron in a board column header to **collapse** it into a slim rail
+  showing its title and issue count (amber when over its WIP limit). Click the
+  rail, or focus it and press Enter or Space, to expand it again. Collapsed
+  columns are remembered across reloads; cards can't be dropped on a rail.
 
 | Shortcut | Action |
 |---|---|
