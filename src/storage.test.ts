@@ -82,6 +82,33 @@ describe('loadBoard', () => {
     expect(loadBoard()).toEqual(board)
   })
 
+  it('loads boards saved before collapsible columns existed', () => {
+    const board = createSeedBoard()
+    const legacy = {
+      ...board,
+      columns: board.columns.map(
+        ({ collapsed: _collapsed, ...column }) => column,
+      ),
+    }
+    storage.setItem(STORAGE_KEY, JSON.stringify(legacy))
+    expect(loadBoard()).toEqual(board)
+  })
+
+  it('keeps saved collapsed columns and drops non-boolean values', () => {
+    const saved = JSON.parse(JSON.stringify(createSeedBoard()))
+    saved.columns[0].collapsed = true
+    saved.columns[1].collapsed = 'true'
+    saved.columns[2].collapsed = 1
+    storage.setItem(STORAGE_KEY, JSON.stringify(saved))
+    const loaded = loadBoard()!
+    expect(loaded.columns.map((column) => column.collapsed)).toEqual([
+      true,
+      false,
+      false,
+      false,
+    ])
+  })
+
   it('normalizes invalid WIP limits and keeps valid limits', () => {
     const saved = JSON.parse(JSON.stringify(createSeedBoard()))
     saved.columns[0].wipLimit = 0

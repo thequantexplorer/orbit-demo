@@ -44,6 +44,7 @@ function normalizeBoard(board: BoardState): BoardState {
   const columns = board.columns.map((column) => ({
     ...column,
     wipLimit: isValidWipLimit(column.wipLimit) ? column.wipLimit : null,
+    collapsed: column.collapsed === true,
   }))
   const cards: Record<string, Card> = {}
   for (const [id, card] of Object.entries(board.cards)) {

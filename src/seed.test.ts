@@ -38,6 +38,7 @@ describe('createGeneratedBoard', () => {
       null,
       null,
     ])
+    expect(board.columns.every((column) => !column.collapsed)).toBe(true)
     for (const column of board.columns)
       expect(column.cardIds.length).toBeGreaterThan(0)
     expect(board.nextCardNumber).toBe(1001)

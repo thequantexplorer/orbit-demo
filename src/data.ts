@@ -103,6 +103,7 @@ export function createSeedBoard(): BoardState {
         accent: '#94a3b8',
         cardIds: ['KB-1', 'KB-2', 'KB-3', 'KB-4'],
         wipLimit: null,
+        collapsed: false,
       },
       {
         id: 'in-progress',
@@ -110,6 +111,7 @@ export function createSeedBoard(): BoardState {
         accent: '#3b82f6',
         cardIds: ['KB-5', 'KB-6'],
         wipLimit: null,
+        collapsed: false,
       },
       {
         id: 'review',
@@ -117,6 +119,7 @@ export function createSeedBoard(): BoardState {
         accent: '#a855f7',
         cardIds: ['KB-7'],
         wipLimit: null,
+        collapsed: false,
       },
       {
         id: 'done',
@@ -124,6 +127,7 @@ export function createSeedBoard(): BoardState {
         accent: '#22c55e',
         cardIds: ['KB-8', 'KB-9'],
         wipLimit: null,
+        collapsed: false,
       },
     ],
     cards: Object.fromEntries(seedCards.map((card) => [card.id, card])),

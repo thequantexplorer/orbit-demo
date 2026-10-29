@@ -206,6 +206,69 @@ describe('boardReducer', () => {
     ).toBe(2)
   })
 
+  describe('toggle-column-collapsed', () => {
+    it('toggles only the target column', () => {
+      const seed = createSeedBoard()
+      const collapsed = boardReducer(seed, {
+        type: 'toggle-column-collapsed',
+        columnId: 'review',
+      })
+      expect(collapsed.columns.map((column) => column.collapsed)).toEqual([
+        false,
+        false,
+        true,
+        false,
+      ])
+      expect(collapsed.columns.map((column) => column.cardIds)).toEqual(
+        seed.columns.map((column) => column.cardIds),
+      )
+
+      const expanded = boardReducer(collapsed, {
+        type: 'toggle-column-collapsed',
+        columnId: 'review',
+      })
+      expect(expanded.columns).toEqual(seed.columns)
+    })
+
+    it('returns the same board for an unknown column', () => {
+      const seed = createSeedBoard()
+      expect(
+        boardReducer(seed, {
+          type: 'toggle-column-collapsed',
+          columnId: 'missing' as ColumnId,
+        }),
+      ).toBe(seed)
+    })
+  })
+
+  it('restores a drag snapshot while keeping the current collapsed state', () => {
+    const snapshot = createSeedBoard()
+    const moved = boardReducer(snapshot, {
+      type: 'move-card',
+      cardId: 'KB-5',
+      toColumn: 'review',
+      toIndex: 1,
+    })
+    const current = boardReducer(moved, {
+      type: 'toggle-column-collapsed',
+      columnId: 'backlog',
+    })
+    const cancelled = boardReducer(current, {
+      type: 'cancel-drag',
+      snapshot,
+    })
+
+    expect(cancelled.columns.map((column) => column.cardIds)).toEqual(
+      snapshot.columns.map((column) => column.cardIds),
+    )
+    expect(cancelled.columns.map((column) => column.collapsed)).toEqual([
+      true,
+      false,
+      false,
+      false,
+    ])
+  })
+
   it('delete-card removes the card and its column reference', () => {
     const board = boardReducer(createSeedBoard(), {
       type: 'delete-card',
