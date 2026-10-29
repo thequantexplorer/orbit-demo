@@ -37,6 +37,9 @@ Then open http://localhost:5173. Other scripts: `npm run build`, `npm run lint`.
   Chen, the demo workspace member.
 - Click an issue to edit it. Delete and reset actions ask for confirmation.
   **Reset board** restores the nine original issues.
+- After deleting an issue, the toast offers **Undo** (or Ctrl/Cmd + Z) for 5
+  seconds to put it back where it was; hovering or focusing the toast pauses
+  the countdown. Only the latest deletion can be undone.
 - Drag a card with the mouse, or focus it and use Space, arrow keys, and Space
   to pick up, move, and drop. Escape cancels a drag and restores its starting state.
 - Use the chevron in a board column header to **collapse** it into a slim rail
@@ -50,6 +53,7 @@ Then open http://localhost:5173. Other scripts: `npm run build`, `npm run lint`.
 | C | Create an issue |
 | / | Focus board search |
 | Ctrl/Cmd + Enter | Save the issue editor |
+| Ctrl/Cmd + Z | Undo the last delete while its toast is visible |
 | ? | Show keyboard shortcuts |
 | Escape | Close a dialog or cancel a drag |
 

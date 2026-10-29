@@ -20,6 +20,7 @@ export type BoardAction =
     }
   | { type: 'update-card'; cardId: string; patch: Partial<Omit<Card, 'id'>> }
   | { type: 'delete-card'; cardId: string }
+  | { type: 'restore-card'; card: Card; columnId: ColumnId; index: number }
   | { type: 'clear-column'; columnId: ColumnId }
   | { type: 'set-wip-limit'; columnId: ColumnId; limit: number | null }
   | { type: 'toggle-column-collapsed'; columnId: ColumnId }
@@ -136,6 +137,32 @@ export function boardReducer(
           ...column,
           cardIds: column.cardIds.filter((id) => id !== action.cardId),
         })),
+      }
+    }
+    case 'restore-card': {
+      const { card, columnId } = action
+      if (board.cards[card.id] || findColumnOfCard(board, card.id)) return board
+      const target = board.columns.find((column) => column.id === columnId)
+      if (!target) return board
+      const length = target.cardIds.length
+      const index = Number.isFinite(action.index)
+        ? Math.min(Math.max(0, Math.trunc(action.index)), length)
+        : length
+      return {
+        ...board,
+        cards: { ...board.cards, [card.id]: card },
+        columns: board.columns.map((column) =>
+          column.id === columnId
+            ? {
+                ...column,
+                cardIds: [
+                  ...column.cardIds.slice(0, index),
+                  card.id,
+                  ...column.cardIds.slice(index),
+                ],
+              }
+            : column,
+        ),
       }
     }
     case 'clear-column': {

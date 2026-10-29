@@ -28,6 +28,12 @@ import {
 } from './data'
 import { createGeneratedBoard, parseSeedCount } from './seed'
 import { loadBoard, saveBoard } from './storage'
+import {
+  UNDO_TIMEOUT_MS,
+  captureDeletedCard,
+  deletedCardMessage,
+  type DeletedCard,
+} from './deletedCard'
 import type {
   BoardState,
   Card,
@@ -46,6 +52,7 @@ import { Icon, ProgressRing, StatusIcon } from './components/Icon'
 import { IssueList } from './components/IssueList'
 import { LabelPill } from './components/LabelPill'
 import { Sidebar } from './components/Sidebar'
+import { Toast } from './components/Toast'
 
 const collisionDetection: CollisionDetection = (args) => {
   const pointer = args.pointerCoordinates
@@ -91,7 +98,12 @@ export default function App() {
   const [starred, setStarred] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [saved, setSaved] = useState(true)
-  const [toast, setToast] = useState('')
+  const [toast, setToast] = useState<{
+    id: number
+    message: string
+    deleted?: DeletedCard
+  } | null>(null)
+  const toastCount = useRef(0)
   const [dark, setDark] = useState(() => {
     try {
       return localStorage.getItem('kanban-theme') === 'dark'
@@ -113,12 +125,6 @@ export default function App() {
       /* The theme still works without storage. */
     }
   }, [dark])
-
-  useEffect(() => {
-    if (!toast) return
-    const timer = window.setTimeout(() => setToast(''), 3200)
-    return () => window.clearTimeout(timer)
-  }, [toast])
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -254,6 +260,16 @@ export default function App() {
   }
 
   const closeModal = useCallback(() => setOpenCardId(null), [])
+  // One toast at a time: a newer toast replaces an undo toast, making that
+  // deletion final.
+  const showToast = (message: string, deleted?: DeletedCard) =>
+    setToast({ id: ++toastCount.current, message, deleted })
+  const undoDelete = () => {
+    const deleted = toast?.deleted
+    if (!deleted || activeCardId) return
+    dispatch({ type: 'restore-card', ...deleted })
+    showToast('Issue restored')
+  }
   const navigate = (next: WorkspaceView) => {
     setView(next)
     setQuery('')
@@ -798,7 +814,7 @@ export default function App() {
                             columnId: column.id,
                             title,
                           })
-                          setToast('Issue created')
+                          showToast('Issue created')
                         }}
                         onOpenCard={setOpenCardId}
                         onClearColumn={() => setClearDoneOpen(true)}
@@ -884,7 +900,7 @@ export default function App() {
                       ?.cardIds.length ?? 0,
                 })
             }
-            setToast(creating ? 'Issue created' : 'Issue updated')
+            showToast(creating ? 'Issue created' : 'Issue updated')
           }}
           onAddComment={(comment) =>
             dispatch({ type: 'add-comment', cardId: openCard.id, comment })
@@ -898,9 +914,11 @@ export default function App() {
             })
           }
           onDelete={() => {
+            const deleted = captureDeletedCard(board, openCard.id)
             dispatch({ type: 'delete-card', cardId: openCard.id })
             closeModal()
-            setToast('Issue deleted')
+            if (deleted) showToast(deletedCardMessage(deleted.card), deleted)
+            else showToast('Issue deleted')
           }}
           onClose={closeModal}
         />
@@ -942,7 +960,7 @@ export default function App() {
                 dispatch({ type: 'reset' })
                 navigate('project')
                 setResetOpen(false)
-                setToast('Board reset to the original issues')
+                showToast('Board reset to the original issues')
               }}
             >
               Reset board
@@ -985,7 +1003,7 @@ export default function App() {
                     '[data-column-id="done"] .column__add',
                   )
                   ?.focus()
-                setToast('Done column cleared')
+                showToast('Done column cleared')
               }}
             >
               Clear done
@@ -1019,6 +1037,7 @@ export default function App() {
               ['Create an issue', 'C'],
               ['Search this board', '/'],
               ['Save an issue', 'Ctrl / ⌘ ↵'],
+              ['Undo a delete', 'Ctrl / ⌘ Z'],
               ['Pick up / drop a focused card', 'Space'],
               ['Move a picked-up card', '↑ ↓ ← →'],
               ['Close / cancel a drag', 'Esc'],
@@ -1035,17 +1054,13 @@ export default function App() {
         </Dialog>
       )}
       {toast && (
-        <div className="toast" role="status">
-          <Icon name="circleCheck" size={17} />
-          <span>{toast}</span>
-          <button
-            className="icon-button"
-            aria-label="Dismiss notification"
-            onClick={() => setToast('')}
-          >
-            <Icon name="close" size={13} />
-          </button>
-        </div>
+        <Toast
+          key={toast.id}
+          message={toast.message}
+          duration={toast.deleted ? UNDO_TIMEOUT_MS : 3200}
+          onDismiss={() => setToast(null)}
+          onUndo={toast.deleted ? undoDelete : undefined}
+        />
       )}
     </div>
   )
