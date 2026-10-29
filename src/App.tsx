@@ -18,7 +18,13 @@ import {
 } from '@dnd-kit/core'
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { boardReducer, findColumnOfCard } from './boardReducer'
-import { ASSIGNEES, LABELS, LABEL_ORDER, createSeedBoard } from './data'
+import {
+  ASSIGNEES,
+  CURRENT_USER_ID,
+  LABELS,
+  LABEL_ORDER,
+  createSeedBoard,
+} from './data'
 import { createGeneratedBoard, parseSeedCount } from './seed'
 import { loadBoard, saveBoard } from './storage'
 import type {
@@ -262,6 +268,7 @@ export default function App() {
         labels: [],
         assigneeId: null,
         dueDate: null,
+        comments: [],
       }
     : openCardId
       ? board.cards[openCardId]
@@ -273,7 +280,7 @@ export default function App() {
   const doneCount =
     board.columns.find((column) => column.id === 'done')?.cardIds.length ?? 0
   const mineCount = Object.values(board.cards).filter(
-    (card) => card.assigneeId === 'ava',
+    (card) => card.assigneeId === CURRENT_USER_ID,
   ).length
   const percentDone = totalCards
     ? Math.round((doneCount / totalCards) * 100)
@@ -309,7 +316,7 @@ export default function App() {
           (!labelFilter.length ||
             labelFilter.some((label) => card.labels.includes(label))) &&
           (!assigneeFilter || card.assigneeId === assigneeFilter) &&
-          (view !== 'mine' || card.assigneeId === 'ava') &&
+          (view !== 'mine' || card.assigneeId === CURRENT_USER_ID) &&
           (view !== 'completed' || column.id === 'done'),
       ),
   }))
@@ -854,6 +861,17 @@ export default function App() {
             }
             setToast(creating ? 'Issue created' : 'Issue updated')
           }}
+          onAddComment={(comment) =>
+            dispatch({ type: 'add-comment', cardId: openCard.id, comment })
+          }
+          onDeleteComment={(commentId) =>
+            dispatch({
+              type: 'delete-comment',
+              cardId: openCard.id,
+              commentId,
+              authorId: CURRENT_USER_ID,
+            })
+          }
           onDelete={() => {
             dispatch({ type: 'delete-card', cardId: openCard.id })
             closeModal()

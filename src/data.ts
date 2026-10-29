@@ -11,6 +11,9 @@ export const LABELS: Record<LabelId, Label> = {
 
 export const LABEL_ORDER: LabelId[] = ['bug', 'feature', 'design', 'docs', 'devops', 'urgent']
 
+/** The signed-in demo workspace member (used by My issues and comments). */
+export const CURRENT_USER_ID = 'ava'
+
 export const ASSIGNEES: Record<string, Assignee> = {
   ava: { id: 'ava', name: 'Ava Chen', initials: 'AC', color: '#6366f1' },
   marcus: { id: 'marcus', name: 'Marcus Reed', initials: 'MR', color: '#0ea5e9' },
@@ -27,6 +30,7 @@ const seedCards: Card[] = [
     labels: ['devops'],
     assigneeId: 'marcus',
     dueDate: null,
+    comments: [],
   },
   {
     id: 'KB-2',
@@ -35,6 +39,7 @@ const seedCards: Card[] = [
     labels: ['design'],
     assigneeId: 'priya',
     dueDate: null,
+    comments: [],
   },
   {
     id: 'KB-3',
@@ -43,6 +48,7 @@ const seedCards: Card[] = [
     labels: ['docs'],
     assigneeId: 'ava',
     dueDate: null,
+    comments: [],
   },
   {
     id: 'KB-4',
@@ -51,6 +57,7 @@ const seedCards: Card[] = [
     labels: ['bug', 'urgent'],
     assigneeId: 'leo',
     dueDate: null,
+    comments: [],
   },
   {
     id: 'KB-5',
@@ -59,6 +66,7 @@ const seedCards: Card[] = [
     labels: ['feature'],
     assigneeId: 'sofia',
     dueDate: null,
+    comments: [],
   },
   {
     id: 'KB-6',
@@ -67,6 +75,7 @@ const seedCards: Card[] = [
     labels: ['devops', 'feature'],
     assigneeId: 'marcus',
     dueDate: null,
+    comments: [],
   },
   {
     id: 'KB-7',
@@ -75,6 +84,7 @@ const seedCards: Card[] = [
     labels: ['feature'],
     assigneeId: 'ava',
     dueDate: null,
+    comments: [],
   },
   {
     id: 'KB-8',
@@ -83,6 +93,7 @@ const seedCards: Card[] = [
     labels: ['docs', 'design'],
     assigneeId: 'priya',
     dueDate: null,
+    comments: [],
   },
   {
     id: 'KB-9',
@@ -91,6 +102,7 @@ const seedCards: Card[] = [
     labels: ['feature'],
     assigneeId: 'leo',
     dueDate: null,
+    comments: [],
   },
 ]
 

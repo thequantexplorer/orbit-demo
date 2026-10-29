@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { boardReducer, findColumnOfCard } from './boardReducer'
 import { createSeedBoard } from './data'
-import type { BoardState, ColumnId } from './types'
+import type { BoardState, ColumnId, Comment } from './types'
 
 function cardIds(board: BoardState, columnId: ColumnId) {
   return board.columns.find((column) => column.id === columnId)!.cardIds
@@ -90,6 +90,7 @@ describe('boardReducer', () => {
         labels: ['bug'],
         assigneeId: null,
         dueDate: null,
+        comments: [],
       })
       expect(cardIds(board, 'in-progress')).toEqual(['KB-5', 'KB-6', 'KB-10'])
     })
@@ -237,6 +238,104 @@ describe('boardReducer', () => {
       expect(
         boardReducer(cleared, { type: 'clear-column', columnId: 'done' }),
       ).toBe(cleared)
+    })
+  })
+
+  describe('comments', () => {
+    const comment: Comment = {
+      id: 'c-1',
+      authorId: 'ava',
+      body: '  First!  ',
+      createdAt: '2026-10-12T09:30:00.000Z',
+    }
+
+    it('new cards start without comments', () => {
+      const board = boardReducer(createSeedBoard(), {
+        type: 'add-card',
+        columnId: 'backlog',
+        title: 'Fresh',
+      })
+      expect(board.cards['KB-10'].comments).toEqual([])
+    })
+
+    it('add-comment appends a trimmed comment in order', () => {
+      const seed = createSeedBoard()
+      const before = structuredClone(seed)
+      const once = boardReducer(seed, { type: 'add-comment', cardId: 'KB-1', comment })
+      const twice = boardReducer(once, {
+        type: 'add-comment',
+        cardId: 'KB-1',
+        comment: { ...comment, id: 'c-2', body: 'Second' },
+      })
+      expect(twice.cards['KB-1'].comments.map((entry) => entry.body)).toEqual([
+        'First!',
+        'Second',
+      ])
+      expect(twice.cards['KB-2']).toBe(seed.cards['KB-2'])
+      expect(seed).toEqual(before)
+    })
+
+    it('add-comment ignores blank bodies, unknown cards and duplicate ids', () => {
+      const seed = createSeedBoard()
+      expect(
+        boardReducer(seed, {
+          type: 'add-comment',
+          cardId: 'KB-1',
+          comment: { ...comment, body: ' \n ' },
+        }),
+      ).toBe(seed)
+      expect(
+        boardReducer(seed, { type: 'add-comment', cardId: 'KB-404', comment }),
+      ).toBe(seed)
+      const once = boardReducer(seed, { type: 'add-comment', cardId: 'KB-1', comment })
+      expect(
+        boardReducer(once, { type: 'add-comment', cardId: 'KB-1', comment }),
+      ).toBe(once)
+    })
+
+    it('delete-comment removes only the author\'s own comment', () => {
+      const board = boardReducer(createSeedBoard(), {
+        type: 'add-comment',
+        cardId: 'KB-1',
+        comment,
+      })
+      expect(
+        boardReducer(board, {
+          type: 'delete-comment',
+          cardId: 'KB-1',
+          commentId: 'c-1',
+          authorId: 'marcus',
+        }),
+      ).toBe(board)
+      expect(
+        boardReducer(board, {
+          type: 'delete-comment',
+          cardId: 'KB-1',
+          commentId: 'c-404',
+          authorId: 'ava',
+        }),
+      ).toBe(board)
+      const deleted = boardReducer(board, {
+        type: 'delete-comment',
+        cardId: 'KB-1',
+        commentId: 'c-1',
+        authorId: 'ava',
+      })
+      expect(deleted.cards['KB-1'].comments).toEqual([])
+    })
+
+    it('update-card keeps existing comments', () => {
+      const board = boardReducer(createSeedBoard(), {
+        type: 'add-comment',
+        cardId: 'KB-1',
+        comment,
+      })
+      const updated = boardReducer(board, {
+        type: 'update-card',
+        cardId: 'KB-1',
+        patch: { title: 'Renamed' },
+      })
+      expect(updated.cards['KB-1'].comments).toHaveLength(1)
     })
   })
 

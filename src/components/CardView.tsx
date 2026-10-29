@@ -6,6 +6,16 @@ import { Avatar } from './Avatar'
 import { LabelPill } from './LabelPill'
 import { Icon } from './Icon'
 
+function CommentCount({ count }: { count: number }) {
+  const label = `${count} ${count === 1 ? 'comment' : 'comments'}`
+  return (
+    <span className="comment-count" title={label} aria-label={label}>
+      <Icon name="comment" size={11} />
+      {count}
+    </span>
+  )
+}
+
 interface CardViewProps extends HTMLAttributes<HTMLElement> {
   card: Card
   ref?: Ref<HTMLElement>
@@ -63,6 +73,9 @@ export function CardView({
             <LabelPill key={labelId} labelId={labelId} />
           ))}
         </div>
+        {card.comments.length > 0 && (
+          <CommentCount count={card.comments.length} />
+        )}
         <Avatar assigneeId={card.assigneeId} />
       </div>
     </article>

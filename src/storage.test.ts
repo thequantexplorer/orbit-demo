@@ -111,6 +111,37 @@ describe('loadBoard', () => {
     expect(loaded.cards['KB-3'].dueDate).toBeNull()
   })
 
+  it('loads boards saved before comments existed', () => {
+    const board = createSeedBoard()
+    const legacy = {
+      ...board,
+      cards: Object.fromEntries(
+        Object.entries(board.cards).map(([id, card]) => {
+          const { comments: _comments, ...rest } = card
+          return [id, rest]
+        }),
+      ),
+    }
+    storage.setItem(STORAGE_KEY, JSON.stringify(legacy))
+    expect(loadBoard()).toEqual(board)
+  })
+
+  it('keeps valid comments and drops malformed ones', () => {
+    const comment = {
+      id: 'c-1',
+      authorId: 'ava',
+      body: 'Ship it',
+      createdAt: '2026-10-12T09:30:00.000Z',
+    }
+    const saved = JSON.parse(JSON.stringify(createSeedBoard()))
+    saved.cards['KB-1'].comments = [comment, { id: 'c-2', body: 'no author' }, null]
+    saved.cards['KB-2'].comments = 'oops'
+    storage.setItem(STORAGE_KEY, JSON.stringify(saved))
+    const loaded = loadBoard()!
+    expect(loaded.cards['KB-1'].comments).toEqual([comment])
+    expect(loaded.cards['KB-2'].comments).toEqual([])
+  })
+
   it('returns null for invalid JSON', () => {
     storage.setItem(STORAGE_KEY, '{not json')
     expect(loadBoard()).toBeNull()
