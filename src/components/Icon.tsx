@@ -34,6 +34,7 @@ const paths = {
   sidebar: 'M3 4h18v16H3z M9 4v16',
   collapse: 'm11 17-5-5 5-5 M18 17l-5-5 5-5',
   expand: 'm13 17 5-5-5-5 M6 17l5-5-5-5',
+  comment: 'M4 5h16v11H9l-5 4z',
 } as const
 
 export type IconName = keyof typeof paths

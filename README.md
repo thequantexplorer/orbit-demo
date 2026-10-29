@@ -26,6 +26,9 @@ Then open http://localhost:5173. Other scripts: `npm run build`, `npm run lint`.
 
 - Use **Board** or **List**, search by title, description, or issue ID, and combine
   label and assignee filters.
+- Open an issue to read and add **Comments** below its fields (Ctrl/Cmd + Enter
+  posts). Comments save immediately as Ava Chen, and you can delete your own.
+  Cards show a comment count once an issue has one.
 - Set an optional **Due date** in the issue editor. Cards show it as a chip:
   "Due Oct 12", then "Due today" on the day and "Overdue" once it has passed.
 - **Display** controls descriptions and dark appearance. The sidebar also has an

@@ -27,6 +27,16 @@ export interface Card {
   assigneeId: string | null
   /** Optional due day as `YYYY-MM-DD` (local calendar date). */
   dueDate: string | null
+  /** Oldest first. */
+  comments: Comment[]
+}
+
+export interface Comment {
+  id: string
+  authorId: string
+  body: string
+  /** ISO 8601 timestamp. */
+  createdAt: string
 }
 
 export type ColumnId = 'backlog' | 'in-progress' | 'review' | 'done'

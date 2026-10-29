@@ -1,3 +1,4 @@
+import { isValidComment } from './comments'
 import { isValidDueDate } from './dueDate'
 import type { BoardState, Card } from './types'
 import { isValidWipLimit } from './wipLimit'
@@ -51,6 +52,9 @@ function normalizeBoard(board: BoardState): BoardState {
     cards[id] = {
       ...card,
       dueDate: isValidDueDate(card.dueDate) ? card.dueDate : null,
+      comments: Array.isArray(card.comments)
+        ? card.comments.filter(isValidComment)
+        : [],
     }
   }
   return { ...board, columns, cards }

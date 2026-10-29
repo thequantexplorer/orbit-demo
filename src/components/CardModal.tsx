@@ -1,7 +1,8 @@
 import { useRef, useState, type FormEvent } from 'react'
 import { ASSIGNEES, LABELS, LABEL_ORDER } from '../data'
-import type { Card, Column, ColumnId, LabelId } from '../types'
+import type { Card, Column, ColumnId, Comment, LabelId } from '../types'
 import { Avatar } from './Avatar'
+import { CommentsSection } from './CommentsSection'
 import { Dialog } from './Dialog'
 import { Icon, StatusIcon } from './Icon'
 
@@ -10,7 +11,9 @@ interface CardModalProps {
   columnId: ColumnId
   columns: Column[]
   creating?: boolean
-  onSave: (patch: Omit<Card, 'id'>, columnId: ColumnId) => void
+  onSave: (patch: Omit<Card, 'id' | 'comments'>, columnId: ColumnId) => void
+  onAddComment: (comment: Comment) => void
+  onDeleteComment: (commentId: string) => void
   onDelete: () => void
   onClose: () => void
 }
@@ -21,6 +24,8 @@ export function CardModal({
   columns,
   creating = false,
   onSave,
+  onAddComment,
+  onDeleteComment,
   onDelete,
   onClose,
 }: CardModalProps) {
@@ -206,6 +211,13 @@ export function CardModal({
               </button>
             ))}
           </fieldset>
+          {!creating && (
+            <CommentsSection
+              comments={card.comments}
+              onAdd={onAddComment}
+              onDelete={onDeleteComment}
+            />
+          )}
         </div>
         <footer className="modal__footer">
           {creating ? (

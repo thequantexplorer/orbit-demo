@@ -1,5 +1,6 @@
 import { arrayMove } from '@dnd-kit/sortable'
-import type { BoardState, Card, ColumnId } from './types'
+import type { BoardState, Card, ColumnId, Comment } from './types'
+import { isValidComment } from './comments'
 import { createSeedBoard } from './data'
 import { isValidWipLimit } from './wipLimit'
 
@@ -22,6 +23,14 @@ export type BoardAction =
   | { type: 'clear-column'; columnId: ColumnId }
   | { type: 'set-wip-limit'; columnId: ColumnId; limit: number | null }
   | { type: 'toggle-column-collapsed'; columnId: ColumnId }
+  | { type: 'add-comment'; cardId: string; comment: Comment }
+  | {
+      type: 'delete-comment'
+      cardId: string
+      commentId: string
+      /** Only the comment's author can delete it. */
+      authorId: string
+    }
   | { type: 'reset' }
   | { type: 'cancel-drag'; snapshot: BoardState }
   | { type: 'restore'; board: BoardState }
@@ -94,6 +103,7 @@ export function boardReducer(
         assigneeId: null,
         dueDate: null,
         ...action.details,
+        comments: [],
       }
       return {
         ...board,
@@ -168,6 +178,40 @@ export function boardReducer(
             : column,
         ),
       }
+    case 'add-comment': {
+      const existing = board.cards[action.cardId]
+      const comment = { ...action.comment, body: action.comment.body.trim() }
+      if (
+        !existing ||
+        !isValidComment(comment) ||
+        existing.comments.some((entry) => entry.id === comment.id)
+      )
+        return board
+      return {
+        ...board,
+        cards: {
+          ...board.cards,
+          [action.cardId]: {
+            ...existing,
+            comments: [...existing.comments, comment],
+          },
+        },
+      }
+    }
+    case 'delete-comment': {
+      const existing = board.cards[action.cardId]
+      const comments = existing?.comments.filter(
+        (comment) =>
+          comment.id !== action.commentId ||
+          comment.authorId !== action.authorId,
+      )
+      if (!existing || !comments || comments.length === existing.comments.length)
+        return board
+      return {
+        ...board,
+        cards: { ...board.cards, [action.cardId]: { ...existing, comments } },
+      }
+    }
     case 'reset':
       return createSeedBoard()
     case 'cancel-drag':
