@@ -11,3 +11,10 @@ export function focusCollapseToggle(columnId: ColumnId) {
       ?.focus(),
   )
 }
+
+// Collapsed rails are not drop targets, so a drop on one cancels the drag.
+export function isPointOverCollapsedRail(point: { x: number; y: number }) {
+  return document
+    .elementsFromPoint(point.x, point.y)
+    .some((element) => element.closest('.column-rail'))
+}

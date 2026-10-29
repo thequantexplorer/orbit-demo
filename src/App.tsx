@@ -18,6 +18,7 @@ import {
 } from '@dnd-kit/core'
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { boardReducer, findColumnOfCard } from './boardReducer'
+import { isPointOverCollapsedRail } from './columnCollapse'
 import { ASSIGNEES, LABELS, LABEL_ORDER, createSeedBoard } from './data'
 import { createGeneratedBoard, parseSeedCount } from './seed'
 import { loadBoard, saveBoard } from './storage'
@@ -41,6 +42,8 @@ import { LabelPill } from './components/LabelPill'
 import { Sidebar } from './components/Sidebar'
 
 const collisionDetection: CollisionDetection = (args) => {
+  const pointer = args.pointerCoordinates
+  if (pointer && isPointOverCollapsedRail(pointer)) return []
   const within = pointerWithin(args)
   const cardHits = within.filter(
     (hit) => hit.data?.droppableContainer?.data.current?.type === 'card',
