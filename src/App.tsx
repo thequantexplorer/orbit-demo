@@ -994,6 +994,7 @@ export default function App() {
               ['Create an issue', 'C'],
               ['Search this board', '/'],
               ['Save an issue', 'Ctrl / ⌘ ↵'],
+              ['Undo a delete', 'Ctrl / ⌘ Z'],
               ['Pick up / drop a focused card', 'Space'],
               ['Move a picked-up card', '↑ ↓ ← →'],
               ['Close / cancel a drag', 'Esc'],
