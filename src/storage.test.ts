@@ -72,6 +72,50 @@ describe('loadBoard', () => {
     expect(loadBoard()).toEqual(board)
   })
 
+  it('keeps a saved checklist', () => {
+    const seed = createSeedBoard()
+    const checklist = [
+      { id: 'a', text: 'Draft', done: true },
+      { id: 'b', text: 'Review', done: false },
+    ]
+    const board = {
+      ...seed,
+      cards: { ...seed.cards, 'KB-1': { ...seed.cards['KB-1'], checklist } },
+    }
+    saveBoard(board)
+    expect(loadBoard()?.cards['KB-1'].checklist).toEqual(checklist)
+  })
+
+  it('loads boards saved before checklists existed', () => {
+    const board = createSeedBoard()
+    const legacy = {
+      ...board,
+      cards: Object.fromEntries(
+        Object.entries(board.cards).map(([id, card]) => {
+          const { checklist: _checklist, ...rest } = card
+          return [id, rest]
+        }),
+      ),
+    }
+    storage.setItem(STORAGE_KEY, JSON.stringify(legacy))
+    expect(loadBoard()).toEqual(board)
+  })
+
+  it('drops malformed checklist items', () => {
+    const saved = JSON.parse(JSON.stringify(createSeedBoard()))
+    saved.cards['KB-1'].checklist = 'not a list'
+    saved.cards['KB-2'].checklist = [
+      { id: 'a', text: 'Keep', done: true },
+      { id: 'b', done: false },
+    ]
+    storage.setItem(STORAGE_KEY, JSON.stringify(saved))
+    const loaded = loadBoard()!
+    expect(loaded.cards['KB-1'].checklist).toEqual([])
+    expect(loaded.cards['KB-2'].checklist).toEqual([
+      { id: 'a', text: 'Keep', done: true },
+    ])
+  })
+
   it('loads boards saved before WIP limits existed', () => {
     const board = createSeedBoard()
     const legacy = {

@@ -1,4 +1,5 @@
 import type { HTMLAttributes, Ref } from 'react'
+import { getChecklistProgress } from '../checklist'
 import { fromDateKey, getDueChip } from '../dueDate'
 import { useTodayKey } from '../useToday'
 import type { Card } from '../types'
@@ -31,6 +32,7 @@ export function CardView({
     .join(' ')
   const todayKey = useTodayKey()
   const dueChip = getDueChip(card.dueDate, fromDateKey(todayKey))
+  const checklist = getChecklistProgress(card.checklist)
 
   return (
     <article ref={ref} className={classes} data-card-id={card.id} {...rest}>
@@ -57,6 +59,15 @@ export function CardView({
             >
               <Icon name="calendar" size={10} />
               {dueChip.label}
+            </span>
+          )}
+          {checklist.total > 0 && (
+            <span
+              className={`checklist-chip${checklist.done === checklist.total ? ' checklist-chip--complete' : ''}`}
+              title={`Checklist: ${checklist.done} of ${checklist.total} done`}
+            >
+              <Icon name="circleCheck" size={10} />
+              {checklist.done}/{checklist.total}
             </span>
           )}
           {card.labels.map((labelId) => (

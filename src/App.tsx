@@ -262,6 +262,7 @@ export default function App() {
         labels: [],
         assigneeId: null,
         dueDate: null,
+        checklist: [],
       }
     : openCardId
       ? board.cards[openCardId]

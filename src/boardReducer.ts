@@ -15,7 +15,12 @@ export type BoardAction =
       type: 'add-card'
       columnId: ColumnId
       title: string
-      details?: Partial<Pick<Card, 'description' | 'labels' | 'assigneeId' | 'dueDate'>>
+      details?: Partial<
+        Pick<
+          Card,
+          'description' | 'labels' | 'assigneeId' | 'dueDate' | 'checklist'
+        >
+      >
     }
   | { type: 'update-card'; cardId: string; patch: Partial<Omit<Card, 'id'>> }
   | { type: 'delete-card'; cardId: string }
@@ -92,6 +97,7 @@ export function boardReducer(
         labels: [],
         assigneeId: null,
         dueDate: null,
+        checklist: [],
         ...action.details,
       }
       return {

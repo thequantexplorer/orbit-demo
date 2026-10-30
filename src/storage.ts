@@ -1,3 +1,4 @@
+import { normalizeChecklist } from './checklist'
 import { isValidDueDate } from './dueDate'
 import type { BoardState, Card } from './types'
 import { isValidWipLimit } from './wipLimit'
@@ -50,6 +51,7 @@ function normalizeBoard(board: BoardState): BoardState {
     cards[id] = {
       ...card,
       dueDate: isValidDueDate(card.dueDate) ? card.dueDate : null,
+      checklist: normalizeChecklist(card.checklist),
     }
   }
   return { ...board, columns, cards }

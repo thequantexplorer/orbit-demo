@@ -90,6 +90,7 @@ describe('boardReducer', () => {
         labels: ['bug'],
         assigneeId: null,
         dueDate: null,
+        checklist: [],
       })
       expect(cardIds(board, 'in-progress')).toEqual(['KB-5', 'KB-6', 'KB-10'])
     })
@@ -142,6 +143,16 @@ describe('boardReducer', () => {
       patch: { dueDate: null },
     })
     expect(cleared.cards['KB-2'].dueDate).toBeNull()
+  })
+
+  it('update-card replaces the checklist', () => {
+    const checklist = [{ id: 'a', text: 'Write copy', done: true }]
+    const board = boardReducer(createSeedBoard(), {
+      type: 'update-card',
+      cardId: 'KB-2',
+      patch: { checklist },
+    })
+    expect(board.cards['KB-2'].checklist).toEqual(checklist)
   })
 
   describe('set-wip-limit', () => {

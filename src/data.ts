@@ -27,6 +27,7 @@ const seedCards: Card[] = [
     labels: ['devops'],
     assigneeId: 'marcus',
     dueDate: null,
+    checklist: [],
   },
   {
     id: 'KB-2',
@@ -35,6 +36,7 @@ const seedCards: Card[] = [
     labels: ['design'],
     assigneeId: 'priya',
     dueDate: null,
+    checklist: [],
   },
   {
     id: 'KB-3',
@@ -43,6 +45,7 @@ const seedCards: Card[] = [
     labels: ['docs'],
     assigneeId: 'ava',
     dueDate: null,
+    checklist: [],
   },
   {
     id: 'KB-4',
@@ -51,6 +54,7 @@ const seedCards: Card[] = [
     labels: ['bug', 'urgent'],
     assigneeId: 'leo',
     dueDate: null,
+    checklist: [],
   },
   {
     id: 'KB-5',
@@ -59,6 +63,7 @@ const seedCards: Card[] = [
     labels: ['feature'],
     assigneeId: 'sofia',
     dueDate: null,
+    checklist: [],
   },
   {
     id: 'KB-6',
@@ -67,6 +72,7 @@ const seedCards: Card[] = [
     labels: ['devops', 'feature'],
     assigneeId: 'marcus',
     dueDate: null,
+    checklist: [],
   },
   {
     id: 'KB-7',
@@ -75,6 +81,7 @@ const seedCards: Card[] = [
     labels: ['feature'],
     assigneeId: 'ava',
     dueDate: null,
+    checklist: [],
   },
   {
     id: 'KB-8',
@@ -83,6 +90,7 @@ const seedCards: Card[] = [
     labels: ['docs', 'design'],
     assigneeId: 'priya',
     dueDate: null,
+    checklist: [],
   },
   {
     id: 'KB-9',
@@ -91,6 +99,7 @@ const seedCards: Card[] = [
     labels: ['feature'],
     assigneeId: 'leo',
     dueDate: null,
+    checklist: [],
   },
 ]
 

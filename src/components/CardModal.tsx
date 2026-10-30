@@ -1,9 +1,11 @@
-import { useRef, useState, type FormEvent } from 'react'
-import { ASSIGNEES, LABELS, LABEL_ORDER } from '../data'
-import type { Card, Column, ColumnId, LabelId } from '../types'
-import { Avatar } from './Avatar'
+import { useState, type FormEvent } from 'react'
+import { addChecklistItem } from '../checklist'
+import type { Card, ChecklistItem, Column, ColumnId, LabelId } from '../types'
+import { ChecklistEditor } from './ChecklistEditor'
 import { Dialog } from './Dialog'
-import { Icon, StatusIcon } from './Icon'
+import { Icon } from './Icon'
+import { IssueProperties } from './IssueProperties'
+import { LabelPicker } from './LabelPicker'
 
 interface CardModalProps {
   card: Card
@@ -29,17 +31,10 @@ export function CardModal({
   const [labels, setLabels] = useState<LabelId[]>(card.labels)
   const [assigneeId, setAssigneeId] = useState<string | null>(card.assigneeId)
   const [dueDate, setDueDate] = useState<string | null>(card.dueDate)
-  const dueDateInput = useRef<HTMLInputElement>(null)
+  const [checklist, setChecklist] = useState<ChecklistItem[]>(card.checklist)
+  const [checklistDraft, setChecklistDraft] = useState('')
   const [status, setStatus] = useState(columnId)
   const [confirmDelete, setConfirmDelete] = useState(false)
-
-  function toggleLabel(labelId: LabelId) {
-    setLabels((current) =>
-      current.includes(labelId)
-        ? current.filter((id) => id !== labelId)
-        : [...current, labelId],
-    )
-  }
 
   function handleSave(event: FormEvent) {
     event.preventDefault()
@@ -51,6 +46,7 @@ export function CardModal({
         labels,
         assigneeId,
         dueDate,
+        checklist: addChecklistItem(checklist, checklistDraft),
       },
       status,
     )
@@ -114,98 +110,22 @@ export function CardModal({
             onChange={(event) => setDescription(event.target.value)}
             placeholder="Add a description, a little context, or a big idea…"
           />
-          <div className="modal__properties">
-            <div className="property-field">
-              <label htmlFor="issue-status">Status</label>
-              <div className="select-wrap">
-                <StatusIcon status={status} />
-                <select
-                  id="issue-status"
-                  value={status}
-                  onChange={(event) => {
-                    const column = columns.find(
-                      (entry) => entry.id === event.target.value,
-                    )
-                    if (column) setStatus(column.id)
-                  }}
-                >
-                  {columns.map((column) => (
-                    <option key={column.id} value={column.id}>
-                      {column.title}
-                    </option>
-                  ))}
-                </select>
-                <Icon name="down" size={12} />
-              </div>
-            </div>
-            <div className="property-field">
-              <label htmlFor="issue-assignee">Assignee</label>
-              <div className="select-wrap">
-                <Avatar assigneeId={assigneeId} />
-                <select
-                  id="issue-assignee"
-                  value={assigneeId ?? ''}
-                  onChange={(event) =>
-                    setAssigneeId(event.target.value || null)
-                  }
-                >
-                  <option value="">Unassigned</option>
-                  {Object.values(ASSIGNEES).map((assignee) => (
-                    <option key={assignee.id} value={assignee.id}>
-                      {assignee.name}
-                    </option>
-                  ))}
-                </select>
-                <Icon name="down" size={12} />
-              </div>
-            </div>
-            <div className="property-field">
-              <label htmlFor="issue-due-date">Due date</label>
-              <div className="select-wrap">
-                <Icon name="calendar" size={14} />
-                <input
-                  ref={dueDateInput}
-                  id="issue-due-date"
-                  type="date"
-                  value={dueDate ?? ''}
-                  onChange={(event) => setDueDate(event.target.value || null)}
-                />
-                {dueDate && (
-                  <button
-                    type="button"
-                    className="icon-button due-date-clear"
-                    aria-label="Clear due date"
-                    title="Clear due date"
-                    onClick={() => {
-                      setDueDate(null)
-                      dueDateInput.current?.focus()
-                    }}
-                  >
-                    <Icon name="close" size={12} />
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-          <fieldset className="label-picker">
-            <legend>Labels</legend>
-            {LABEL_ORDER.map((labelId) => (
-              <button
-                key={labelId}
-                type="button"
-                className={`label-chip${labels.includes(labelId) ? ' label-chip--active' : ''}`}
-                aria-pressed={labels.includes(labelId)}
-                onClick={() => toggleLabel(labelId)}
-              >
-                <span
-                  className="label-dot"
-                  style={{ background: LABELS[labelId].color }}
-                />
-                {LABELS[labelId].name}
-                {labels.includes(labelId) && <Icon name="check" size={12} />}
-              </button>
-            ))}
-          </fieldset>
+          <IssueProperties
+            columns={columns}
+            status={status}
+            assigneeId={assigneeId}
+            dueDate={dueDate}
+            onStatusChange={setStatus}
+            onAssigneeChange={setAssigneeId}
+            onDueDateChange={setDueDate}
+          />
+          <LabelPicker labels={labels} onChange={setLabels} />
+          <ChecklistEditor
+            items={checklist}
+            draft={checklistDraft}
+            onItemsChange={setChecklist}
+            onDraftChange={setChecklistDraft}
+          />
         </div>
         <footer className="modal__footer">
           {creating ? (
