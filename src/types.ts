@@ -35,6 +35,7 @@ export type WorkspaceView =
   | 'overview'
   | 'all'
   | 'mine'
+  | 'team'
   | 'completed'
 
 export interface Column {

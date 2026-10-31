@@ -84,6 +84,7 @@ export function Sidebar({
           {navItem('overview', 'layers', 'Overview')}
           {navItem('all', 'box', 'All issues', total)}
           {navItem('mine', 'user', 'My issues', mine)}
+          {navItem('team', 'users', 'Team')}
           {navItem('completed', 'circleCheck', 'Completed', done)}
         </div>
         <div className="nav-group">

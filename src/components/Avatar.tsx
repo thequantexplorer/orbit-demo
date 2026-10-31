@@ -2,7 +2,7 @@ import { ASSIGNEES } from '../data'
 
 interface AvatarProps {
   assigneeId: string | null
-  size?: 'sm' | 'md'
+  size?: 'sm' | 'md' | 'lg'
 }
 
 export function Avatar({ assigneeId, size = 'sm' }: AvatarProps) {

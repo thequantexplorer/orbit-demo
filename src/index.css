@@ -1275,6 +1275,11 @@ details[open] > .toolbar-button {
   height: 29px;
   font-size: 9px;
 }
+.avatar--lg {
+  width: 40px;
+  height: 40px;
+  font-size: 12px;
+}
 .avatar--empty {
   background: var(--surface-hover);
   border: 1px dashed var(--border-strong);
@@ -1604,6 +1609,81 @@ details[open] > .toolbar-button {
   font-weight: 500;
   color: var(--text);
   margin-left: 3px;
+}
+.team-page {
+  flex: 1;
+  overflow: auto;
+  padding: 35px 42px;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+}
+.team-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+.team-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+.team-card:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+}
+.team-card:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.team-card__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.team-card__name {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.team-card__name strong {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+.team-card__name small {
+  font-size: 11px;
+  color: var(--secondary);
+}
+.team-card__bar {
+  display: block;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--board);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.team-card__bar > span {
+  display: block;
+  height: 100%;
+  background: var(--primary);
+  border-radius: inherit;
+}
+.team-card__labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-height: 20px;
+}
+.team-card__empty {
+  font-size: 10px;
+  color: var(--muted);
 }
 .team-grid {
   display: grid;
@@ -2276,7 +2356,8 @@ details[open] > .toolbar-button {
   .toast {
     left: 50%;
   }
-  .overview {
+  .overview,
+  .team-page {
     padding: 26px 20px;
   }
   .overview-intro h2 {

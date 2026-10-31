@@ -38,6 +38,7 @@ import { Icon, ProgressRing, StatusIcon } from './components/Icon'
 import { IssueList } from './components/IssueList'
 import { LabelPill } from './components/LabelPill'
 import { Sidebar } from './components/Sidebar'
+import { TeamPage } from './components/TeamPage'
 
 const collisionDetection: CollisionDetection = (args) => {
   const within = pointerWithin(args)
@@ -286,6 +287,7 @@ export default function App() {
     project: 'Product launch',
     all: 'All issues',
     mine: 'My issues',
+    team: 'Team',
     completed: 'Completed issues',
     overview: 'Project overview',
   }
@@ -293,6 +295,7 @@ export default function App() {
     project: 'The details that make the difference. Let’s ship them.',
     all: 'Everything the team is working on, in one place.',
     mine: 'Your space to focus. Issues assigned to Ava Chen.',
+    team: `${Object.keys(ASSIGNEES).length} people · open issues per person`,
     completed: 'Small wins. Meaningful progress. A little closer to launch.',
     overview: 'A clear view of where we are, and what comes next.',
   }
@@ -411,60 +414,72 @@ export default function App() {
               New issue<kbd>C</kbd>
             </button>
           </div>
-          <div className="project-properties">
-            <span className="project-status">
-              <span />
-              {percentDone === 100 ? 'Complete' : 'In progress'}
-            </span>
-            <span className="property-divider" />
-            <span className="project-property">
-              <Icon name="cycle" size={14} />
-              Sprint 42
-            </span>
-            <span className="property-divider" />
-            <span className="project-property">
-              <Icon name="box" size={14} />
-              {issueCountLabel(totalCards)}
-            </span>
-            <div className="project-team">
-              <div className="avatar-group">
-                {Object.values(ASSIGNEES).map((assignee) => (
-                  <Avatar key={assignee.id} assigneeId={assignee.id} />
-                ))}
+          {view !== 'team' && (
+            <>
+              <div className="project-properties">
+                <span className="project-status">
+                  <span />
+                  {percentDone === 100 ? 'Complete' : 'In progress'}
+                </span>
+                <span className="property-divider" />
+                <span className="project-property">
+                  <Icon name="cycle" size={14} />
+                  Sprint 42
+                </span>
+                <span className="property-divider" />
+                <span className="project-property">
+                  <Icon name="box" size={14} />
+                  {issueCountLabel(totalCards)}
+                </span>
+                <div className="project-team">
+                  <div className="avatar-group">
+                    {Object.values(ASSIGNEES).map((assignee) => (
+                      <Avatar key={assignee.id} assigneeId={assignee.id} />
+                    ))}
+                  </div>
+                  <span>{Object.keys(ASSIGNEES).length} members</span>
+                </div>
               </div>
-              <span>{Object.keys(ASSIGNEES).length} members</span>
-            </div>
-          </div>
-          <div className="project-tabs">
-            <button
-              className={
-                view !== 'overview'
-                  ? 'project-tab project-tab--active'
-                  : 'project-tab'
-              }
-              onClick={() => navigate('project')}
-            >
-              <Icon name="board" size={15} />
-              Issues<span>{totalCards}</span>
-            </button>
-            <button
-              className={
-                view === 'overview'
-                  ? 'project-tab project-tab--active'
-                  : 'project-tab'
-              }
-              onClick={() => navigate('overview')}
-            >
-              <Icon name="layers" size={15} />
-              Overview
-            </button>
-            <div className="project-progress">
-              <ProgressRing value={percentDone} />
-              <span>{percentDone}% complete</span>
-            </div>
-          </div>
+              <div className="project-tabs">
+                <button
+                  className={
+                    view !== 'overview'
+                      ? 'project-tab project-tab--active'
+                      : 'project-tab'
+                  }
+                  onClick={() => navigate('project')}
+                >
+                  <Icon name="board" size={15} />
+                  Issues<span>{totalCards}</span>
+                </button>
+                <button
+                  className={
+                    view === 'overview'
+                      ? 'project-tab project-tab--active'
+                      : 'project-tab'
+                  }
+                  onClick={() => navigate('overview')}
+                >
+                  <Icon name="layers" size={15} />
+                  Overview
+                </button>
+                <div className="project-progress">
+                  <ProgressRing value={percentDone} />
+                  <span>{percentDone}% complete</span>
+                </div>
+              </div>
+            </>
+          )}
         </section>
-        {view === 'overview' ? (
+        {view === 'team' ? (
+          <TeamPage
+            board={board}
+            onSelectMember={(assigneeId) => {
+              navigate('project')
+              setAssigneeFilter(assigneeId)
+            }}
+          />
+        ) : view === 'overview' ? (
           <section className="overview">
             <div className="overview-intro">
               <span className="eyebrow">PRODUCT / SPRINT 42</span>
@@ -816,7 +831,9 @@ export default function App() {
           <span className="footer-tip">
             {view === 'overview'
               ? 'Built for the way you work.'
-              : 'Drag to move · Click to edit'}
+              : view === 'team'
+                ? 'Click a teammate to see their issues'
+                : 'Drag to move · Click to edit'}
             <span className="footer-divider" />
             <button onClick={() => setHelpOpen(true)}>
               <kbd>?</kbd> Shortcuts
