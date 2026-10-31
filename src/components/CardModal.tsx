@@ -1,9 +1,11 @@
-import { useRef, useState, type FormEvent } from 'react'
-import { ASSIGNEES, LABELS, LABEL_ORDER } from '../data'
+import { useState, type FormEvent } from 'react'
+import { LABELS, LABEL_ORDER } from '../data'
+import { isTitleValid } from '../titleLimit'
 import type { Card, Column, ColumnId, LabelId } from '../types'
-import { Avatar } from './Avatar'
 import { Dialog } from './Dialog'
-import { Icon, StatusIcon } from './Icon'
+import { Icon } from './Icon'
+import { IssueProperties } from './IssueProperties'
+import { TitleField } from './TitleField'
 
 interface CardModalProps {
   card: Card
@@ -29,7 +31,6 @@ export function CardModal({
   const [labels, setLabels] = useState<LabelId[]>(card.labels)
   const [assigneeId, setAssigneeId] = useState<string | null>(card.assigneeId)
   const [dueDate, setDueDate] = useState<string | null>(card.dueDate)
-  const dueDateInput = useRef<HTMLInputElement>(null)
   const [status, setStatus] = useState(columnId)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
@@ -43,7 +44,7 @@ export function CardModal({
 
   function handleSave(event: FormEvent) {
     event.preventDefault()
-    if (!title.trim()) return
+    if (!isTitleValid(title)) return
     onSave(
       {
         title: title.trim(),
@@ -90,19 +91,7 @@ export function CardModal({
           </button>
         </header>
         <div className="modal__body">
-          <label htmlFor="modal-title" className="visually-hidden">
-            Title
-          </label>
-          <input
-            id="modal-title"
-            className="modal__title-input"
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            placeholder="Issue title"
-            maxLength={200}
-            required
-            data-autofocus
-          />
+          <TitleField value={title} onChange={setTitle} />
           <label htmlFor="modal-description" className="visually-hidden">
             Description
           </label>
@@ -114,79 +103,15 @@ export function CardModal({
             onChange={(event) => setDescription(event.target.value)}
             placeholder="Add a description, a little context, or a big idea…"
           />
-          <div className="modal__properties">
-            <div className="property-field">
-              <label htmlFor="issue-status">Status</label>
-              <div className="select-wrap">
-                <StatusIcon status={status} />
-                <select
-                  id="issue-status"
-                  value={status}
-                  onChange={(event) => {
-                    const column = columns.find(
-                      (entry) => entry.id === event.target.value,
-                    )
-                    if (column) setStatus(column.id)
-                  }}
-                >
-                  {columns.map((column) => (
-                    <option key={column.id} value={column.id}>
-                      {column.title}
-                    </option>
-                  ))}
-                </select>
-                <Icon name="down" size={12} />
-              </div>
-            </div>
-            <div className="property-field">
-              <label htmlFor="issue-assignee">Assignee</label>
-              <div className="select-wrap">
-                <Avatar assigneeId={assigneeId} />
-                <select
-                  id="issue-assignee"
-                  value={assigneeId ?? ''}
-                  onChange={(event) =>
-                    setAssigneeId(event.target.value || null)
-                  }
-                >
-                  <option value="">Unassigned</option>
-                  {Object.values(ASSIGNEES).map((assignee) => (
-                    <option key={assignee.id} value={assignee.id}>
-                      {assignee.name}
-                    </option>
-                  ))}
-                </select>
-                <Icon name="down" size={12} />
-              </div>
-            </div>
-            <div className="property-field">
-              <label htmlFor="issue-due-date">Due date</label>
-              <div className="select-wrap">
-                <Icon name="calendar" size={14} />
-                <input
-                  ref={dueDateInput}
-                  id="issue-due-date"
-                  type="date"
-                  value={dueDate ?? ''}
-                  onChange={(event) => setDueDate(event.target.value || null)}
-                />
-                {dueDate && (
-                  <button
-                    type="button"
-                    className="icon-button due-date-clear"
-                    aria-label="Clear due date"
-                    title="Clear due date"
-                    onClick={() => {
-                      setDueDate(null)
-                      dueDateInput.current?.focus()
-                    }}
-                  >
-                    <Icon name="close" size={12} />
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
+          <IssueProperties
+            columns={columns}
+            status={status}
+            assigneeId={assigneeId}
+            dueDate={dueDate}
+            setStatus={setStatus}
+            setAssigneeId={setAssigneeId}
+            setDueDate={setDueDate}
+          />
           <fieldset className="label-picker">
             <legend>Labels</legend>
             {LABEL_ORDER.map((labelId) => (
@@ -249,7 +174,7 @@ export function CardModal({
             <button
               className="button button--primary"
               type="submit"
-              disabled={!title.trim()}
+              disabled={!isTitleValid(title)}
             >
               {creating ? 'Create issue' : 'Save changes'} <kbd>↵</kbd>
             </button>

@@ -1696,6 +1696,25 @@ details[open] > .toolbar-button {
   background: var(--board);
   border-color: var(--border);
 }
+.modal__title-field {
+  margin-bottom: 13px;
+}
+.modal__title-field .modal__title-input {
+  margin-bottom: 4px;
+}
+.modal__title-input[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+.modal__title-count {
+  color: var(--muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.modal__title-count--over {
+  color: var(--danger);
+  font-weight: 500;
+}
 .modal__description {
   display: block;
   width: 100%;
