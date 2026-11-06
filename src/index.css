@@ -1667,6 +1667,12 @@ details[open] > .toolbar-button {
   padding: 13px 19px;
   border-bottom: 1px solid var(--border);
 }
+
+.modal__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
 .modal__breadcrumb {
   display: flex;
   align-items: center;

@@ -860,6 +860,7 @@ export default function App() {
             setToast('Issue deleted')
           }}
           onClose={closeModal}
+          onCopied={() => setToast('Link copied')}
         />
       )}
       {commandOpen && (

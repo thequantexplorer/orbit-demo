@@ -13,6 +13,7 @@ interface CardModalProps {
   onSave: (patch: Omit<Card, 'id'>, columnId: ColumnId) => void
   onDelete: () => void
   onClose: () => void
+  onCopied: () => void
 }
 
 export function CardModal({
@@ -23,6 +24,7 @@ export function CardModal({
   onSave,
   onDelete,
   onClose,
+  onCopied,
 }: CardModalProps) {
   const [title, setTitle] = useState(card.title)
   const [description, setDescription] = useState(card.description)
@@ -39,6 +41,18 @@ export function CardModal({
         ? current.filter((id) => id !== labelId)
         : [...current, labelId],
     )
+  }
+
+  async function copyLink() {
+    const params = new URLSearchParams(window.location.search)
+    params.set('issue', card.id)
+    const url = `${window.location.origin}${window.location.pathname}?${params}`
+    try {
+      await navigator.clipboard.writeText(url)
+      onCopied()
+    } catch {
+      // Clipboard unavailable (e.g. insecure context); skip the toast.
+    }
   }
 
   function handleSave(event: FormEvent) {
@@ -80,14 +94,27 @@ export function CardModal({
               {creating ? 'New issue' : card.id}
             </span>
           </div>
-          <button
-            className="icon-button"
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-          >
-            <Icon name="close" />
-          </button>
+          <div className="modal__header-actions">
+            {!creating && (
+              <button
+                className="icon-button"
+                type="button"
+                onClick={copyLink}
+                aria-label="Copy link"
+                title="Copy link"
+              >
+                <Icon name="link" />
+              </button>
+            )}
+            <button
+              className="icon-button"
+              type="button"
+              onClick={onClose}
+              aria-label="Close"
+            >
+              <Icon name="close" />
+            </button>
+          </div>
         </header>
         <div className="modal__body">
           <label htmlFor="modal-title" className="visually-hidden">
