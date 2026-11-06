@@ -1837,6 +1837,16 @@ details[open] > .toolbar-button {
   font-size: 10px;
   color: var(--muted);
 }
+.modal__tools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.duplicate-button {
+  font-size: 11px;
+  min-height: 28px;
+  padding-inline: 8px;
+}
 .delete-button:hover {
   color: var(--danger);
 }

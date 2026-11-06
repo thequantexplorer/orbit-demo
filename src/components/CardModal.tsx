@@ -4,6 +4,7 @@ import type { Card, Column, ColumnId, LabelId } from '../types'
 import { Avatar } from './Avatar'
 import { Dialog } from './Dialog'
 import { Icon, StatusIcon } from './Icon'
+import { IssueTools } from './IssueTools'
 
 interface CardModalProps {
   card: Card
@@ -11,6 +12,7 @@ interface CardModalProps {
   columns: Column[]
   creating?: boolean
   onSave: (patch: Omit<Card, 'id'>, columnId: ColumnId) => void
+  onDuplicate: () => void
   onDelete: () => void
   onClose: () => void
 }
@@ -21,6 +23,7 @@ export function CardModal({
   columns,
   creating = false,
   onSave,
+  onDuplicate,
   onDelete,
   onClose,
 }: CardModalProps) {
@@ -31,7 +34,6 @@ export function CardModal({
   const [dueDate, setDueDate] = useState<string | null>(card.dueDate)
   const dueDateInput = useRef<HTMLInputElement>(null)
   const [status, setStatus] = useState(columnId)
-  const [confirmDelete, setConfirmDelete] = useState(false)
 
   function toggleLabel(labelId: LabelId) {
     setLabels((current) =>
@@ -212,35 +214,8 @@ export function CardModal({
             <span className="modal__hint">
               Good work starts with a clear issue.
             </span>
-          ) : confirmDelete ? (
-            <div className="delete-confirm">
-              <span>Delete this issue?</span>
-              <button
-                type="button"
-                className="button button--danger"
-                onClick={onDelete}
-              >
-                Delete issue
-              </button>
-              <button
-                type="button"
-                className="icon-button"
-                aria-label="Cancel deletion"
-                onClick={() => setConfirmDelete(false)}
-              >
-                <Icon name="close" size={14} />
-              </button>
-            </div>
           ) : (
-            <button
-              className="icon-button delete-button"
-              type="button"
-              onClick={() => setConfirmDelete(true)}
-              aria-label="Delete issue"
-              title="Delete issue"
-            >
-              <Icon name="trash" />
-            </button>
+            <IssueTools onDelete={onDelete} onDuplicate={onDuplicate} />
           )}
           <div className="modal__actions">
             <button className="button" type="button" onClick={onClose}>

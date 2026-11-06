@@ -216,6 +216,41 @@ describe('boardReducer', () => {
     expect(Object.keys(board.cards)).toHaveLength(8)
   })
 
+  describe('duplicate-card', () => {
+    it('inserts a copy right below the original in the same column', () => {
+      const seed = createSeedBoard()
+      const board = boardReducer(seed, {
+        type: 'duplicate-card',
+        cardId: 'KB-2',
+      })
+      expect(cardIds(board, 'backlog')).toEqual([
+        'KB-1',
+        'KB-2',
+        'KB-10',
+        'KB-3',
+        'KB-4',
+      ])
+      expect(board.cards['KB-10']).toEqual({ ...seed.cards['KB-2'], id: 'KB-10' })
+      expect(board.cards['KB-10'].labels).not.toBe(seed.cards['KB-2'].labels)
+      expect(board.nextCardNumber).toBe(11)
+    })
+
+    it('appends after the last card of a column', () => {
+      const board = boardReducer(createSeedBoard(), {
+        type: 'duplicate-card',
+        cardId: 'KB-9',
+      })
+      expect(cardIds(board, 'done')).toEqual(['KB-8', 'KB-9', 'KB-10'])
+    })
+
+    it('returns the same board for an unknown card', () => {
+      const seed = createSeedBoard()
+      expect(
+        boardReducer(seed, { type: 'duplicate-card', cardId: 'KB-404' }),
+      ).toBe(seed)
+    })
+  })
+
   describe('clear-column', () => {
     it('removes every card in the column and leaves others intact', () => {
       const board = boardReducer(createSeedBoard(), {
