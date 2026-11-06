@@ -32,6 +32,8 @@ Then open http://localhost:5173. Other scripts: `npm run build`, `npm run lint`.
   appearance toggle.
 - **Overview** shows live progress and team assignments. **My issues** uses Ava
   Chen, the demo workspace member.
+- Run **Export issues to CSV** from the command menu (Ctrl/Cmd + K) to download
+  every issue (ID, title, status, labels, assignee, due date, description).
 - Click an issue to edit it. Delete and reset actions ask for confirmation.
   **Reset board** restores the nine original issues.
 - Drag a card with the mouse, or focus it and use Space, arrow keys, and Space

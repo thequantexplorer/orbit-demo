@@ -20,6 +20,7 @@ import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { boardReducer, findColumnOfCard } from './boardReducer'
 import { ASSIGNEES, LABELS, LABEL_ORDER, createSeedBoard } from './data'
 import { createGeneratedBoard, parseSeedCount } from './seed'
+import { boardToCsv, csvFileName, downloadCsv } from './csvExport'
 import { loadBoard, saveBoard } from './storage'
 import type {
   BoardState,
@@ -869,6 +870,10 @@ export default function App() {
           onOpen={setOpenCardId}
           onCreate={() => setOpenCardId('new')}
           onTheme={themeToggle}
+          onExport={() => {
+            downloadCsv(boardToCsv(board), csvFileName(new Date()))
+            setToast(`Exported ${issueCountLabel(Object.keys(board.cards).length)}`)
+          }}
         />
       )}
       {resetOpen && (

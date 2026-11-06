@@ -1,13 +1,20 @@
 import { useRef, useState } from 'react'
 import type { Card } from '../types'
 import { Dialog } from './Dialog'
-import { Icon } from './Icon'
+import { Icon, type IconName } from './Icon'
+
+const ACTION_ICONS: Record<string, IconName> = {
+  create: 'plus',
+  theme: 'sun',
+  'export-csv': 'download',
+}
 
 interface CommandMenuProps {
   cards: Card[]
   onOpen: (id: string) => void
   onCreate: () => void
   onTheme: () => void
+  onExport: () => void
   onClose: () => void
 }
 
@@ -16,6 +23,7 @@ export function CommandMenu({
   onOpen,
   onCreate,
   onTheme,
+  onExport,
   onClose,
 }: CommandMenuProps) {
   const [query, setQuery] = useState('')
@@ -29,6 +37,7 @@ export function CommandMenu({
   const actions = [
     { id: 'create', title: 'Create a new issue', run: onCreate },
     { id: 'theme', title: 'Toggle appearance', run: onTheme },
+    { id: 'export-csv', title: 'Export issues to CSV', run: onExport },
   ].filter((action) => action.title.toLowerCase().includes(query.toLowerCase()))
   const items = [
     ...actions,
@@ -119,15 +128,7 @@ export function CommandMenu({
             onMouseMove={() => setSelected(index)}
             onClick={() => execute(index)}
           >
-            <Icon
-              name={
-                item.id === 'create'
-                  ? 'plus'
-                  : item.id === 'theme'
-                    ? 'sun'
-                    : 'circleCheck'
-              }
-            />
+            <Icon name={ACTION_ICONS[item.id] ?? 'circleCheck'} />
             <span>{item.title}</span>
             <small>{item.id.startsWith('KB-') ? item.id : 'Action'}</small>
             {selected === index && <span className="command-enter">↵</span>}
