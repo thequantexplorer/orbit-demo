@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent } from 'react'
+import { useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { ASSIGNEES, LABELS, LABEL_ORDER } from '../data'
 import type { Card, Column, ColumnId, LabelId } from '../types'
 import { Avatar } from './Avatar'
@@ -14,6 +14,7 @@ interface CardModalProps {
   onDelete: () => void
   onClose: () => void
   onCopied: () => void
+  toast?: ReactNode
 }
 
 export function CardModal({
@@ -25,6 +26,7 @@ export function CardModal({
   onDelete,
   onClose,
   onCopied,
+  toast,
 }: CardModalProps) {
   const [title, setTitle] = useState(card.title)
   const [description, setDescription] = useState(card.description)
@@ -283,6 +285,7 @@ export function CardModal({
           </div>
         </footer>
       </form>
+      {toast}
     </Dialog>
   )
 }

@@ -38,6 +38,7 @@ import { Icon, ProgressRing, StatusIcon } from './components/Icon'
 import { IssueList } from './components/IssueList'
 import { LabelPill } from './components/LabelPill'
 import { Sidebar } from './components/Sidebar'
+import { Toast } from './components/Toast'
 
 const collisionDetection: CollisionDetection = (args) => {
   const within = pointerWithin(args)
@@ -323,6 +324,10 @@ export default function App() {
     setAssigneeFilter('')
   }
   const themeToggle = () => setDark((current) => !current)
+
+  const toastView = toast ? (
+    <Toast message={toast} onDismiss={() => setToast('')} />
+  ) : null
 
   return (
     <div className={`app${descriptions ? '' : ' app--compact'}`}>
@@ -861,6 +866,7 @@ export default function App() {
           }}
           onClose={closeModal}
           onCopied={() => setToast('Link copied')}
+          toast={toastView}
         />
       )}
       {commandOpen && (
@@ -992,19 +998,7 @@ export default function App() {
           </dl>
         </Dialog>
       )}
-      {toast && (
-        <div className="toast" role="status">
-          <Icon name="circleCheck" size={17} />
-          <span>{toast}</span>
-          <button
-            className="icon-button"
-            aria-label="Dismiss notification"
-            onClick={() => setToast('')}
-          >
-            <Icon name="close" size={13} />
-          </button>
-        </div>
-      )}
+      {!openCard && toastView}
     </div>
   )
 }
