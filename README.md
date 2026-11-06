@@ -36,6 +36,8 @@ Then open http://localhost:5173. Other scripts: `npm run build`, `npm run lint`.
   **Reset board** restores the nine original issues.
 - Drag a card with the mouse, or focus it and use Space, arrow keys, and Space
   to pick up, move, and drop. Escape cancels a drag and restores its starting state.
+- Open a column's **⋯** menu and choose **Sort by priority** to move **Urgent**
+  issues to the top. Other issues keep their order.
 
 | Shortcut | Action |
 |---|---|

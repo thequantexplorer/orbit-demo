@@ -21,6 +21,7 @@ export type BoardAction =
   | { type: 'delete-card'; cardId: string }
   | { type: 'clear-column'; columnId: ColumnId }
   | { type: 'set-wip-limit'; columnId: ColumnId; limit: number | null }
+  | { type: 'sort-column-by-priority'; columnId: ColumnId }
   | { type: 'reset' }
   | { type: 'cancel-drag'; snapshot: BoardState }
   | { type: 'restore'; board: BoardState }
@@ -140,6 +141,25 @@ export function boardReducer(
         ),
         columns: board.columns.map((column) =>
           column.id === action.columnId ? { ...column, cardIds: [] } : column,
+        ),
+      }
+    }
+    case 'sort-column-by-priority': {
+      const target = board.columns.find(
+        (column) => column.id === action.columnId,
+      )
+      if (!target) return board
+      const isUrgent = (id: string) =>
+        board.cards[id]?.labels.includes('urgent') ?? false
+      const cardIds = [...target.cardIds].sort(
+        (a, b) => Number(isUrgent(b)) - Number(isUrgent(a)),
+      )
+      if (cardIds.every((id, index) => id === target.cardIds[index]))
+        return board
+      return {
+        ...board,
+        columns: board.columns.map((column) =>
+          column === target ? { ...column, cardIds } : column,
         ),
       }
     }

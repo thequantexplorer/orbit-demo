@@ -1050,6 +1050,46 @@ details[open] > .toolbar-button {
 .column__clear + .column__add {
   margin-left: 0;
 }
+.column__menu {
+  margin-left: 0;
+}
+.column__menu-button {
+  list-style: none;
+  cursor: pointer;
+  color: var(--muted);
+  width: 23px;
+  height: 23px;
+}
+.column__menu-button::-webkit-details-marker {
+  display: none;
+}
+.column__menu[open] .column__menu-button {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+.popover-panel.column__menu-panel {
+  top: 28px;
+  width: 180px;
+  padding: 4px;
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 5px;
+  font-size: 11px;
+  color: var(--text);
+  text-align: left;
+}
+.menu-item:hover,
+.menu-item:focus-visible {
+  background: var(--surface-hover);
+}
+.menu-item svg {
+  color: var(--muted);
+}
 .status-icon {
   width: 13px;
   height: 13px;

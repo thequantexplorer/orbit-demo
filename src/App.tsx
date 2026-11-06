@@ -784,6 +784,12 @@ export default function App() {
                           limit,
                         })
                       }
+                      onSortByPriority={() =>
+                        dispatch({
+                          type: 'sort-column-by-priority',
+                          columnId: column.id,
+                        })
+                      }
                     />
                   ))}
                 </div>

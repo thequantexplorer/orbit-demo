@@ -180,6 +180,47 @@ describe('boardReducer', () => {
     })
   })
 
+  describe('sort-column-by-priority', () => {
+    it('moves urgent cards to the top, keeping order within each group', () => {
+      const seed = createSeedBoard()
+      const board: BoardState = {
+        ...seed,
+        cards: {
+          ...seed.cards,
+          'KB-2': { ...seed.cards['KB-2'], labels: ['design', 'urgent'] },
+        },
+      }
+      const sorted = boardReducer(board, {
+        type: 'sort-column-by-priority',
+        columnId: 'backlog',
+      })
+      expect(cardIds(sorted, 'backlog')).toEqual(['KB-2', 'KB-4', 'KB-1', 'KB-3'])
+      expect(sorted.columns.filter((column) => column.id !== 'backlog'))
+        .toEqual(board.columns.filter((column) => column.id !== 'backlog'))
+      expect(sorted.cards).toBe(board.cards)
+    })
+
+    it('returns the same board when the column is already sorted', () => {
+      const seed = createSeedBoard()
+      expect(
+        boardReducer(seed, {
+          type: 'sort-column-by-priority',
+          columnId: 'in-progress',
+        }),
+      ).toBe(seed)
+    })
+
+    it('returns the same board for an unknown column', () => {
+      const seed = createSeedBoard()
+      expect(
+        boardReducer(seed, {
+          type: 'sort-column-by-priority',
+          columnId: 'archived' as ColumnId,
+        }),
+      ).toBe(seed)
+    })
+  })
+
   it('restores a drag snapshot while keeping the current WIP limits', () => {
     const snapshot = createSeedBoard()
     const moved = boardReducer(snapshot, {
