@@ -1677,6 +1677,33 @@ details[open] > .toolbar-button {
 .modal__breadcrumb > .icon {
   color: var(--muted);
 }
+.modal__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.copy-link-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 9px;
+  border-radius: 5px;
+  font-size: 12px;
+  color: var(--secondary);
+}
+.copy-link-button:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+.copy-link-button--copied,
+.copy-link-button--copied:hover {
+  color: var(--green);
+}
+.copy-link-button--failed,
+.copy-link-button--failed:hover {
+  color: var(--danger);
+}
 .modal__body {
   padding: 25px 28px 28px;
 }

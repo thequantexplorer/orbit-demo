@@ -2,6 +2,7 @@ import { useRef, useState, type FormEvent } from 'react'
 import { ASSIGNEES, LABELS, LABEL_ORDER } from '../data'
 import type { Card, Column, ColumnId, LabelId } from '../types'
 import { Avatar } from './Avatar'
+import { CopyLinkButton } from './CopyLinkButton'
 import { Dialog } from './Dialog'
 import { Icon, StatusIcon } from './Icon'
 
@@ -80,14 +81,17 @@ export function CardModal({
               {creating ? 'New issue' : card.id}
             </span>
           </div>
-          <button
-            className="icon-button"
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-          >
-            <Icon name="close" />
-          </button>
+          <div className="modal__header-actions">
+            {!creating && <CopyLinkButton cardId={card.id} />}
+            <button
+              className="icon-button"
+              type="button"
+              onClick={onClose}
+              aria-label="Close"
+            >
+              <Icon name="close" />
+            </button>
+          </div>
         </header>
         <div className="modal__body">
           <label htmlFor="modal-title" className="visually-hidden">

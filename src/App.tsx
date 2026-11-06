@@ -38,6 +38,7 @@ import { Icon, ProgressRing, StatusIcon } from './components/Icon'
 import { IssueList } from './components/IssueList'
 import { LabelPill } from './components/LabelPill'
 import { Sidebar } from './components/Sidebar'
+import { parseIssueParam, withoutIssueParam } from './issueLink'
 
 const collisionDetection: CollisionDetection = (args) => {
   const within = pointerWithin(args)
@@ -67,7 +68,10 @@ export default function App() {
   )
   const [activeCardId, setActiveCardId] = useState<string | null>(null)
   const [overColumnId, setOverColumnId] = useState<ColumnId | null>(null)
-  const [openCardId, setOpenCardId] = useState<string | null>(null)
+  const [openCardId, setOpenCardId] = useState<string | null>(() => {
+    const linkedId = parseIssueParam(window.location.search)
+    return linkedId && board.cards[linkedId] ? linkedId : null
+  })
   const [view, setView] = useState<WorkspaceView>('project')
   const [layout, setLayout] = useState<'board' | 'list'>('board')
   const [query, setQuery] = useState('')
@@ -243,7 +247,11 @@ export default function App() {
     setOverColumnId(null)
   }
 
-  const closeModal = useCallback(() => setOpenCardId(null), [])
+  const closeModal = useCallback(() => {
+    setOpenCardId(null)
+    const href = withoutIssueParam(window.location.href)
+    if (href) window.history.replaceState(window.history.state, '', href)
+  }, [])
   const navigate = (next: WorkspaceView) => {
     setView(next)
     setQuery('')

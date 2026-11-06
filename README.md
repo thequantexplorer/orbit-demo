@@ -34,6 +34,8 @@ Then open http://localhost:5173. Other scripts: `npm run build`, `npm run lint`.
   Chen, the demo workspace member.
 - Click an issue to edit it. Delete and reset actions ask for confirmation.
   **Reset board** restores the nine original issues.
+- **Copy link** in the issue editor header copies a URL like
+  `http://localhost:5173/?issue=KB-3` that opens that issue when visited.
 - Drag a card with the mouse, or focus it and use Space, arrow keys, and Space
   to pick up, move, and drop. Escape cancels a drag and restores its starting state.
 
