@@ -947,6 +947,47 @@ details[open] > .toolbar-button {
   align-self: flex-start;
   max-height: 100%;
 }
+.column--collapsed {
+  flex: 0 0 40px;
+  min-width: 40px;
+  align-self: stretch;
+}
+.column__strip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 160px;
+  padding: 10px 0 14px;
+  border-radius: 8px;
+  background: var(--surface-hover);
+  color: var(--secondary);
+  transition: background 0.16s;
+}
+.column__strip:hover {
+  background: var(--surface-active);
+  color: var(--text);
+}
+.column__strip:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+.column__strip-title {
+  writing-mode: vertical-rl;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+}
+.column__collapse {
+  color: var(--muted);
+  width: 23px;
+  height: 23px;
+}
+.column__add + .column__collapse {
+  margin-left: -4px;
+}
 .column--drop-target {
   border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
   background: var(--primary-subtle);

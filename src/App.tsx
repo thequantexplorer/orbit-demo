@@ -21,6 +21,7 @@ import { boardReducer, findColumnOfCard } from './boardReducer'
 import { ASSIGNEES, LABELS, LABEL_ORDER, createSeedBoard } from './data'
 import { createGeneratedBoard, parseSeedCount } from './seed'
 import { loadBoard, saveBoard } from './storage'
+import { useCollapsedColumns } from './collapsedColumns'
 import type {
   BoardState,
   Card,
@@ -31,6 +32,7 @@ import type {
 import { CardModal } from './components/CardModal'
 import { CardView } from './components/CardView'
 import { ColumnView } from './components/ColumnView'
+import { CollapsedColumn } from './components/CollapsedColumn'
 import { Avatar } from './components/Avatar'
 import { CommandMenu } from './components/CommandMenu'
 import { Dialog } from './components/Dialog'
@@ -89,6 +91,7 @@ export default function App() {
       return false
     }
   })
+  const { collapsed, setColumnCollapsed } = useCollapsedColumns()
   const dragSnapshot = useRef<BoardState | null>(null)
 
   useEffect(() => {
@@ -756,36 +759,49 @@ export default function App() {
             >
               {layout === 'board' ? (
                 <div className="board" aria-label="Issue board">
-                  {visibleColumns.map((column) => (
-                    <ColumnView
-                      key={column.id}
-                      column={column}
-                      cards={column.cards}
-                      filtered={hasFilters}
-                      activeCardId={activeCardId}
-                      showDescriptions={descriptions}
-                      isDropTarget={
-                        activeCardId !== null && overColumnId === column.id
-                      }
-                      onAddCard={(title) => {
-                        dispatch({
-                          type: 'add-card',
-                          columnId: column.id,
-                          title,
-                        })
-                        setToast('Issue created')
-                      }}
-                      onOpenCard={setOpenCardId}
-                      onClearColumn={() => setClearDoneOpen(true)}
-                      onSetWipLimit={(limit) =>
-                        dispatch({
-                          type: 'set-wip-limit',
-                          columnId: column.id,
-                          limit,
-                        })
-                      }
-                    />
-                  ))}
+                  {visibleColumns.map((column) =>
+                    collapsed.includes(column.id) ? (
+                      <CollapsedColumn
+                        key={column.id}
+                        column={column}
+                        cardCount={column.cards.length}
+                        isDropTarget={
+                          activeCardId !== null && overColumnId === column.id
+                        }
+                        onExpand={() => setColumnCollapsed(column.id, false)}
+                      />
+                    ) : (
+                      <ColumnView
+                        key={column.id}
+                        column={column}
+                        cards={column.cards}
+                        filtered={hasFilters}
+                        activeCardId={activeCardId}
+                        showDescriptions={descriptions}
+                        isDropTarget={
+                          activeCardId !== null && overColumnId === column.id
+                        }
+                        onAddCard={(title) => {
+                          dispatch({
+                            type: 'add-card',
+                            columnId: column.id,
+                            title,
+                          })
+                          setToast('Issue created')
+                        }}
+                        onOpenCard={setOpenCardId}
+                        onClearColumn={() => setClearDoneOpen(true)}
+                        onSetWipLimit={(limit) =>
+                          dispatch({
+                            type: 'set-wip-limit',
+                            columnId: column.id,
+                            limit,
+                          })
+                        }
+                        onCollapse={() => setColumnCollapsed(column.id, true)}
+                      />
+                    ),
+                  )}
                 </div>
               ) : (
                 <IssueList

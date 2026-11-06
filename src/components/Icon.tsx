@@ -6,6 +6,7 @@ const paths = {
   plus: 'M12 5v14 M5 12h14',
   close: 'm6 6 12 12 M6 18 18 6',
   chevron: 'm8 5 7 7-7 7',
+  collapse: 'm15 5-7 7 7 7',
   down: 'm6 9 6 6 6-6',
   board: 'M4 4h16v16H4z M9 4v16 M15 4v16',
   list: 'M8 6h12 M8 12h12 M8 18h12 M3 6h.01 M3 12h.01 M3 18h.01',
