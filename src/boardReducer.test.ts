@@ -144,6 +144,33 @@ describe('boardReducer', () => {
     expect(cleared.cards['KB-2'].dueDate).toBeNull()
   })
 
+  describe('duplicate-card', () => {
+    it('copies the issue under a new ID directly below the original', () => {
+      const seed = createSeedBoard()
+      const board = boardReducer(seed, { type: 'duplicate-card', cardId: 'KB-2' })
+      const id = `KB-${seed.nextCardNumber}`
+      expect(board.nextCardNumber).toBe(seed.nextCardNumber + 1)
+      expect(cardIds(board, 'backlog')).toEqual(['KB-1', 'KB-2', id, 'KB-3', 'KB-4'])
+      expect(board.cards[id]).toEqual({ ...seed.cards['KB-2'], id })
+      expect(board.cards[id].labels).not.toBe(seed.cards['KB-2'].labels)
+      expect(board.cards['KB-2']).toBe(seed.cards['KB-2'])
+    })
+
+    it('keeps the copy in the same column as the original', () => {
+      const board = boardReducer(createSeedBoard(), {
+        type: 'duplicate-card',
+        cardId: 'KB-7',
+      })
+      expect(cardIds(board, 'review')).toHaveLength(2)
+      expect(findColumnOfCard(board, cardIds(board, 'review')[1])).toBe('review')
+    })
+
+    it('ignores unknown issues', () => {
+      const seed = createSeedBoard()
+      expect(boardReducer(seed, { type: 'duplicate-card', cardId: 'KB-404' })).toBe(seed)
+    })
+  })
+
   describe('set-wip-limit', () => {
     it('sets a limit on only the target column and clears it with null', () => {
       const seed = createSeedBoard()

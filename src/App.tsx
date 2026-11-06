@@ -854,6 +854,11 @@ export default function App() {
             }
             setToast(creating ? 'Issue created' : 'Issue updated')
           }}
+          onDuplicate={() => {
+            dispatch({ type: 'duplicate-card', cardId: openCard.id })
+            closeModal()
+            setToast('Issue duplicated')
+          }}
           onDelete={() => {
             dispatch({ type: 'delete-card', cardId: openCard.id })
             closeModal()
