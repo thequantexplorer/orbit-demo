@@ -72,6 +72,31 @@ describe('loadBoard', () => {
     expect(loadBoard()).toEqual(board)
   })
 
+  it('loads boards saved before story points existed', () => {
+    const board = createSeedBoard()
+    const legacy = JSON.parse(JSON.stringify(board))
+    for (const card of Object.values(legacy.cards)) {
+      delete (card as { storyPoints?: unknown }).storyPoints
+    }
+    storage.setItem(STORAGE_KEY, JSON.stringify(legacy))
+    const loaded = loadBoard()!
+    for (const card of Object.values(loaded.cards)) {
+      expect(card.storyPoints).toBeNull()
+    }
+  })
+
+  it('keeps valid story points and drops values off the scale', () => {
+    const saved = JSON.parse(JSON.stringify(createSeedBoard()))
+    saved.cards['KB-1'].storyPoints = 8
+    saved.cards['KB-2'].storyPoints = 4
+    saved.cards['KB-3'].storyPoints = '3'
+    storage.setItem(STORAGE_KEY, JSON.stringify(saved))
+    const loaded = loadBoard()!
+    expect(loaded.cards['KB-1'].storyPoints).toBe(8)
+    expect(loaded.cards['KB-2'].storyPoints).toBeNull()
+    expect(loaded.cards['KB-3'].storyPoints).toBeNull()
+  })
+
   it('loads boards saved before WIP limits existed', () => {
     const board = createSeedBoard()
     const legacy = {

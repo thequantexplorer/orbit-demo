@@ -1229,6 +1229,21 @@ details[open] > .toolbar-button {
   line-height: 16px;
   white-space: nowrap;
 }
+.points-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  padding: 1px 4px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--secondary);
+  background: var(--surface);
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+}
 .due-chip--today {
   color: var(--warning);
   border-color: color-mix(in srgb, var(--warning) 35%, var(--border));
@@ -2073,6 +2088,7 @@ details[open] > .toolbar-button {
     margin-top: 18px;
   }
   .label-pill,
+  .points-chip,
   .due-chip {
     font-size: 10px;
   }

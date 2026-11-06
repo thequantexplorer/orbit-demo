@@ -27,6 +27,7 @@ const seedCards: Card[] = [
     labels: ['devops'],
     assigneeId: 'marcus',
     dueDate: null,
+    storyPoints: 3,
   },
   {
     id: 'KB-2',
@@ -35,6 +36,7 @@ const seedCards: Card[] = [
     labels: ['design'],
     assigneeId: 'priya',
     dueDate: null,
+    storyPoints: 5,
   },
   {
     id: 'KB-3',
@@ -43,6 +45,7 @@ const seedCards: Card[] = [
     labels: ['docs'],
     assigneeId: 'ava',
     dueDate: null,
+    storyPoints: 2,
   },
   {
     id: 'KB-4',
@@ -51,6 +54,7 @@ const seedCards: Card[] = [
     labels: ['bug', 'urgent'],
     assigneeId: 'leo',
     dueDate: null,
+    storyPoints: 8,
   },
   {
     id: 'KB-5',
@@ -59,6 +63,7 @@ const seedCards: Card[] = [
     labels: ['feature'],
     assigneeId: 'sofia',
     dueDate: null,
+    storyPoints: 1,
   },
   {
     id: 'KB-6',
@@ -67,6 +72,7 @@ const seedCards: Card[] = [
     labels: ['devops', 'feature'],
     assigneeId: 'marcus',
     dueDate: null,
+    storyPoints: 3,
   },
   {
     id: 'KB-7',
@@ -75,6 +81,7 @@ const seedCards: Card[] = [
     labels: ['feature'],
     assigneeId: 'ava',
     dueDate: null,
+    storyPoints: null,
   },
   {
     id: 'KB-8',
@@ -83,6 +90,7 @@ const seedCards: Card[] = [
     labels: ['docs', 'design'],
     assigneeId: 'priya',
     dueDate: null,
+    storyPoints: 5,
   },
   {
     id: 'KB-9',
@@ -91,6 +99,7 @@ const seedCards: Card[] = [
     labels: ['feature'],
     assigneeId: 'leo',
     dueDate: null,
+    storyPoints: 13,
   },
 ]
 

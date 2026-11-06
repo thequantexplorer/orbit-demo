@@ -28,6 +28,8 @@ Then open http://localhost:5173. Other scripts: `npm run build`, `npm run lint`.
   label and assignee filters.
 - Set an optional **Due date** in the issue editor. Cards show it as a chip:
   "Due Oct 12", then "Due today" on the day and "Overdue" once it has passed.
+- Set an optional **Estimate** in story points (1, 2, 3, 5, 8, 13, the same scale as
+  orbit-api's `story_points`). Cards show it as a small number chip.
 - **Display** controls descriptions and dark appearance. The sidebar also has an
   appearance toggle.
 - **Overview** shows live progress and team assignments. **My issues** uses Ava

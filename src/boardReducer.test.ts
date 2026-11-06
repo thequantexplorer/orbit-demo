@@ -90,6 +90,7 @@ describe('boardReducer', () => {
         labels: ['bug'],
         assigneeId: null,
         dueDate: null,
+        storyPoints: null,
       })
       expect(cardIds(board, 'in-progress')).toEqual(['KB-5', 'KB-6', 'KB-10'])
     })

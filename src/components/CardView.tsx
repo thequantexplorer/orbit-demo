@@ -1,5 +1,6 @@
 import type { HTMLAttributes, Ref } from 'react'
 import { fromDateKey, getDueChip } from '../dueDate'
+import { formatStoryPoints } from '../storyPoints'
 import { useTodayKey } from '../useToday'
 import type { Card } from '../types'
 import { Avatar } from './Avatar'
@@ -50,6 +51,15 @@ export function CardView({
       )}
       <div className="card__footer">
         <div className="card__labels">
+          {card.storyPoints !== null && (
+            <span
+              className="points-chip"
+              title={formatStoryPoints(card.storyPoints)}
+              aria-label={formatStoryPoints(card.storyPoints)}
+            >
+              {card.storyPoints}
+            </span>
+          )}
           {dueChip && (
             <span
               className={`due-chip due-chip--${dueChip.status}`}

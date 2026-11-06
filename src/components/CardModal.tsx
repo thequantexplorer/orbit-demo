@@ -4,6 +4,7 @@ import type { Card, Column, ColumnId, LabelId } from '../types'
 import { Avatar } from './Avatar'
 import { Dialog } from './Dialog'
 import { Icon, StatusIcon } from './Icon'
+import { StoryPointsField } from './StoryPointsField'
 
 interface CardModalProps {
   card: Card
@@ -29,6 +30,7 @@ export function CardModal({
   const [labels, setLabels] = useState<LabelId[]>(card.labels)
   const [assigneeId, setAssigneeId] = useState<string | null>(card.assigneeId)
   const [dueDate, setDueDate] = useState<string | null>(card.dueDate)
+  const [storyPoints, setStoryPoints] = useState(card.storyPoints)
   const dueDateInput = useRef<HTMLInputElement>(null)
   const [status, setStatus] = useState(columnId)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -51,6 +53,7 @@ export function CardModal({
         labels,
         assigneeId,
         dueDate,
+        storyPoints,
       },
       status,
     )
@@ -186,6 +189,7 @@ export function CardModal({
                 )}
               </div>
             </div>
+            <StoryPointsField value={storyPoints} onChange={setStoryPoints} />
           </div>
           <fieldset className="label-picker">
             <legend>Labels</legend>

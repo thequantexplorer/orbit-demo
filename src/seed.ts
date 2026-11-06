@@ -1,5 +1,6 @@
 import { ASSIGNEES, LABEL_ORDER } from './data'
 import type { BoardState, Card, Column, ColumnId, LabelId } from './types'
+import { STORY_POINT_OPTIONS } from './storyPoints'
 
 export const MAX_SEED_CARDS = 100_000
 const RANDOM_SEED = 0x0b17
@@ -88,6 +89,10 @@ export function createGeneratedBoard(count: number): BoardState {
         dueRoll < 0.25
           ? `2026-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
           : null,
+      storyPoints:
+        index % 7 === 6
+          ? null
+          : STORY_POINT_OPTIONS[index % STORY_POINT_OPTIONS.length],
     }
 
     let roll = random()

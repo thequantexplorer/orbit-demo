@@ -27,6 +27,8 @@ export interface Card {
   assigneeId: string | null
   /** Optional due day as `YYYY-MM-DD` (local calendar date). */
   dueDate: string | null
+  /** Optional estimate on the `STORY_POINT_OPTIONS` scale; null is unestimated. */
+  storyPoints: number | null
 }
 
 export type ColumnId = 'backlog' | 'in-progress' | 'review' | 'done'
