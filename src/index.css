@@ -1704,10 +1704,20 @@ details[open] > .toolbar-button {
   border-radius: 6px;
   background: transparent;
   padding: 8px;
-  margin: 0 -8px 23px;
+  margin: 0 -8px 4px;
   font-size: 12px;
   line-height: 1.9;
   resize: vertical;
+}
+.modal__char-count {
+  margin: 0 0 19px;
+  color: var(--muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.modal__char-count--over {
+  color: var(--danger);
 }
 .modal__description:focus {
   border-color: var(--border);

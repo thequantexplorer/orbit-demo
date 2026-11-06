@@ -2,6 +2,7 @@ import { useRef, useState, type FormEvent } from 'react'
 import { ASSIGNEES, LABELS, LABEL_ORDER } from '../data'
 import type { Card, Column, ColumnId, LabelId } from '../types'
 import { Avatar } from './Avatar'
+import { DescriptionField } from './DescriptionField'
 import { Dialog } from './Dialog'
 import { Icon, StatusIcon } from './Icon'
 
@@ -103,17 +104,7 @@ export function CardModal({
             required
             data-autofocus
           />
-          <label htmlFor="modal-description" className="visually-hidden">
-            Description
-          </label>
-          <textarea
-            id="modal-description"
-            className="modal__description"
-            rows={5}
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            placeholder="Add a description, a little context, or a big idea…"
-          />
+          <DescriptionField value={description} onChange={setDescription} />
           <div className="modal__properties">
             <div className="property-field">
               <label htmlFor="issue-status">Status</label>
