@@ -19,6 +19,7 @@ import {
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { boardReducer, findColumnOfCard } from './boardReducer'
 import { ASSIGNEES, LABELS, LABEL_ORDER, createSeedBoard } from './data'
+import { documentTitle, type IssueLayout } from './documentTitle'
 import { createGeneratedBoard, parseSeedCount } from './seed'
 import { loadBoard, saveBoard } from './storage'
 import type {
@@ -69,7 +70,7 @@ export default function App() {
   const [overColumnId, setOverColumnId] = useState<ColumnId | null>(null)
   const [openCardId, setOpenCardId] = useState<string | null>(null)
   const [view, setView] = useState<WorkspaceView>('project')
-  const [layout, setLayout] = useState<'board' | 'list'>('board')
+  const [layout, setLayout] = useState<IssueLayout>('board')
   const [query, setQuery] = useState('')
   const [labelFilter, setLabelFilter] = useState<LabelId[]>([])
   const [assigneeFilter, setAssigneeFilter] = useState('')
@@ -103,6 +104,10 @@ export default function App() {
       /* The theme still works without storage. */
     }
   }, [dark])
+
+  useEffect(() => {
+    document.title = documentTitle(view, layout)
+  }, [view, layout])
 
   useEffect(() => {
     if (!toast) return
