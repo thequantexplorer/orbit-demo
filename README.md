@@ -22,6 +22,21 @@ npm run dev
 
 Then open http://localhost:5173. Other scripts: `npm run build`, `npm run lint`.
 
+## Board columns
+
+Issues flow left to right through four fixed columns. Each header shows a live
+card count, and cards keep their order within a column.
+
+| Column | Use it for | Seeded issues |
+|---|---|---|
+| **Backlog** | Planned work that hasn't started | KB-1 – KB-4 |
+| **In Progress** | Work someone is actively doing | KB-5, KB-6 |
+| **Review** | Finished work awaiting review | KB-7 |
+| **Done** | Completed work; drives **Overview** progress and the **Completed** view | KB-8, KB-9 |
+
+Move a card by dragging it, or change **Status** in the issue editor. New cards
+can be added inline at the bottom of any column.
+
 ## Working in Orbit
 
 - Use **Board** or **List**, search by title, description, or issue ID, and combine
