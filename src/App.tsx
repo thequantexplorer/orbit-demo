@@ -254,10 +254,15 @@ export default function App() {
     setToast({ message: 'Shipped!', detail: title, shipped: true })
     if (prefersReducedMotion()) return
     requestAnimationFrame(() => {
-      const rect = document
-        .querySelector(`.board [data-card-id="${CSS.escape(cardId)}"]`)
-        ?.getBoundingClientRect()
-      if (!rect) return
+      const card = document.querySelector(
+        `.board [data-card-id="${CSS.escape(cardId)}"]`,
+      )
+      card?.scrollIntoView({ block: 'nearest' })
+      const origin =
+        card ??
+        document.querySelector('.board [data-column-id="done"] .column__header')
+      if (!origin) return
+      const rect = origin.getBoundingClientRect()
       const id = nextBurstId.current++
       const burst = { id, x: rect.left + rect.width / 2, y: rect.top + 12 }
       setBursts((current) => [...current, burst])
