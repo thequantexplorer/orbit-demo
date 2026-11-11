@@ -21,6 +21,8 @@ import { boardReducer, findColumnOfCard } from './boardReducer'
 import { ASSIGNEES, LABELS, LABEL_ORDER, createSeedBoard } from './data'
 import { createGeneratedBoard, parseSeedCount } from './seed'
 import { loadBoard, saveBoard } from './storage'
+import { applyDueThisWeek } from './dueThisWeek'
+import { useTodayKey } from './useToday'
 import type {
   BoardState,
   Card,
@@ -73,6 +75,8 @@ export default function App() {
   const [query, setQuery] = useState('')
   const [labelFilter, setLabelFilter] = useState<LabelId[]>([])
   const [assigneeFilter, setAssigneeFilter] = useState('')
+  const [dueThisWeek, setDueThisWeek] = useState(false)
+  const todayKey = useTodayKey()
   const [descriptions, setDescriptions] = useState(false)
   const [commandOpen, setCommandOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
@@ -249,6 +253,7 @@ export default function App() {
     setQuery('')
     setLabelFilter([])
     setAssigneeFilter('')
+    setDueThisWeek(false)
     setSidebarOpen(false)
   }
 
@@ -280,7 +285,7 @@ export default function App() {
     : 0
   const filterCount = labelFilter.length + (assigneeFilter ? 1 : 0)
   const hasFilters = Boolean(
-    query || filterCount || view === 'mine' || view === 'completed',
+    query || filterCount || dueThisWeek || view === 'mine' || view === 'completed',
   )
   const titles: Record<WorkspaceView, string> = {
     project: 'Product launch',
@@ -296,7 +301,7 @@ export default function App() {
     completed: 'Small wins. Meaningful progress. A little closer to launch.',
     overview: 'A clear view of where we are, and what comes next.',
   }
-  const visibleColumns = board.columns.map((column) => ({
+  const matchingColumns = board.columns.map((column) => ({
     ...column,
     cards: column.cardIds
       .map((id) => board.cards[id])
@@ -313,6 +318,8 @@ export default function App() {
           (view !== 'completed' || column.id === 'done'),
       ),
   }))
+  const { columns: visibleColumns, count: dueThisWeekCount } =
+    applyDueThisWeek(matchingColumns, dueThisWeek, todayKey)
   const visibleCount = visibleColumns.reduce(
     (sum, column) => sum + column.cards.length,
     0,
@@ -321,6 +328,7 @@ export default function App() {
     setQuery('')
     setLabelFilter([])
     setAssigneeFilter('')
+    setDueThisWeek(false)
   }
   const themeToggle = () => setDark((current) => !current)
 
@@ -655,6 +663,18 @@ export default function App() {
                     </button>
                   </div>
                 </details>
+                <button
+                  className={`filter-chip${dueThisWeek ? ' filter-chip--active' : ''}`}
+                  aria-pressed={dueThisWeek}
+                  title="Show only issues due in the next 7 days"
+                  onClick={() => setDueThisWeek((current) => !current)}
+                >
+                  <Icon name="calendar" size={13} />
+                  Due this week
+                  <span className="filter-chip__count">
+                    · {dueThisWeekCount}
+                  </span>
+                </button>
               </div>
               <div className="toolbar-right">
                 <div className="board-search">
@@ -715,7 +735,7 @@ export default function App() {
                 </details>
               </div>
             </div>
-            {(query || filterCount > 0) && (
+            {(query || filterCount > 0 || dueThisWeek) && (
               <div className="active-filters">
                 <span>
                   {visibleCount} matching{' '}
@@ -737,6 +757,12 @@ export default function App() {
                 {assigneeFilter && (
                   <button onClick={() => setAssigneeFilter('')}>
                     {ASSIGNEES[assigneeFilter]?.name}
+                    <Icon name="close" size={11} />
+                  </button>
+                )}
+                {dueThisWeek && (
+                  <button onClick={() => setDueThisWeek(false)}>
+                    Due this week
                     <Icon name="close" size={11} />
                   </button>
                 )}

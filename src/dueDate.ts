@@ -79,3 +79,25 @@ export function getDueChip(
     title,
   }
 }
+
+export const DUE_SOON_DAYS = 7
+
+/** The `YYYY-MM-DD` key `days` calendar days after `key`. */
+export function addDays(key: string, days: number): string {
+  const date = fromDateKey(key)
+  date.setDate(date.getDate() + days)
+  return toDateKey(date)
+}
+
+/**
+ * True when `dueDate` falls within the `days` calendar days starting today
+ * (today included, overdue dates excluded).
+ */
+export function isDueWithinDays(
+  dueDate: string | null | undefined,
+  todayKey: string,
+  days: number = DUE_SOON_DAYS,
+): boolean {
+  if (!isValidDueDate(dueDate) || days <= 0) return false
+  return dueDate >= todayKey && dueDate < addDays(todayKey, days)
+}
