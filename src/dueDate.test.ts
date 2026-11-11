@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
+  DUE_SOON_DAYS,
+  addDays,
   formatDueDate,
   fromDateKey,
   getDueChip,
+  isDueWithinDays,
   isValidDueDate,
   toDateKey,
 } from './dueDate'
@@ -110,5 +113,62 @@ describe('getDueChip', () => {
     expect(
       getDueChip('2026-10-09', new Date(2026, 9, 10, 0, 0))?.status,
     ).toBe('overdue')
+  })
+})
+
+describe('addDays', () => {
+  it('moves across month, year, and leap-day boundaries', () => {
+    expect(addDays('2026-10-09', 0)).toBe('2026-10-09')
+    expect(addDays('2026-10-09', 6)).toBe('2026-10-15')
+    expect(addDays('2026-10-28', 7)).toBe('2026-11-04')
+    expect(addDays('2026-12-29', 7)).toBe('2027-01-05')
+    expect(addDays('2028-02-26', 3)).toBe('2028-02-29')
+    expect(addDays('2026-10-09', -1)).toBe('2026-10-08')
+  })
+
+  it('counts calendar days across daylight-saving changes', () => {
+    expect(addDays('2026-03-07', 1)).toBe('2026-03-08')
+    expect(addDays('2026-03-08', 1)).toBe('2026-03-09')
+    expect(addDays('2026-10-31', 1)).toBe('2026-11-01')
+    expect(addDays('2026-11-01', 1)).toBe('2026-11-02')
+  })
+})
+
+describe('isDueWithinDays', () => {
+  const todayKey = '2026-10-09'
+
+  it('defaults to a seven-day window', () => {
+    expect(DUE_SOON_DAYS).toBe(7)
+  })
+
+  it('includes today through the sixth day after today', () => {
+    expect(isDueWithinDays('2026-10-09', todayKey)).toBe(true)
+    expect(isDueWithinDays('2026-10-12', todayKey)).toBe(true)
+    expect(isDueWithinDays('2026-10-15', todayKey)).toBe(true)
+  })
+
+  it('excludes overdue dates and dates after the window', () => {
+    expect(isDueWithinDays('2026-10-08', todayKey)).toBe(false)
+    expect(isDueWithinDays('2025-10-12', todayKey)).toBe(false)
+    expect(isDueWithinDays('2026-10-16', todayKey)).toBe(false)
+    expect(isDueWithinDays('2027-10-12', todayKey)).toBe(false)
+  })
+
+  it('handles windows that cross a month or year', () => {
+    expect(isDueWithinDays('2027-01-02', '2026-12-29')).toBe(true)
+    expect(isDueWithinDays('2027-01-04', '2026-12-29')).toBe(true)
+    expect(isDueWithinDays('2027-01-05', '2026-12-29')).toBe(false)
+  })
+
+  it('ignores missing or invalid due dates', () => {
+    for (const value of [null, undefined, '', 'soon', '2026-10-32']) {
+      expect(isDueWithinDays(value, todayKey)).toBe(false)
+    }
+  })
+
+  it('supports other window sizes', () => {
+    expect(isDueWithinDays('2026-10-09', todayKey, 1)).toBe(true)
+    expect(isDueWithinDays('2026-10-10', todayKey, 1)).toBe(false)
+    expect(isDueWithinDays('2026-10-09', todayKey, 0)).toBe(false)
   })
 })

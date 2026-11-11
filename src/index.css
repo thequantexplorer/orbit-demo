@@ -747,6 +747,35 @@ details[open] > .toolbar-button {
 .toolbar-button--active {
   color: var(--primary);
 }
+.filter-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 11px;
+  color: var(--secondary);
+  white-space: nowrap;
+}
+.filter-chip:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+.filter-chip--active,
+.filter-chip--active:hover {
+  border-color: var(--primary);
+  background: var(--primary-subtle);
+  color: var(--primary);
+}
+.filter-chip:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.filter-chip__count {
+  font-variant-numeric: tabular-nums;
+}
 .board-search {
   display: flex;
   align-items: center;
@@ -2235,6 +2264,10 @@ details[open] > .toolbar-button {
   }
   .toolbar-button {
     padding-inline: 5px;
+    font-size: 10px;
+  }
+  .filter-chip {
+    padding-inline: 7px;
     font-size: 10px;
   }
   .board-search {
