@@ -2029,6 +2029,62 @@ details[open] > .toolbar-button {
   height: 22px;
   margin-left: 10px;
 }
+.toast-message {
+  white-space: nowrap;
+}
+.toast--shipped > .icon {
+  color: var(--primary);
+}
+.toast--shipped .toast-message {
+  font-weight: 600;
+}
+.toast-detail {
+  max-width: 240px;
+  overflow: hidden;
+  color: var(--secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.confetti {
+  position: fixed;
+  z-index: 45;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.confetti-piece {
+  position: absolute;
+  top: calc(var(--size) / -4);
+  left: calc(var(--size) / -2);
+  width: var(--size);
+  height: calc(var(--size) / 2);
+  border-radius: 1px;
+  background: var(--color);
+  opacity: 0;
+  animation-name: confetti-burst;
+  animation-timing-function: cubic-bezier(0.2, 0.7, 0.3, 1);
+  animation-fill-mode: forwards;
+}
+.confetti-piece--round {
+  height: var(--size);
+  border-radius: 50%;
+}
+@keyframes confetti-burst {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0deg) scale(0.6);
+  }
+  55% {
+    opacity: 1;
+    transform: translate(var(--dx), var(--dy)) rotate(calc(var(--spin) * 0.6))
+      scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(var(--dx) * 1.15), calc(var(--dy) + 70px))
+      rotate(var(--spin)) scale(0.9);
+  }
+}
 @keyframes pop-in {
   from {
     opacity: 0;
@@ -2374,6 +2430,9 @@ details[open] > .toolbar-button {
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  .confetti {
+    display: none;
+  }
   *,
   *::before,
   *::after {

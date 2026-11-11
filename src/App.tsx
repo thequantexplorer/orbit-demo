@@ -21,6 +21,7 @@ import { boardReducer, findColumnOfCard } from './boardReducer'
 import { ASSIGNEES, LABELS, LABEL_ORDER, createSeedBoard } from './data'
 import { createGeneratedBoard, parseSeedCount } from './seed'
 import { loadBoard, saveBoard } from './storage'
+import { isShipped, prefersReducedMotion } from './celebration'
 import type {
   BoardState,
   Card,
@@ -38,6 +39,8 @@ import { Icon, ProgressRing, StatusIcon } from './components/Icon'
 import { IssueList } from './components/IssueList'
 import { LabelPill } from './components/LabelPill'
 import { Sidebar } from './components/Sidebar'
+import { ConfettiBurst } from './components/ConfettiBurst'
+import { Toast, type ToastMessage } from './components/Toast'
 
 const collisionDetection: CollisionDetection = (args) => {
   const within = pointerWithin(args)
@@ -81,7 +84,16 @@ export default function App() {
   const [starred, setStarred] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [saved, setSaved] = useState(true)
-  const [toast, setToast] = useState('')
+  const [toast, setToast] = useState<ToastMessage | null>(null)
+  const [bursts, setBursts] = useState<{ id: number; x: number; y: number }[]>(
+    [],
+  )
+  const nextBurstId = useRef(0)
+  const notify = (message: string) => setToast({ message })
+  const removeBurst = useCallback(
+    (id: number) => setBursts((current) => current.filter((b) => b.id !== id)),
+    [],
+  )
   const [dark, setDark] = useState(() => {
     try {
       return localStorage.getItem('kanban-theme') === 'dark'
@@ -106,7 +118,7 @@ export default function App() {
 
   useEffect(() => {
     if (!toast) return
-    const timer = window.setTimeout(() => setToast(''), 3200)
+    const timer = window.setTimeout(() => setToast(null), 3200)
     return () => window.clearTimeout(timer)
   }, [toast])
 
@@ -211,6 +223,9 @@ export default function App() {
         )
         ?.focus({ preventScroll: true })
     }
+    const snapshot = dragSnapshot.current
+    if (snapshot && isShipped(snapshot, board, String(active.id)))
+      celebrate(String(active.id))
     dragSnapshot.current = null
     setActiveCardId(null)
     setOverColumnId(null)
@@ -233,6 +248,25 @@ export default function App() {
         toIndex,
       })
     }
+  }
+
+  function celebrate(cardId: string, title = board.cards[cardId]?.title) {
+    setToast({ message: 'Shipped!', detail: title, shipped: true })
+    if (prefersReducedMotion()) return
+    requestAnimationFrame(() => {
+      const card = document.querySelector(
+        `.board [data-card-id="${CSS.escape(cardId)}"]`,
+      )
+      card?.scrollIntoView({ block: 'nearest' })
+      const origin =
+        card ??
+        document.querySelector('.board [data-column-id="done"] .column__header')
+      if (!origin) return
+      const rect = origin.getBoundingClientRect()
+      const id = nextBurstId.current++
+      const burst = { id, x: rect.left + rect.width / 2, y: rect.top + 12 }
+      setBursts((current) => [...current, burst])
+    })
   }
 
   function handleDragCancel() {
@@ -773,7 +807,7 @@ export default function App() {
                           columnId: column.id,
                           title,
                         })
-                        setToast('Issue created')
+                        notify('Issue created')
                       }}
                       onOpenCard={setOpenCardId}
                       onClearColumn={() => setClearDoneOpen(true)}
@@ -842,6 +876,11 @@ export default function App() {
               navigate('project')
             } else {
               dispatch({ type: 'update-card', cardId: openCard.id, patch })
+              if (columnId === 'done' && openCardColumn?.id !== 'done') {
+                celebrate(openCard.id, patch.title)
+              } else {
+                notify('Issue updated')
+              }
               if (columnId !== openCardColumn?.id)
                 dispatch({
                   type: 'move-card',
@@ -852,12 +891,12 @@ export default function App() {
                       ?.cardIds.length ?? 0,
                 })
             }
-            setToast(creating ? 'Issue created' : 'Issue updated')
+            if (creating) notify('Issue created')
           }}
           onDelete={() => {
             dispatch({ type: 'delete-card', cardId: openCard.id })
             closeModal()
-            setToast('Issue deleted')
+            notify('Issue deleted')
           }}
           onClose={closeModal}
         />
@@ -899,7 +938,7 @@ export default function App() {
                 dispatch({ type: 'reset' })
                 navigate('project')
                 setResetOpen(false)
-                setToast('Board reset to the original issues')
+                notify('Board reset to the original issues')
               }}
             >
               Reset board
@@ -942,7 +981,7 @@ export default function App() {
                     '[data-column-id="done"] .column__add',
                   )
                   ?.focus()
-                setToast('Done column cleared')
+                notify('Done column cleared')
               }}
             >
               Clear done
@@ -991,19 +1030,16 @@ export default function App() {
           </dl>
         </Dialog>
       )}
-      {toast && (
-        <div className="toast" role="status">
-          <Icon name="circleCheck" size={17} />
-          <span>{toast}</span>
-          <button
-            className="icon-button"
-            aria-label="Dismiss notification"
-            onClick={() => setToast('')}
-          >
-            <Icon name="close" size={13} />
-          </button>
-        </div>
-      )}
+      {toast && <Toast toast={toast} onDismiss={() => setToast(null)} />}
+      {bursts.map((burst) => (
+        <ConfettiBurst
+          key={burst.id}
+          id={burst.id}
+          x={burst.x}
+          y={burst.y}
+          onDone={removeBurst}
+        />
+      ))}
     </div>
   )
 }
